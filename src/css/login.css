@@ -31,6 +31,7 @@ h2 {
 }
 
 label {
+  font-size: 24px;
 }
 
 input {
@@ -73,6 +74,7 @@ h4.alert {
   -webkit-border-radius: 2px;
 }
 
+/* Span with a class commit */
 span.exit {
   position: absolute;
   top: 0;
