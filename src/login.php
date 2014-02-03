@@ -3,7 +3,7 @@
 require_once 'classes/ValidUser.php';
 
 session_start();
-$user = new ValidUser();
+$user = new ValidUser(isset($_GET[USR_NAME_KEY]) ? $_GET[USR_NAME_KEY] : '' );
 if (isset($_GET[SESS_KEY]) && $_GET[SESS_KEY] == SESS_END_VAL) {
   $user->log_out();
 }

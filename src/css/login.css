@@ -89,3 +89,11 @@ span.exit {
   border-left: 1px dotted white;
   border-bottom: 1px dotted white;
 }
+
+p.error {
+  font-style: italic;
+}
+
+p.question {
+  text-decoration: underline;
+}
