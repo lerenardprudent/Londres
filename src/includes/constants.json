@@ -4,11 +4,14 @@
   "DB_PASSWORD" : "",
   "DB_NAME" : "londres",
   "TBL_USERS" : "users",
+  "TBL_ANSWERS" : "answers",
   "SESS_KEY" : "status",
   "SESS_AUTH_VAL" : "authorized",
   "SESS_END_VAL" : "loggedout",
   "USR_NAME_KEY" : "uid",
   "USR_NAME_UNDEFINED" : "undefined",
   "USR_NAME_ADMIN" : "admin",
-  "Q_STATUS_KEY" : "qstat"
+  "Q_STATUS_KEY" : "qstat",
+  "SRC_PHP_INDEX" : "index.php",
+  "SRC_PHP_LOGIN" : "login.php" 
 }

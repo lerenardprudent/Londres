@@ -1,10 +1,12 @@
 <?php
 
 require_once 'classes/ValidUser.php';
+require_once 'classes/Constants.php';
 
 session_start();
-$user = new ValidUser(isset($_GET[USR_NAME_KEY]) ? $_GET[USR_NAME_KEY] : '' );
-if (isset($_GET[SESS_KEY]) && $_GET[SESS_KEY] == SESS_END_VAL) {
+$C = new Constants();
+$user = new ValidUser(isset($_GET[$C['USR_NAME_KEY']]) ? $_GET[$C['USR_NAME_KEY']] : '' );
+if (isset($_GET[$C['SESS_KEY']]) && $_GET[$C['SESS_KEY']] == $C['SESS_END_VAL']) {
   $user->log_out();
 }
 

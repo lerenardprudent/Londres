@@ -1,19 +1,20 @@
 <?php
-require_once 'includes/constants.php';
+require_once 'classes/Constants.php';
 
 class MySql {
   private $conn;
   
   function __construct()
   {
-    $this->conn = new mysqli(DB_SERVER, DB_USER, DB_PASSWORD, DB_NAME) or die("DB problem :(");
+    $this->C = new Constants();
+    $this->conn = new mysqli($this->C['DB_SERVER'], $this->C['DB_USER'], $this->C['DB_PASSWORD'], $this->C['DB_NAME']) or die("DB problem :(");
   }
   
   function verify_credentials($username, $hashed_password)
   {
     $this->check_username_defined($username);
     
-    $query = "SELECT curr_quest FROM ".TBL_USERS." where uname = ? AND pwd = ? LIMIT 1";
+    $query = "SELECT curr_quest FROM ".$this->C['TBL_USERS']." where uname = ? AND pwd = ? LIMIT 1";
     if ( $stmt = $this->conn->prepare($query) ) {
       $stmt->bind_param('ss', $username, $hashed_password);
       $stmt->execute();
@@ -29,7 +30,7 @@ class MySql {
   {
     $this->check_username_defined($username);
     
-    $query = "SELECT curr_quest FROM ".TBL_USERS." where uname = ?";
+    $query = "SELECT curr_quest FROM ".$this->C['TBL_USERS']." where uname = ?";
     
     if ( $stmt = $this->conn->prepare($query) ) {
       $stmt->bind_param('s', $username);
@@ -43,33 +44,30 @@ class MySql {
     return -1;
   }
   
-  function get_next_quest($username)
+  function update_current_question($username, $new_curr)
   {
-    $curr_q = $this->get_curr_quest($username);
-   
-    $query = "SELECT curr_quest FROM ".TBL_USERS." where uname = ? LIMIT 1";
+    $this->check_username_defined($username);
+    
+    $query = "SELECT curr_quest FROM ".$this->C['TBL_USERS']." where uname = ? LIMIT 1";
     if ( $stmt = $this->conn->prepare($query) ) {
-      $admin_name = USR_NAME_ADMIN;
+      $admin_name = $this->C['USR_NAME_ADMIN'];
       $stmt->bind_param('s', $admin_name);
       $stmt->execute();
       $stmt->bind_result($admin_curr_quest);
       if ( $stmt->fetch() ) {
         $stmt->close();
-        if ($curr_q+1 <= $admin_curr_quest) {
-          $curr_q += 1;
-          $this->update_curr_quest($username, $curr_q);
-          return $curr_q;
+        if ($new_curr <= $admin_curr_quest) {
+          $this->update_curr($username, $new_curr);
+          return $new_curr;
         }
       }
     }
     return -1;
   }
   
-  function update_curr_quest($username, $curr_quest)
+  function update_curr($username, $curr_quest)
   {
-    $this->check_username_defined($username);
-    
-    $query = "UPDATE ".TBL_USERS." SET curr_quest=? where uname = ?";
+    $query = "UPDATE ".$this->C['TBL_USERS']." SET curr_quest=? where uname = ?";
     if ( $stmt = $this->conn->prepare($query) ) {
       $stmt->bind_param('ds', $curr_quest, $username);
       $stmt->execute();
@@ -77,11 +75,34 @@ class MySql {
     }
   }
   
-  function setConnected($username, $val = true)
+  function save_answer($username, $qno, $answer)
   {
     $this->check_username_defined($username);
     
-    $query = "UPDATE ".TBL_USERS." SET connected=? where uname = ?";
+    $query = "INSERT INTO ".$this->C['TBL_ANSWERS']." (uname, qno, ans) values (?, ?, ?)";
+    if ( $stmt = $this->conn->prepare($query) ) {
+      $stmt->bind_param('sds', $username, $qno, $answer);
+      $stmt->execute();
+      if ( $stmt->affected_rows == 1 )
+        return true;
+    }
+    
+    $query = "UPDATE ".$this->C['TBL_ANSWERS']." SET ans = ? WHERE uname = ? AND qno = ?";
+    if ( $stmt = $this->conn->prepare($query) ) {
+      $stmt->bind_param('ssd', $answer, $username, $qno);
+      $stmt->execute();
+      if ( $stmt->affected_rows == 1 )
+        return true;
+    }
+    
+    return false;
+  }
+  
+  function set_connected($username, $val = true)
+  {
+    $this->check_username_defined($username);
+    
+    $query = "UPDATE ".$this->C['TBL_USERS']." SET connected=? where uname = ?";
     if ( $stmt = $this->conn->prepare($query) ) {
       $stmt->bind_param('ds', $val, $username);
       $stmt->execute();
@@ -91,9 +112,9 @@ class MySql {
   
   function admin_connected()
   {
-    $query = "SELECT connected FROM ".TBL_USERS." where uname = ? LIMIT 1";
+    $query = "SELECT connected FROM ".$this->C['TBL_USERS']." where uname = ? LIMIT 1";
     if ( $stmt = $this->conn->prepare($query) ) {
-      $admin_name = USR_NAME_ADMIN;
+      $admin_name = $this->C['USR_NAME_ADMIN'];
       $stmt->bind_param('s', $admin_name);
       $stmt->execute();
       $stmt->bind_result($admin_connected);
@@ -107,7 +128,7 @@ class MySql {
   
   function check_username_defined($username)
   {
-    if (!isset($username) || $username == USR_NAME_UNDEFINED) {
+    if (empty($username)) {
       die("Could not complete DB request: User name is undefined");
     }
   }

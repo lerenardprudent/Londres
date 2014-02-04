@@ -3,22 +3,23 @@
 require_once 'includes/constants.php';
 require_once 'classes/ValidUser.php';
 
-$contents = file_get_contents('includes/constants.json');
-$contents = utf8_encode($contents);
-$json = json_decode($contents);
-
 $usr = new ValidUser();
-if (isset($_GET[USR_NAME_KEY])) {
-  $usr = new ValidUser($_GET[USR_NAME_KEY]);
-  if ( $usr->confirm() ) {
-    //$usr->start_or_resume_questionnaire();
-  }
+$C = new Constants();
+
+$sess_confirm = $usr->confirm();
+// Reject user if session has not already been created
+if (!$sess_confirm) {
+    header("location: ".$C['SRC_PHP_LOGIN']);
 }
 
+if (isset($_GET[USR_NAME_KEY])) {
+  $usr->setUsername($_GET[USR_NAME_KEY]);
+}
+$usr->connect();
 if (isset($_POST['submit'])) {
   if ($instr_connected = $usr->instructor_connected()) {
     if (isset($_POST['answer']) || isset($_POST['hack'])) {
-      $curr_quest = $usr->get_next_question();
+      $curr_quest = $usr->save_answer_get_next_question($_POST['answer']);
     }
     else {
       $curr_quest = $usr->get_current_question();
@@ -35,37 +36,36 @@ if (isset($_POST['submit'])) {
 <title>Member page</title>
 <link rel="stylesheet" type="text/css" href="css/login.css">
 <script type="text/javascript" src="js/jquery/jquery-1.10.2.min.js"></script>
+<script type="text/javascript" src="constants.js"></script>
 <script type="text/javascript">
   var uname_key = 'uid';
   var uname = null;
   function parseUrl() {
-        var urlParams = {};
-        var query = window.location.search.substring(1).split("&");
-        for (var i = 0, max = query.length; i < max; i++)
-        {
-          if (query[i] === "") // check for trailing & with no param
-            continue;
+    var urlParams = {};
+    var query = window.location.search.substring(1).split("&");
+    for (var i = 0, max = query.length; i < max; i++) {
+      if (query[i] === "") // check for trailing & with no param
+        continue;
 
-          var param = query[i].split("=");
-          urlParams[decodeURIComponent(param[0])] = decodeURIComponent(param[1] || "");
-        }
-        return urlParams;
+      var param = query[i].split("=");
+      urlParams[decodeURIComponent(param[0])] = decodeURIComponent(param[1] || "");
     }
+    return urlParams;
+  }
     
   $(document).ready( function() {
     var params = parseUrl();
-    
+        
     if ( uname_key in params ) {
       uname = params[uname_key];
-      var logoutHref = $('a').attr('href');
-      logoutHref += "&" + uname_key + "=" + uname;
+      var logoutHref = Consts.get('SRC_PHP_LOGIN') + '?' + uname_key + "=" + uname + '&' + Consts.get('SESS_KEY') + '=' + Consts.get('SESS_END_VAL');
       $('a').attr('href', logoutHref);
     }
-    var qstat_key = 'qstat';
+    var qstat_key = Consts.get('Q_STATUS_KEY');
     if ( qstat_key in params ) {
       var resume_quest = params[qstat_key];
       if ( parseInt(resume_quest) ) {
-        $('input').attr('value', 'Resume questionnaire');
+        $("input[type='submit']").attr('value', 'Resume questionnaire');
       }
     }
     
@@ -85,6 +85,10 @@ if (isset($_POST['submit'])) {
       $('#submit').attr('value', 'Submit');
     });
     
+    $("input[type='text']").each(function() {
+      $('input[type="submit"]').prop('disabled', $(this).prop('value').length == 0);
+      $(this).keyup(function() {$('input[type="submit"]').prop('disabled', $(this).val().length == 0);});
+    });
   });
 </script>
 </head>
@@ -109,7 +113,7 @@ if (isset($_POST['submit'])) {
         echo "<p class='question'>Question ".$curr_quest."</p>";
         echo "<p>\"What browser do you use?\"</p><p/>";
         echo "<div id='options'>";
-        echo '<input id="answer" list="browsers" name="answer">
+        echo '<input id="answer" list="browsers" type="text" name="answer">
           <datalist id="browsers">
             <option value="Internet Explorer">
             <option value="Firefox">
@@ -124,7 +128,7 @@ if (isset($_POST['submit'])) {
     <input type="submit" id="submit" value="Start / Resume" name="submit" />
   </form>
   <p />
-  <a href="login.php?status=loggedout">Log out</a>
+  <a>Log out</a>
 </div>
 </body>
 </html>

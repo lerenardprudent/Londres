@@ -1,20 +1,21 @@
 <?php
 require_once 'MySql.php';
-require_once 'includes/constants.php';
+require_once 'classes/Constants.php';
 
 class ValidUser {
-  function __construct($uname = USR_NAME_UNDEFINED) {
+  function __construct($uname = '') {
     $this->mysql = new MySql();
     $this->username = $uname;
+    $this->C = new Constants();
   }
   
   function validate_user($username, $password) {
     $creds = $this->mysql->verify_credentials($username, md5($password));
     if ( $creds ) {
-      $_SESSION[SESS_KEY] = SESS_AUTH_VAL;
+      $_SESSION[$this->C['SESS_KEY']] = $this->C['SESS_AUTH_VAL'];
       $this->username = $username;
       $curr_quest = $this->mysql->get_curr_quest($this->username);
-      header("location: index.php?".USR_NAME_KEY."=".$username."&".Q_STATUS_KEY."=".($curr_quest == 1 ? 0 : 1));
+      header("location: ".$this->C['SRC_PHP_INDEX']."?".$this->C['USR_NAME_KEY']."=".$username."&".$this->C['Q_STATUS_KEY']."=".($curr_quest == 1 ? 0 : 1));
     }
     else {
       return "Please enter a correct username and/or password!";
@@ -23,24 +24,25 @@ class ValidUser {
   
   function confirm() {
     session_start();
-    if ($_SESSION[SESS_KEY] != SESS_AUTH_VAL) {
-      header("location: login.php");
-      return false;
-    }
-    $this->mysql->setConnected($this->username);
-    return true;
+    return ($_SESSION[$this->C['SESS_KEY']] == $this->C['SESS_AUTH_VAL']);
   }
   
-  function start_or_resume_questionnaire() {
-    $this->mysql->update_curr_quest($this->username, 1);
+  function setUsername($name) {
+    $this->username = $name;
+  }
+  
+  function connect() {
+    $this->mysql->set_connected($this->username);
   }
   
   function get_current_question() {
     return $this->mysql->get_curr_quest($this->username);
   }
   
-  function get_next_question() {
-    return $this->mysql->get_next_quest($this->username);
+  function save_answer_get_next_question($answer) {
+    $curr_quest = $this->mysql->get_curr_quest($this->username);
+    $this->mysql->save_answer($this->username, $curr_quest, $answer);
+    return $this->mysql->update_current_question($this->username, $curr_quest+1);
   }
   
   function instructor_connected() {
@@ -48,9 +50,9 @@ class ValidUser {
   }
   
   function log_out() {
-    $this->mysql->setConnected($this->username, false);
-    if (isset($_SESSION[SESS_KEY])) {
-      unset($_SESSION[SESS_KEY]);
+    $this->mysql->set_connected($this->username, false);
+    if (isset($_SESSION[$this->C['SESS_KEY']])) {
+      unset($_SESSION[$this->C['SESS_KEY']]);
       
       if (isset($_COOKIE[session_name()])) {
         setcookie(session_name(), '', time() - 1000);
