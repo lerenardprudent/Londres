@@ -39,6 +39,10 @@ class ValidUser {
     return $this->mysql->get_curr_quest($this->username);
   }
   
+  function get_next_question() {
+    return $this->mysql->get_next_quest($this->username);
+  }
+  
   function instructor_connected() {
     return $this->mysql->admin_connected();   
   }

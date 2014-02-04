@@ -1,0 +1,14 @@
+{
+  "DB_SERVER" : "localhost",
+  "DB_USER" : "root",
+  "DB_PASSWORD" : "",
+  "DB_NAME" : "londres",
+  "TBL_USERS" : "users",
+  "SESS_KEY" : "status",
+  "SESS_AUTH_VAL" : "authorized",
+  "SESS_END_VAL" : "loggedout",
+  "USR_NAME_KEY" : "uid",
+  "USR_NAME_UNDEFINED" : "undefined",
+  "USR_NAME_ADMIN" : "admin",
+  "Q_STATUS_KEY" : "qstat"
+}

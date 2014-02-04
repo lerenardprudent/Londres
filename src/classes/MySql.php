@@ -43,6 +43,28 @@ class MySql {
     return -1;
   }
   
+  function get_next_quest($username)
+  {
+    $curr_q = $this->get_curr_quest($username);
+   
+    $query = "SELECT curr_quest FROM ".TBL_USERS." where uname = ? LIMIT 1";
+    if ( $stmt = $this->conn->prepare($query) ) {
+      $admin_name = USR_NAME_ADMIN;
+      $stmt->bind_param('s', $admin_name);
+      $stmt->execute();
+      $stmt->bind_result($admin_curr_quest);
+      if ( $stmt->fetch() ) {
+        $stmt->close();
+        if ($curr_q+1 <= $admin_curr_quest) {
+          $curr_q += 1;
+          $this->update_curr_quest($username, $curr_q);
+          return $curr_q;
+        }
+      }
+    }
+    return -1;
+  }
+  
   function update_curr_quest($username, $curr_quest)
   {
     $this->check_username_defined($username);

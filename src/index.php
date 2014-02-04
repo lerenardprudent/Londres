@@ -3,6 +3,10 @@
 require_once 'includes/constants.php';
 require_once 'classes/ValidUser.php';
 
+$contents = file_get_contents('includes/constants.json');
+$contents = utf8_encode($contents);
+$json = json_decode($contents);
+
 $usr = new ValidUser();
 if (isset($_GET[USR_NAME_KEY])) {
   $usr = new ValidUser($_GET[USR_NAME_KEY]);
@@ -13,9 +17,13 @@ if (isset($_GET[USR_NAME_KEY])) {
 
 if (isset($_POST['submit'])) {
   if ($instr_connected = $usr->instructor_connected()) {
-    $curr_quest = $usr->get_current_question();
+    if (isset($_POST['answer']) || isset($_POST['hack'])) {
+      $curr_quest = $usr->get_next_question();
+    }
+    else {
+      $curr_quest = $usr->get_current_question();
+    }
   }
-  
 }
 
 ?>
@@ -63,6 +71,13 @@ if (isset($_POST['submit'])) {
     
     $('.error').each(function() {
       $('h3').text('Error');
+      $('#submit').attr('value', 'Retry');
+    });
+    
+    $('.pause').each(function() {
+      $('h3').text('Please wait');
+      $('#submit').attr('value', 'Retry');
+      $('#hack').attr('value', 'hack');
     });
     
     $('.question').each(function() {
@@ -82,13 +97,28 @@ if (isset($_POST['submit'])) {
     <?php
     if (isset($instr_connected) && !$instr_connected) {
       echo '<p class="error">Instructor not connected!</p>';
-      echo '<p>Please wait for your instructor to log in, then try again.</p>
-      ';
+      echo '<p>Please wait for the instructor to reconnect.</p>';
     }
     
     if (isset($curr_quest)) {
-      echo "<p class='question'>Question ".$curr_quest."</p>";
-      echo "<p>\"Blah blah blah?\"</p>";
+      if ($curr_quest < 0) {
+        echo '<p class="pause">Please wait for the instructor to reach the next question.</p>';
+        echo '<input id="hack" name="hack" type="text" style="display: none" />';
+      }
+      else {
+        echo "<p class='question'>Question ".$curr_quest."</p>";
+        echo "<p>\"What browser do you use?\"</p><p/>";
+        echo "<div id='options'>";
+        echo '<input id="answer" list="browsers" name="answer">
+          <datalist id="browsers">
+            <option value="Internet Explorer">
+            <option value="Firefox">
+            <option value="Chrome">
+            <option value="Opera">
+            <option value="Safari">
+          </datalist>';
+        echo '</div><p/>';
+      }
     }
     ?>
     <input type="submit" id="submit" value="Start / Resume" name="submit" />
