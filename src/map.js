@@ -40,13 +40,13 @@ var tooltipDelete = chooseLang('Mode ÉFFACEMENT', 'DELETE mode');
 
 var osmLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
   attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-});
+}).addTo(map);
 
 defineZoomLevels();
 recenter_map();
 var offlineLayer = L.tileLayer('img/tiles/{z}/{x}/{y}.png',
                                {attribution: '&copy; <a href="http://http://mapnik.org/">Mapnik</a>',
-                               minZoom:_zoomMin, maxZoom:_zoomMax}).addTo(map);
+                               minZoom:_zoomMin, maxZoom:_zoomMax});
 
 var defaultStyle = { "weight": 2,
                      "opacity": 0.65,
@@ -76,6 +76,8 @@ arrondsLayer.addData(jsonData);*/
 //============================= CONTROLS ======================================
 var drawControl;
 var drawnItems = new L.FeatureGroup();
+var myControls = {};
+
 map.addLayer(drawnItems);
 initControls();
 
@@ -112,19 +114,28 @@ map.on('draw:created', function (e) {
         ]
   }).addTo(map);*/
     
+  if (type === 'marker') {
+    layer.options.bounceOnAdd = true;
+    layer.options.draggable = true;
+    layer.bindPopup('A popup!');
+    layer.bindLabel('Here it is', {noHide: true});
+  }
+  else if ( type == "polyline" ) {
+    $('#modes').html(modesHeading);
+    var accLengs = L.GeometryUtil.accumulatedLengths(layer);
+    for ( var x = 1; x < layer._latlngs.length; x++ ) {
+      var optionsHTML = "";
+      for ( var i in MODE_TRANSPORT ) {
+        optionsHTML += '<option value="' + MODE_TRANSPORT[i].ind + '">' + i + '</option>';
+      }
+      $('#modes').append('<span style="padding: 8px">' + chooseLang("Étape ", "Leg ") + x + ' (distance ' + ((accLengs[x]-accLengs[x-1])/1000).toFixed(2) + 'km): <select>' + optionsHTML + '</select></span><br/>');
+    }
+    $('#modes').append('<p>');
+  }
+  
   document.getElementById("save").disabled = false;
   drawnItems.clearLayers();
   drawnItems.addLayer(layer);
-  $('#modes').html(modesHeading);
-  var accLengs = L.GeometryUtil.accumulatedLengths(layer);
-  for ( var x = 1; x < layer._latlngs.length; x++ ) {
-    var optionsHTML = "";
-    for ( var i in MODE_TRANSPORT ) {
-      optionsHTML += '<option value="' + MODE_TRANSPORT[i].ind + '">' + i + '</option>';
-    }
-    $('#modes').append('<span style="padding: 8px">' + chooseLang("Étape ", "Leg ") + x + ' (distance ' + ((accLengs[x]-accLengs[x-1])/1000).toFixed(2) + 'km): <select>' + optionsHTML + '</select></span><br/>');
-  }
-  $('#modes').append('<p>');
 });
 
 map.on('draw:edited', function (e) {
@@ -165,7 +176,7 @@ function initControls()
     zoomControlOptions.zoomInTitle = 'Zoomer avant';
     zoomControlOptions.zoomOutTitle = 'Zoomer arrière';
   }
-  L.control.zoom(zoomControlOptions).addTo(map);
+  myControls.zoom = L.control.zoom(zoomControlOptions).addTo(map);
 
   // Controls dessin - en haut à droite
   L.drawLocal.draw.toolbar.buttons.polygon = chooseLang('Mode DESSIN', 'DRAW mode');
@@ -181,7 +192,16 @@ function initControls()
     L.drawLocal.edit.handlers.edit.tooltip.text = "Cliquer sur 'Annuler' pour défaire tous changements.";
     L.drawLocal.edit.handlers.edit.tooltip.subtext = "Modifier la forme du polygone en déplaçant ses ancranges.";
   }
-                                                
+  
+  var MyCustomMarker = L.Icon.extend({
+    options: {
+        shadowUrl: null,
+        iconAnchor: new L.Point(12, 40),
+        iconUrl: 'img/leaflet/marker-icon.png',
+        labelAnchor: [10,-25]
+    }
+  });
+
   drawControl = new L.Control.Draw({
     position: 'topleft',
     draw: {
@@ -199,7 +219,7 @@ function initControls()
         },
         shapeOptions: polyStyle
       },
-      marker: false
+      marker: { icon: new MyCustomMarker() }
     },
     edit: {
       featureGroup: drawnItems,
@@ -207,23 +227,8 @@ function initControls()
       remove: true
     }
   });
-  map.addControl(drawControl);
-/*
-  var info = L.control();
+  myControls.drawTools = map.addControl(drawControl);
 
-  info.onAdd = function (map) {
-    this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
-    this.update();
-    return this._div;
-  };
-
-  // method that we will use to update the control based on feature properties passed
-  info.update = function (props) {
-    this._div.innerHTML = "<i class='glyphicon glyphicon-fullscreen myIcon' onclick='recenter_map();'></i>";
-};
-
-info.addTo(map);
-*/
   var MyCenterControl = L.Control.extend({
     options: {
       position: 'bottomleft',
@@ -240,8 +245,7 @@ info.addTo(map);
       return controlDiv;
     }
   });
-  map.addControl(new MyCenterControl());
-
+  myControls.recenter = map.addControl(new MyCenterControl());
 
     var MyControl = L.Control.extend({
     options: {
@@ -259,8 +263,12 @@ info.addTo(map);
       return controlDiv;
     }
   });
-  map.addControl(new MyControl());
+  myControls.custom = map.addControl(new MyControl());
 
+  myControls.searchbar = new L.Control.GeoSearch({
+         provider: new L.GeoSearch.Provider.OpenStreetMap()
+  }).addTo(map);
+        
   $('.leaflet-draw-edit-edit').attr('title', tooltipEdit );
   $('.leaflet-draw-edit-remove').attr('title', tooltipDelete );
   L.drawLocal.edit.toolbar.buttons.edit = tooltipEdit;

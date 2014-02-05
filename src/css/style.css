@@ -10,7 +10,7 @@ html, body {
     width: 1024px;
     font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
     font-size: 12px;
-    background-image: url('ext/logo-douglas-bw.jpg')
+    background-image: url('../img/logo-douglas-bw.jpg')
 }
 
 a { text-decoration: none; }
