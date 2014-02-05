@@ -39,9 +39,14 @@ class ValidUser {
     return $this->mysql->get_curr_quest($this->username);
   }
   
-  function save_answer_get_next_question($answer) {
+  function save_answer($answer) {
     $curr_quest = $this->mysql->get_curr_quest($this->username);
     $this->mysql->save_answer($this->username, $curr_quest, $answer);
+  }
+  
+  function update_current_question()
+  {
+    $curr_quest = $this->mysql->get_curr_quest($this->username);
     return $this->mysql->update_current_question($this->username, $curr_quest+1);
   }
   

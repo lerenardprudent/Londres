@@ -56,10 +56,11 @@ class MySql {
       $stmt->bind_result($admin_curr_quest);
       if ( $stmt->fetch() ) {
         $stmt->close();
-        if ($new_curr <= $admin_curr_quest) {
+        if ($new_curr <= $admin_curr_quest || $username == $this->C['USR_NAME_ADMIN']) {
           $this->update_curr($username, $new_curr);
           return $new_curr;
         }
+        return -$new_curr;
       }
     }
     return -1;

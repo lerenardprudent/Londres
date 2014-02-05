@@ -18,8 +18,12 @@ if (isset($_GET[USR_NAME_KEY])) {
 $usr->connect();
 if (isset($_POST['submit'])) {
   if ($instr_connected = $usr->instructor_connected()) {
-    if (isset($_POST['answer']) || isset($_POST['hack'])) {
-      $curr_quest = $usr->save_answer_get_next_question($_POST['answer']);
+    if (isset($_POST['answer'])) {
+      $usr->save_answer($_POST['answer']);
+      $curr_quest =  $usr->update_current_question();
+    }
+    else if (isset($_POST['hack'])) {
+       $curr_quest = $usr->update_current_question();
     }
     else {
       $curr_quest = $usr->get_current_question();
@@ -78,6 +82,7 @@ if (isset($_POST['submit'])) {
       $('h3').text('Please wait');
       $('#submit').attr('value', 'Retry');
       $('#hack').attr('value', 'hack');
+      $('html').css('cursor', 'progress');
     });
     
     $('.question').each(function() {
@@ -106,7 +111,7 @@ if (isset($_POST['submit'])) {
     
     if (isset($curr_quest)) {
       if ($curr_quest < 0) {
-        echo '<p class="pause">Please wait for the instructor to reach the next question.</p>';
+        echo '<p class="pause">Please wait for the instructor to reach Question '.-$curr_quest.'.</p>';
         echo '<input id="hack" name="hack" type="text" style="display: none" />';
       }
       else {
