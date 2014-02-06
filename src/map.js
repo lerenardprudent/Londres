@@ -38,15 +38,16 @@ var tooltipEdit = chooseLang('Mode ÉDITION', 'EDIT mode');
 var tooltipDelete = chooseLang('Mode ÉFFACEMENT', 'DELETE mode');
 //========================= CALQUES DE LA CARTE ===============================
 
-var osmLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-}).addTo(map);
-
 defineZoomLevels();
 recenter_map();
 var offlineLayer = L.tileLayer('img/tiles/{z}/{x}/{y}.png',
                                {attribution: '&copy; <a href="http://http://mapnik.org/">Mapnik</a>',
                                minZoom:_zoomMin, maxZoom:_zoomMax});
+var osmLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+});
+var layerToAdd = offlineLayer;
+layerToAdd.addTo(map);
 
 var defaultStyle = { "weight": 2,
                      "opacity": 0.65,
@@ -265,9 +266,9 @@ function initControls()
   });
   myControls.custom = map.addControl(new MyControl());
 
-  myControls.searchbar = new L.Control.GeoSearch({
+  /*myControls.searchbar = new L.Control.GeoSearch({
          provider: new L.GeoSearch.Provider.OpenStreetMap()
-  }).addTo(map);
+  }).addTo(map);*/
         
   $('.leaflet-draw-edit-edit').attr('title', tooltipEdit );
   $('.leaflet-draw-edit-remove').attr('title', tooltipDelete );
