@@ -1,17 +1,25 @@
 <?php
 
-require_once 'classes/ValidUser.php';
+require_once 'classes/User.php';
 require_once 'classes/Constants.php';
-
 session_start();
+
 $C = new Constants();
-$user = new ValidUser(isset($_GET[$C['USR_NAME_KEY']]) ? $_GET[$C['USR_NAME_KEY']] : '' );
-if (isset($_GET[$C['SESS_KEY']]) && $_GET[$C['SESS_KEY']] == $C['SESS_END_VAL']) {
-  $user->log_out();
+$U = new User();
+
+$uname_key = $C['USR_NAME_KEY'];
+$pwd_key = $C['PWD_KEY'];
+
+if (isset($_GET[$C['STAT_KEY']]) && $_GET[$C['STAT_KEY']] == $C['SESS_END_VAL']) {
+  $U->logout();
 }
 
-if ($_POST && isset($_POST['username']) && isset($_POST['pwd'])) {
-  $resp = $user->validate_user($_POST['username'], $_POST['pwd']);
+if ($_POST && isset($_POST[$uname_key]) && isset($_POST[$pwd_key])) {
+  
+  $username = filter_var($_POST[$uname_key], FILTER_SANITIZE_STRING);
+  $password = filter_var($_POST[$pwd_key], FILTER_SANITIZE_STRING);
+  
+  $resp = $U->validate_credentials($username, $password);
 }
 ?>
 
@@ -38,12 +46,12 @@ if ($_POST && isset($_POST['username']) && isset($_POST['pwd'])) {
   <form method="post" action="">
     <h2>Login <small>Enter your credentials</small></h2>
     <p>
-      <label for="username">Username:</label>
-      <input type="text" name="username" />
+      <label for="<?php echo $C['USR_NAME_KEY']; ?>">Username:</label>
+      <input type="text" name="<?php echo $C['USR_NAME_KEY']; ?>" />
     </p>
     <p>
-      <label for="pwd">Password:</label>
-      <input type="password" name="pwd" />
+      <label for="<?php echo $C['PWD_KEY']; ?>">Password:</label>
+      <input type="password" name="<?php echo $C['PWD_KEY']; ?>" />
     </p>
     <p>
       <input type="submit" id="submit" value="Login" name="submit" />

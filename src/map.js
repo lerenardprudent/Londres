@@ -134,7 +134,7 @@ map.on('draw:created', function (e) {
     $('#modes').append('<p>');
   }
   
-  document.getElementById("save").disabled = false;
+//  document.getElementById("save").disabled = false;
   drawnItems.clearLayers();
   drawnItems.addLayer(layer);
 });
@@ -304,7 +304,7 @@ function readJSON(file)
 
 function defineZoomLevels()
 {
-	jsonZoomInfo = readJSON('zoomlevels.php');
+	jsonZoomInfo = Consts.readJSON('zoomlevels.php');
 	_zoomMin = jsonZoomInfo.minZ;
 	_zoomMax = jsonZoomInfo.maxZ;
 }

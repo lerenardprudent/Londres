@@ -1,6 +1,6 @@
 var Consts = new function()
 {
-  var readJSON = function(file)
+  this.readJSON = function(file)
   {
     var json;
     
@@ -22,7 +22,7 @@ var Consts = new function()
     return json;
   }
   
-  this.config = readJSON('includes/constants.json');
+  this.config = this.readJSON('includes/constants.json');
   this.get = function(key) {
     if ( key in this.config ) {
       return this.config[key];
