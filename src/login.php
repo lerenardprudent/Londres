@@ -15,11 +15,14 @@ if (isset($_GET[$C['STAT_KEY']]) && $_GET[$C['STAT_KEY']] == $C['SESS_END_VAL'])
 }
 
 if ($_POST && isset($_POST[$uname_key]) && isset($_POST[$pwd_key])) {
-  
   $username = filter_var($_POST[$uname_key], FILTER_SANITIZE_STRING);
   $password = filter_var($_POST[$pwd_key], FILTER_SANITIZE_STRING);
   
   $resp = $U->validate_credentials($username, $password);
+}
+else if ( isset($_GET[$C['REDIRECT_KEY']]) ) {
+  $resp = "Please log in before proceeding to the questionnaire.";
+  unset($_GET);
 }
 ?>
 

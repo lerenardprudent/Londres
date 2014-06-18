@@ -6,7 +6,9 @@ class User {
   function __construct() {
     $this->mysql = new MySql();
     $this->C = new Constants();
-    $this->uid = $_SESSION[$this->C['USR_ID_KEY']];
+    if ( isset($_SESSION[$this->C['USR_ID_KEY']]) ) {
+      $this->uid = $_SESSION[$this->C['USR_ID_KEY']];
+    }
   }
   
   function validate_credentials($username, $password) {
@@ -16,6 +18,7 @@ class User {
     $valid = $this->mysql->verify_credentials($username, $password);
     if ( $valid ) {
       $_SESSION[$this->C['STAT_KEY']] = $this->C['SESS_AUTH_VAL'];
+      $this->uid = $_SESSION[$this->C['USR_ID_KEY']];
    //   $this->username = $username;
    //   $curr_quest = $this->mysql->get_curr_quest($this->username);
       header("location: ".$this->C['SRC_PHP_INDEX']); //."?".$this->C['USR_ID_KEY']."=".$_SESSION[$this->C['USR_ID_KEY']]."&".$this->C['Q_STATUS_KEY']."=".($curr_quest == 1 ? 0 : 1));
@@ -26,7 +29,7 @@ class User {
   }
   
   function authorised() {
-    return ($_SESSION[$this->C['STAT_KEY']] == $this->C['SESS_AUTH_VAL']);
+    return (isset($_SESSION[$this->C['STAT_KEY']]) && $_SESSION[$this->C['STAT_KEY']] == $this->C['SESS_AUTH_VAL']);
   }
   
   function login() {

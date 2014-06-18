@@ -1,12 +1,13 @@
 <?php
 
-require_once 'includes/Constants.php';
+require_once 'classes/Constants.php';
 require_once 'classes/User.php';
 session_start();
 
 $C = new Constants();
 $U = new User();
 
+$sess_curr_quest = -1;
 if ($U->authorised()) {
   $curr_quest_key = $C['CURR_QUEST_KEY'];
   $sess_curr_quest = $_SESSION[$curr_quest_key];
@@ -28,12 +29,14 @@ if ($U->authorised()) {
   }
 }
 else {
+  /* Redirect to login screen */
   redirect_to_login();
 }
 
 function redirect_to_login()
 {
-  header("location: ".$C['SRC_PHP_LOGIN']);
+  global $C;
+  header("location: ".$C['SRC_PHP_LOGIN'] . "?" . $C['REDIRECT_KEY'] . "=1");
 }
 
 ?>
