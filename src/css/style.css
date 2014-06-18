@@ -1,12 +1,8 @@
-/*
-body {
-    padding: 0;
-    margin: 0;
-    border-style: groove;
-    border-color: grey;
-    border-width: 3px;
+html, body {
+  background: linear-gradient(to right, lightgrey , white);
 }
 
+/*
 html, body {
     height: 576px;
     width: 1024px;
@@ -53,9 +49,14 @@ a { text-decoration: none; }
   font-style: italic;
 }
 
+#container {
+  background: linear-gradient(to right, lightgrey , white);
+}
+
 #topPanel {
   height: 110px;
   width: 100%;
+  padding: 0 5px;
   overflow: hidden;
 }
 
@@ -74,7 +75,7 @@ a { text-decoration: none; }
 #map {
    height: 200px;
    width: 100%;
-   border: 1px solid;
+   border: 2px solid lightblue;
 }
 
 #cpanel {

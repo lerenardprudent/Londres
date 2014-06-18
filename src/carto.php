@@ -95,7 +95,7 @@
     
     function handleWindowResize()
     {
-      var screenHeight = $(window).height() - 10 /* Margin defined somewhere in CSS as 8px */;
+      var screenHeight = $(window).height() - 12 /* Margin defined somewhere in CSS as 8px */;
       $('body').find('.adjust-height').each( function() {
         var offset = $(this).offset().top;
         var adjustedHeight = screenHeight - offset;
