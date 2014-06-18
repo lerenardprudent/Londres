@@ -14,16 +14,16 @@ if ($U->authorised()) {
 
   $U->login();
   if (isset($_POST['submit'])) {
-    if ($instr_connected = $usr->instructor_connected()) {
+    if ($instr_connected = $U->instructor_connected()) {
       if (isset($_POST['answer'])) {
-        $usr->save_answer($_POST['answer']);
-        $curr_quest =  $usr->update_current_question();
+        $U->save_answer($_POST['answer']);
+        $curr_quest =  $U->update_current_question();
       }
       else if (isset($_POST['hack'])) {
-         $curr_quest = $usr->update_current_question();
+         $curr_quest = $U->update_current_question();
       }
       else {
-        $curr_quest = $usr->get_current_question();
+        $curr_quest = $sess_curr_quest;
       }
     }
   }
@@ -46,78 +46,9 @@ function redirect_to_login()
 <head>
 <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
 <title>VERITAS Londres</title>
-
-<!-- ########################## INCLUDES SECTION ########################## -->
-
-<!-- JQUERY -->
-<script type="text/javascript" src="js/jquery/jquery-1.10.2.min.js"></script>
-
-<!-- PROJECT SCRIPTS -->
-<script type="text/javascript" src="constants.js"></script>
 <link rel="stylesheet" href="css/login.css">
 <link rel="stylesheet" href="css/style.css" />
-
-<!-- LEAFLET SCRIPTS -->
-<script type="text/javascript" src="js/leaflet/leaflet.js"></script>
-<script type="text/javascript" src="js/leaflet/leaflet.geometryutil.js"></script>
-<script type="text/javascript" src="js/leaflet/leaflet.geometryutil.js"></script>  
-<script type="text/javascript" src="js/leaflet/bouncemarker.js"></script>
-<link rel="stylesheet" href="css/leaflet.css" />
-
-<!-- LEAFLET DRAW SCRIPTS -->
-<script type="text/javascript" src="js/leaflet/Leaflet.draw.src/Leaflet.draw.js"></script>
-<script type="text/javascript" src="js/leaflet/Leaflet.draw.src/draw/handler/Draw.Feature.js"></script>
-<script type="text/javascript" src="js/leaflet/Leaflet.draw.src/draw/handler/Draw.Polyline.js"></script>
-<script type="text/javascript" src="js/leaflet/Leaflet.draw.src/draw/handler/Draw.Polygon.js"></script>
-<script type="text/javascript" src="js/leaflet/Leaflet.draw.src/draw/handler/Draw.SimpleShape.js"></script>
-<script type="text/javascript" src="js/leaflet/Leaflet.draw.src/draw/handler/Draw.Rectangle.js"></script>
-<script type="text/javascript" src="js/leaflet/Leaflet.draw.src/draw/handler/Draw.Circle.js"></script>
-<script type="text/javascript" src="js/leaflet/Leaflet.draw.src/draw/handler/Draw.Marker.js"></script>
-<script type="text/javascript" src="js/leaflet/Leaflet.draw.src/ext/LatLngUtil.js"></script>
-<script type="text/javascript" src="js/leaflet/Leaflet.draw.src/ext/GeometryUtil.js"></script>
-<script type="text/javascript" src="js/leaflet/Leaflet.draw.src/ext/LineUtil.Intersect.js"></script>
-<script type="text/javascript" src="js/leaflet/Leaflet.draw.src/ext/Polyline.Intersect.js"></script>
-<script type="text/javascript" src="js/leaflet/Leaflet.draw.src/ext/Polygon.Intersect.js"></script>
-<script type="text/javascript" src="js/leaflet/Leaflet.draw.src/Control.Draw.js"></script>
-<script type="text/javascript" src="js/leaflet/Leaflet.draw.src/Tooltip.js"></script>
-<script type="text/javascript" src="js/leaflet/Leaflet.draw.src/Toolbar.js"></script>
-<script type="text/javascript" src="js/leaflet/Leaflet.draw.src/draw/DrawToolbar.js"></script>
-<script type="text/javascript" src="js/leaflet/Leaflet.draw.src/edit/handler/Edit.Poly.js"></script>
-<script type="text/javascript" src="js/leaflet/Leaflet.draw.src/edit/handler/Edit.SimpleShape.js"></script>
-<script type="text/javascript" src="js/leaflet/Leaflet.draw.src/edit/handler/Edit.Circle.js"></script>
-<script type="text/javascript" src="js/leaflet/Leaflet.draw.src/edit/handler/Edit.Rectangle.js"></script>
-<script type="text/javascript" src="js/leaflet/Leaflet.draw.src/edit/EditToolbar.js"></script>
-<script type="text/javascript" src="js/leaflet/Leaflet.draw.src/edit/handler/EditToolbar.Edit.js"></script>
-<script type="text/javascript" src="js/leaflet/Leaflet.draw.src/edit/handler/EditToolbar.Delete.js"></script>
-<link rel="stylesheet" href="css/leaflet.draw.dist.css" />  
-
-<!-- LEAFLET GEOSEARCH SCRIPTS -->
-<!--
-<script type="text/javascript" src="js/leaflet/geosearch/l.control.geosearch.js"></script>
-<script type="text/javascript" src="js/leaflet/geosearch/l.geosearch.provider.openstreetmap.js"></script>
-<link rel="stylesheet" href="css/l.geosearch.css" />
--->
-
-<!-- LEAFLET LABEL SCRIPTS -->
-<script type="text/javascript" src="js/leaflet/Leaflet.label/Label.js"></script>
-<script type="text/javascript" src="js/leaflet/Leaflet.label/BaseMarkerMethods.js"></script>
-<script type="text/javascript" src="js/leaflet/Leaflet.label/Marker.Label.js"></script>
-<script type="text/javascript" src="js/leaflet/Leaflet.label/Path.Label.js"></script>
-<script type="text/javascript" src="js/leaflet/Leaflet.label/Map.Label.js"></script>
-<script type="text/javascript" src="js/leaflet/Leaflet.label/FeatureGroup.Label.js"></script>	
-<link rel="stylesheet" href="css/leaflet.label.css" />
-
-<!-- BOOTSTRAP SCRIPTS -->
-<script type="text/javascript" src="js/bootstrap/bootstrap.min.js"></script>
-<script type="text/javascript" src="js/bootstrap/bootstrap-filestyle.min.js"> </script>
-<link rel="stylesheet" href="css/bootstrap/bootstrap.min.css">
-
-<!-- IMPROMPTU SCRIPTS -->
-<script type="text/javascript" src="js/impromptu/jquery-impromptu.js"></script>
-<link rel="stylesheet" href="css/jquery-impromptu.css" />
-
-<!-- ##################### END OF INCLUDES SECTION ######################### -->
-
+<script type="text/javascript" src="js/jquery/jquery-1.10.2.min.js"></script>
 <script type="text/javascript">
   var uname_key = 'uid';
   var uname = null;
@@ -180,20 +111,8 @@ function redirect_to_login()
         echo '<input id="hack" name="hack" type="text" style="display: none" />';
       }
       else {
-        echo "<div class='questionblock'><p class='question'>Q".$curr_quest.": \"What browser do you use?\"</p></div><p/>";
-        echo '<div class="interact">';
-        echo '<div id="map"></div>';
-        echo '<script src="map.js"></script>';
-        echo "<div id='options'>";
-        echo '<input style="display:none" id="answer" list="browsers" type="text" name="answer">
-          <datalist id="browsers">
-            <option value="Internet Explorer">
-            <option value="Firefox">
-            <option value="Chrome">
-            <option value="Opera">
-            <option value="Safari">
-          </datalist></div>';
-        echo '</div><p/><p/>';
+        echo "Let's jump";
+        header("location: carto.php");
       }
     }
     ?>
