@@ -57,7 +57,6 @@ a { text-decoration: none; }
   height: 110px;
   width: 100%;
   padding: 0 5px;
-  overflow: hidden;
   position: relative;
 }
 
@@ -77,7 +76,6 @@ a { text-decoration: none; }
 #map {
    height: 200px;
    width: 100%;
-   border: 2px solid lightblue;
 }
 
 #cpanel {
@@ -188,8 +186,40 @@ a { text-decoration: none; }
   font-size: 14px;
 }
 
+.submit-div {
+  /*display: inline-block;
+  float: right;*/
+}
+
 .submit-btn {
   position: absolute;
   bottom: 2px;
   right: 0;
+}
+
+.quest-block {
+  display: block;
+  position: absolute;
+  left: 27em;
+  padding: 12px;
+  background-color: lightyellow;
+  border-radius: 15px;
+  border: 1px solid lightgrey;
+}
+
+.quest-text {
+  color: red
+}
+.quest-no {
+  text-decoration: underline
+}
+
+.explanation-block {
+  width: 500px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 200px;
+  font-size: 20px;
+  font-style: italic;
 }

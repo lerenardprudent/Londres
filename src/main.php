@@ -16,14 +16,13 @@ $tokens = explode(',', $curr_pos);
 $taskno = $tokens[0];
 $qno = $tokens[1];
 $qok = true;
+$endOfQuestionnaire = false;
+$questInfo = array();
 
 if ($U->authorised()) {
   if (isset($_POST['ansSubmitted']) ) {
     $next_pos = find_next_quest();
-    if ( $next_pos === false ) {
-      $qok = false;
-    }
-    else {
+    if ( $next_pos !== false ) {
       $_SESSION[$curr_pos_key] = $next_pos;
       $curr_pos = $next_pos;
       $tokens = explode(',', $curr_pos);
@@ -33,14 +32,23 @@ if ($U->authorised()) {
     }
   }
   
+  $isExplanation = false;
   if ( $qok ) {
     $info = $Q->$taskno->$qno;
     $qtext = $info->html;
-    echo $curr_pos . ": " . $qtext;
+    if ( $info->type == $C['QUEST_TEXT_EXPL'] ) {
+      $isExplanation = true;
+      array_push($questInfo, $C['QUEST_TEXT_EXPL']);
+    }
+    if ( isset($info->end) && $info->end ) {
+      array_push($questInfo, $C['QUEST_TEXT_END']);
+    }
   }
   else {
-    echo "-- End of questionnaire --";
+    echo "ERROR! Question not found :(";
   }
+  
+  $questInfo = implode("-", $questInfo);
 }
 else {
   /* Redirect to login screen */
@@ -127,38 +135,52 @@ function redirect_to_login()
   var _infoBubble;
   var _timer;
   var _searchQueries = [];
+  var _endOfQuestionnaire = false;
 </script>
 
 <script type="text/javascript">
   $(document).ready( function() {
     var logoutHref = Consts.get('SRC_PHP_LOGIN') + '?' + Consts.get('STAT_KEY') + '=' + Consts.get('SESS_END_VAL');
     $('.logout-link').attr('href', logoutHref);
+    $('.submit-btn').click(processFormSubmit);
     
-    $(window).resize( handleWindowResize );
-    $(window).resize();
+    var isExpl = ($('.questInfo').val().indexOf(Consts.get('QUEST_TEXT_EXPL')) >= 0);
+    _endOfQuestionnaire = ($('.questInfo').val().indexOf(Consts.get('QUEST_TEXT_END')) >= 0);
+    var showTextInterlude = ( isExpl || _endOfQuestionnaire );
     
-    var searchField = $('#searchfield');
-    var searchBtn = $('.search-button');
-    searchField.val("");
-    searchField.on('keypress', function(e) {
-      if (e.which == 13 ) {
-        var searchString = $(this).val();
-        searchBtn.click();
+    if ( showTextInterlude ) {
+      $('.show-with-map').hide();
+      $('.submit-btn').prop('disabled', false).val(_endOfQuestionnaire ? "Terminate questionnaire" : "Continue");
+      if (_endOfQuestionnaire) {
+        $('.logout-link').hide();
       }
-    });
-    searchBtn.on('mouseover', function(e) {
-      searchField.focus();
-    });
-    searchBtn.click( function() {
-      var searchString = searchField.val();
-      if ( searchString.length > 0 ) {
-        doGoogleSearch(searchString);
-        searchField.val("");
-      }
-    });
-    
-    $('.submit-btn').click(prepareSubmitForm);
-    initMap();
+    }
+    else {
+      $(window).resize( handleWindowResize );
+      $(window).resize();
+      
+      var searchField = $('#searchfield');
+      var searchBtn = $('.search-button');
+      searchField.val("");
+      searchField.on('keypress', function(e) {
+        if (e.which == 13 ) {
+          var searchString = $(this).val();
+          searchBtn.click();
+        }
+      });
+      searchBtn.on('mouseover', function(e) {
+        searchField.focus();
+      });
+      searchBtn.click( function() {
+        var searchString = searchField.val();
+        if ( searchString.length > 0 ) {
+          doGoogleSearch(searchString);
+          searchField.val("");
+        }
+      });
+      
+      initMap();
+    }
   });
 </script>
 </head>
@@ -168,7 +190,13 @@ function redirect_to_login()
       <span class='headingText'>VERITAS London</span>
       <a style='float:right' class='logout-link'>Log out</a>
       <p class='mini-line-break' />
-      <div class='search-slider'>
+      <div class='quest-block show-with-map'>
+        <div class='quest-no'><span><?php if (!$isExplanation) { echo "Question " . str_replace(",", "&#8212;", $curr_pos); } ?></span></div>
+        <p class='mini-line-break' />
+        <div class='quest-text'><span><?php if (!$isExplanation) { echo $qtext; } ?></span></div>
+      </div>
+      <p class='mini-line-break' />
+      <div class='search-slider show-with-map'>
         <div class='search-container'>
           <input id='searchfield' class='searchf' placeholder='What do you wish to find on the map?' type='text'>
           <a class='search-button'>
@@ -176,12 +204,18 @@ function redirect_to_login()
           </a>
         </div>
       </div>
+      <div class='explanation-block'>
+        <span id='explText' ><?php if ( $isExplanation ) { echo $qtext; } ?></span>
+      </div>
       <form method="post" action="" style='height: 200px'>
         <input id='ansQID' name='ansQID' type='hidden' value='<?php echo $_SESSION[$curr_pos_key]; ?>'/>
         <input id='ansCoords' name='ansCoords' type='hidden' />
         <input id='ansSearches' name='ansSearches' type='hidden' />
-        <input name='ansSubmitted' type='hidden' value='1' />
-        <input id='submit' type='submit' value='Submit answer &rarr;' class='submit-btn' disabled/>
+        <input id='ansSubmitted' name='ansSubmitted' type='hidden' />
+        <input class='questInfo' type='hidden' value='<?php echo $questInfo; ?>' />
+        <div class='submit-div'>
+          <input id='submit' type='submit' value='Submit answer &rarr;' class='submit-btn' disabled/>
+        </div>
       </form>
     </div>
     <div id='main'>
@@ -242,10 +276,16 @@ function redirect_to_login()
         return htmlEscapes[match]; });
     }
   
-    function prepareSubmitForm()
+    function processFormSubmit()
     {
-      $('#ansSearches').val(_searchQueries.join(","));
-      $('#ansCoords').val(_markerCoords.lat() + "," + _markerCoords.lng());
+      if ( _endOfQuestionnaire ) {
+       $('.logout-link')[0].click();
+      }
+      else {
+        $('#ansSearches').val(_searchQueries.join(","));
+        $('#ansCoords').val(_markerCoords.lat() + "," + _markerCoords.lng());
+        $('#ansSubmitted').val(true);
+      }
     }
   </script>
 </body>

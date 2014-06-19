@@ -15,8 +15,17 @@
   },
   "2" : {
     "0" : { "type" : "exp",
+            "html" : "Blah blah blah." },
+    "1" : { "type" : "quest",
+            "html" : "Can you locate your school using a pushpin?" },
+    "2" : { "type" : "quest",
+            "html" : "Can you locate the London Olympic Stadium using a pushpin?" }
+  },
+  "3" : {
+    "0" : { "type" : "exp",
             "html" : "Thank you for participating!",
-            "show_task_num" : 0
+            "show_task_num" : 0,
+            "end"  : 1
           }
   }
 }

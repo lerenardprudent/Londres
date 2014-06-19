@@ -19,5 +19,7 @@
   "SRC_PHP_INDEX"       : "index.php",
   "SRC_PHP_LOGIN"       : "login.php",
   "SRC_PHP_QUEST"       : "main.php",
-  "SRC_JS_QUEST"        : "carto.js"
+  "SRC_JS_QUEST"        : "carto.js",
+  "QUEST_TEXT_EXPL"     : "exp",
+  "QUEST_TEXT_END"      : "end"
 }

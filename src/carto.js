@@ -13,6 +13,7 @@ function initMap()
     mapTypeId: google.maps.MapTypeId.ROADMAP		//HYBRID, SATELLITE, TERRAIN
   }	  
   _map = new google.maps.Map(document.getElementById('map'), mapOptions);	  
+  $('#map').css('border', '2px solid lightblue');
   var markerOptions = { 
     map: _map, 
     position: _latLngLondon, 
