@@ -7,24 +7,15 @@ session_start();
 $C = new Constants();
 $U = new User();
 
-$sess_curr_quest = -1;
+$sess_curr_pos = -1;
+$curr_pos_key = $C['CURR_POS_KEY'];
 if ($U->authorised()) {
-  $curr_quest_key = $C['CURR_QUEST_KEY'];
-  $sess_curr_quest = $_SESSION[$curr_quest_key];
+  $sess_curr_pos = $_SESSION[$curr_pos_key];
 
   $U->login();
   if (isset($_POST['submit'])) {
     if ($instr_connected = $U->instructor_connected()) {
-      if (isset($_POST['answer'])) {
-        $U->save_answer($_POST['answer']);
-        $curr_quest =  $U->update_current_question();
-      }
-      else if (isset($_POST['hack'])) {
-         $curr_quest = $U->update_current_question();
-      }
-      else {
-        $curr_quest = $sess_curr_quest;
-      }
+      $curr_pos = $sess_curr_pos;
     }
   }
 }
@@ -49,6 +40,7 @@ function redirect_to_login()
 <link rel="stylesheet" href="css/login.css">
 <link rel="stylesheet" href="css/style.css" />
 <script type="text/javascript" src="js/jquery/jquery-1.10.2.min.js"></script>
+<script type="text/javascript" src="constants.js"></script>
 <script type="text/javascript">
   var uname_key = 'uid';
   var uname = null;
@@ -105,18 +97,18 @@ function redirect_to_login()
       echo '<p>Please wait for the instructor to reconnect.</p>';
     }
     
-    if (isset($curr_quest)) {
-      if ($curr_quest < 0) {
+    if (isset($curr_pos)) {
+      if (false) { // TODO: Check if instructor is up to this question
         echo '<p class="pause">Please wait for the instructor to reach Question '.-$curr_quest.'.</p>';
         echo '<input id="hack" name="hack" type="text" style="display: none" />';
       }
       else {
-        echo "Let's jump";
-        header("location: carto.php");
+        echo "Let's jump " . $_SESSION[$curr_pos_key];
+        header("location: " . $C['SRC_PHP_QUEST']);
       }
     }
     ?>
-    <input type="submit" id="submit" value="<?php if ( $sess_curr_quest > 1 ) echo "Resume quesionnaire"; else echo "Start questionnaire"; ?>" name="submit" />
+    <input type="submit" id="submit" value="<?php if ( $sess_curr_pos != "0,0" ) echo "Resume quesionnaire"; else echo "Start questionnaire"; ?>" name="submit" />
   </form>
   <p />
   <a>Log out</a>

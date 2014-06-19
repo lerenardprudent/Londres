@@ -58,6 +58,7 @@ a { text-decoration: none; }
   width: 100%;
   padding: 0 5px;
   overflow: hidden;
+  position: relative;
 }
 
 .headingText {
@@ -69,6 +70,7 @@ a { text-decoration: none; }
 }
 
 #main {
+  position: relative;
   margin: 0
 }
 
@@ -184,4 +186,10 @@ a { text-decoration: none; }
 
 .myIcon {
   font-size: 14px;
+}
+
+.submit-btn {
+  position: absolute;
+  bottom: 2px;
+  right: 0;
 }

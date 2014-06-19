@@ -11,11 +11,13 @@
   "SESS_END_VAL"        : "endsess",
   "USR_NAME_KEY"        : "uname",
   "USR_ID_KEY"          : "uid",
-  "CURR_QUEST_KEY"      : "curr_quest",
+  "CURR_POS_KEY"        : "curr_pos",
   "PWD_KEY"             : "pwd",
   "USR_NAME_UNDEFINED"  : "undefined",
   "USR_NAME_ADMIN"      : "admin",
   "Q_STATUS_KEY"        : "qstat",
   "SRC_PHP_INDEX"       : "index.php",
-  "SRC_PHP_LOGIN"       : "login.php" 
+  "SRC_PHP_LOGIN"       : "login.php",
+  "SRC_PHP_QUEST"       : "main.php",
+  "SRC_JS_QUEST"        : "carto.js"
 }

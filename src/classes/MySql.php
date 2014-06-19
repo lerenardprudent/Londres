@@ -45,11 +45,11 @@ class MySql {
   {
     $dbh = $this->initNewPDO();
     $uid_key = $this->C['USR_ID_KEY'];
-    $curr_quest_key = $this->C['CURR_QUEST_KEY'];
+    $curr_pos_key = $this->C['CURR_POS_KEY'];
     $usrtbl = $this->C['TBL_USERS'];
 
     /*** prepare the select statement ***/
-    $stmt = $dbh->prepare("SELECT uid, curr_quest FROM " . $usrtbl . " WHERE uname = :phpro_username AND pwd = :phpro_password");
+    $stmt = $dbh->prepare("SELECT uid, curr_pos FROM " . $usrtbl . " WHERE uname = :phpro_username AND pwd = :phpro_password");
     /*** bind the parameters ***/
     $stmt->bindParam(':phpro_username', $username, PDO::PARAM_STR);
     $stmt->bindParam(':phpro_password', $salted_password, PDO::PARAM_STR, 40);
@@ -67,7 +67,7 @@ class MySql {
     else {
       /*** set the session user_id variable ***/
       $_SESSION[$uid_key] = $row[$uid_key];
-      $_SESSION[$curr_quest_key] = $row[$curr_quest_key];
+      $_SESSION[$curr_pos_key] = $row[$curr_pos_key];
 
       /*** tell the user we are logged in ***/
       return true;

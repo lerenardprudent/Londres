@@ -1,3 +1,83 @@
+<?php
+
+require_once 'classes/Constants.php';
+require_once 'classes/User.php';
+session_start();
+
+$C = new Constants();
+$U = new User();
+
+$Q = json_decode(utf8_encode(file_get_contents('includes/questionnaire.json')));
+
+$sess_curr_pos = -1;
+$curr_pos_key = $C['CURR_POS_KEY'];
+$curr_pos = $_SESSION[$curr_pos_key];
+$tokens = explode(',', $curr_pos);
+$taskno = $tokens[0];
+$qno = $tokens[1];
+$qok = true;
+
+if ($U->authorised()) {
+  if (isset($_POST['ansSubmitted']) ) {
+    $next_pos = find_next_quest();
+    if ( $next_pos === false ) {
+      $qok = false;
+    }
+    else {
+      $_SESSION[$curr_pos_key] = $next_pos;
+      $curr_pos = $next_pos;
+      $tokens = explode(',', $curr_pos);
+      $taskno = $tokens[0];
+      $qno = $tokens[1];
+      // TODO : Update DB
+    }
+  }
+  
+  if ( $qok ) {
+    $info = $Q->$taskno->$qno;
+    $qtext = $info->html;
+    echo $curr_pos . ": " . $qtext;
+  }
+  else {
+    echo "-- End of questionnaire --";
+  }
+}
+else {
+  /* Redirect to login screen */
+  redirect_to_login();
+}
+
+function find_next_quest()
+{
+  global $curr_pos;
+  global $taskno;
+  global $qno;
+  global $Q;
+  
+  $next_q = strval(intval($qno)+1);
+  if ( property_exists($Q->$taskno, $next_q )) {
+    return $taskno . "," . $next_q;
+  }
+  
+  $next_t = strval(intval($taskno)+1);
+  $qq = "0";
+  if ( property_exists($Q, $next_t) ) {
+    if ( property_exists($Q->$next_t, $qq) ) {
+      return $next_t . "," . $qq;
+    }
+  }
+  
+  return false;
+}
+
+function redirect_to_login()
+{
+  global $C;
+  header("location: ".$C['SRC_PHP_LOGIN'] . "?" . $C['REDIRECT_KEY'] . "=1");
+}
+
+?>
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional/EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -11,6 +91,8 @@
 
 <!-- PROJECT SCRIPTS -->
 <script type="text/javascript" src="constants.js"></script>
+<script type="text/javascript" src="questionnaire.js"></script>
+<script type="text/javascript" src="carto.js"></script>
 <link rel="stylesheet" href="css/style.css" />
 <link rel="stylesheet" href="css/search.css" media="screen" type="text/css" />
 
@@ -39,6 +121,12 @@
 <script type="text/javascript">
   var _latLngLondon;
   var _map;
+  var _mapmarker, _markerCoords, _markerAddr;
+  var _geocoder;
+	var _placesServ;
+  var _infoBubble;
+  var _timer;
+  var _searchQueries = [];
 </script>
 
 <script type="text/javascript">
@@ -49,6 +137,27 @@
     $(window).resize( handleWindowResize );
     $(window).resize();
     
+    var searchField = $('#searchfield');
+    var searchBtn = $('.search-button');
+    searchField.val("");
+    searchField.on('keypress', function(e) {
+      if (e.which == 13 ) {
+        var searchString = $(this).val();
+        searchBtn.click();
+      }
+    });
+    searchBtn.on('mouseover', function(e) {
+      searchField.focus();
+    });
+    searchBtn.click( function() {
+      var searchString = searchField.val();
+      if ( searchString.length > 0 ) {
+        doGoogleSearch(searchString);
+        searchField.val("");
+      }
+    });
+    
+    $('.submit-btn').click(prepareSubmitForm);
     initMap();
   });
 </script>
@@ -61,38 +170,26 @@
       <p class='mini-line-break' />
       <div class='search-slider'>
         <div class='search-container'>
-          <input placeholder='What do you wish to find on the map?' type='text'>
-          <a class='button'>
+          <input id='searchfield' class='searchf' placeholder='What do you wish to find on the map?' type='text'>
+          <a class='search-button'>
             <i class='icon-search'></i>
           </a>
         </div>
       </div>
+      <form method="post" action="" style='height: 200px'>
+        <input id='ansQID' name='ansQID' type='hidden' value='<?php echo $_SESSION[$curr_pos_key]; ?>'/>
+        <input id='ansCoords' name='ansCoords' type='hidden' />
+        <input id='ansSearches' name='ansSearches' type='hidden' />
+        <input name='ansSubmitted' type='hidden' value='1' />
+        <input id='submit' type='submit' value='Submit answer &rarr;' class='submit-btn' disabled/>
+      </form>
     </div>
     <div id='main'>
-      <form method="post" action="">
-        <div id='map' class='adjust-height'></div>
-      </form>
+      <div id='map' class='adjust-height'></div>
     </div>
   </div>
   
   <script type="text/javascript">	
-    function initMap()
-    {
-      _latLngLondon = new google.maps.LatLng(51.507224, -0.126103); // Montreal
-      var mapOptions = {
-              zoom: 15,
-              center: _latLngLondon,
-              zoomControl: true,
-          panControl:false,
-              scaleControl: true,
-              streetViewControl: false,
-          mapTypeControl: false,
-          draggableCursor: 'crosshair',
-              mapTypeId: google.maps.MapTypeId.ROADMAP		//HYBRID, SATELLITE, TERRAIN
-        }	  
-      _map = new google.maps.Map(document.getElementById('map'), mapOptions);	  
-    }
-    
     function handleWindowResize()
     {
       var screenHeight = $(window).height() - 12 /* Margin defined somewhere in CSS as 8px */;
@@ -128,7 +225,28 @@
         window.console[logType](obj);
       }
     }
-
+    
+    // Escape a string for HTML interpolation.
+    function escapeSpecialChars(str) {
+      var htmlEscapes = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#x27;',
+        '/': '&#x2F;',
+        ',': '&#44;',
+        ' ': '&#32;'
+      };
+      return str.replace(/[&<>"'\/, ]/g, function(match) {
+        return htmlEscapes[match]; });
+    }
+  
+    function prepareSubmitForm()
+    {
+      $('#ansSearches').val(_searchQueries.join(","));
+      $('#ansCoords').val(_markerCoords.lat() + "," + _markerCoords.lng());
+    }
   </script>
 </body>
 </html>

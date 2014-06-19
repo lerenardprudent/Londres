@@ -1,0 +1,22 @@
+{
+  "0" : {
+    "0" : { "type" : "exp",
+            "html" : "Welcome to VERITAS! Here come your tasks.",
+            "show_task_num" : 0
+          }
+  },
+  "1" : {
+    "0" : { "type" : "exp",
+            "html" : "We are interested in how well you can use online maps. The next five questions will ask you to locate places in East London, please locate them as best as you can. You can use your knowledge of the places, or the Google Maps search box to help you find the places." },
+    "1" : { "type" : "quest",
+            "html" : "Can you locate your school using a pushpin?" },
+    "2" : { "type" : "quest",
+            "html" : "Can you locate the London Olympic Stadium using a pushpin?" }
+  },
+  "2" : {
+    "0" : { "type" : "exp",
+            "html" : "Thank you for participating!",
+            "show_task_num" : 0
+          }
+  }
+}

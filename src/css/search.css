@@ -12,8 +12,8 @@ body {
 .search-slider {
   display: block;
   width: 25em;
-  margin: 5px 0;
-  float:right;
+  float: left;
+  margin-top: 10px;
 }
 
 .search-container {
@@ -36,7 +36,7 @@ body {
   padding: 10px;
 }
 
-input {
+input.searchf {
   -moz-appearance: none;
   -webkit-appearance: none;
   appearance: none;
@@ -56,12 +56,12 @@ input {
   -moz-transition: all 0.25s;
   -webkit-transition: all 0.25s;
 }
-input:focus {
+input.searchf:focus {
   outline: none;
   box-shadow: 0 -1px 1px rgba(255, 255, 255, 0.25), 0 1px 5px rgba(0, 0, 0, 0.15);
 }
 
-.button {
+.search-button {
   float: right;
   width: 1.75em;
   height: 1.75em;
@@ -73,11 +73,12 @@ input:focus {
   border-radius: 50%;
   box-shadow: 0 -1px 1px rgba(255, 255, 255, 0.25), 0 1px 1px rgba(0, 0, 0, 0.25);
   text-shadow: 0 -2px 1px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
 }
-.button i {
+.search-button i {
   margin-top: 0.3em;
 }
-.button:active {
+.search-button:active {
   border: 0 !important;
   text-shadow: 0 0 0;
 }
