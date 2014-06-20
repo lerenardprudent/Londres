@@ -17,18 +17,23 @@ $taskno = $tokens[0];
 $qno = $tokens[1];
 $qok = true;
 $questInfo = array();
+$db_err = "";
+$db_log = "";
 
 if ($U->authorised()) {
   if (isset($_POST['ansSubmitted']) ) {
-    $gotoNext = ( $_POST['ansSubmitted'] > 0 );
-    $next_pos = find_next_quest($gotoNext);
+    $goBack = ( $_POST['ansSubmitted'] < 0 );
+    if ( $_POST['ansSubmitted'] > 0 ) {
+      $U->save_answer( $taskno, $qno, $_POST['ansCoords'], $_POST['ansSearches'] );
+      noteAnyDBIssues();
+    }
+    $next_pos = find_next_quest($goBack);
     if ( $next_pos !== false ) {
       $_SESSION[$curr_pos_key] = $next_pos;
       $curr_pos = $next_pos;
       $tokens = explode(',', $curr_pos);
       $taskno = $tokens[0];
       $qno = $tokens[1];
-      // TODO : Update DB
     }
   }
   $first_screen = ($curr_pos == '0,0');
@@ -67,7 +72,7 @@ else {
   redirect_to_login();
 }
 
-function find_next_quest($forw_dir)
+function find_next_quest($goBack)
 {
   global $curr_pos;
   global $taskno;
@@ -75,7 +80,7 @@ function find_next_quest($forw_dir)
   global $Q;
   
   $inc = 1;
-  if ( !isset($forw_dir) || !$forw_dir ) {
+  if ( isset($goBack) && $goBack ) {
     $inc = -1;
   }
   $next_q = strval(intval($qno)+$inc);
@@ -98,6 +103,25 @@ function redirect_to_login()
 {
   global $C;
   header("location: ".$C['SRC_PHP_LOGIN'] . "?" . $C['REDIRECT_KEY'] . "=1");
+}
+
+function noteAnyDBIssues()
+{
+  global $C;
+  global $db_err;
+  global $db_log;
+  
+  $err_key = $C['MYSQL_ERROR_MSG'];
+  if ( isset($_SESSION[$err_key]) ) {
+    $db_err = $_SESSION[$err_key];
+    unset($_SESSION[$err_key]);
+  }
+  
+  $log_key = $C['MYSQL_LOG'];
+  if ( isset($_SESSION[$log_key]) ) {
+    $db_log = $_SESSION[$log_key];
+    unset($_SESSION[$log_key]);
+  }
 }
 
 ?>
@@ -151,6 +175,7 @@ function redirect_to_login()
   var _timer;
   var _searchQueries = [];
   var _endOfQuestionnaire = false;
+  var _isExplanation = false;
 </script>
 
 <script type="text/javascript">
@@ -159,12 +184,13 @@ function redirect_to_login()
     $('.logout-link').attr('href', logoutHref);
     $('.submit-btn').click(processFormSubmit);
     
-    var isExpl = ($('.questInfo').val().indexOf(Consts.get('QUEST_TEXT_EXPL')) >= 0);
+    logAnyDBIssues();
+    
+    _isExplanation = ($('.questInfo').val().indexOf(Consts.get('QUEST_TEXT_EXPL')) >= 0);
     var firstScreen = ($('.questInfo').val().indexOf(Consts.get('QUEST_TEXT_BEGIN')) >= 0);
     _endOfQuestionnaire = ($('.questInfo').val().indexOf(Consts.get('QUEST_TEXT_END')) >= 0);
-    var showTextInterlude = ( isExpl || _endOfQuestionnaire );
     
-    if ( showTextInterlude ) {
+    if ( _isExplanation ) {
       $('.quest-block').removeClass('quest-block').addClass('explanation-block');
       $('.quest-text').removeClass('quest-text').addClass('explanation-text');
       $('.show-with-map').hide();
@@ -233,6 +259,8 @@ function redirect_to_login()
         <input id='ansSearches' name='ansSearches' type='hidden' />
         <input id='ansSubmitted' name='ansSubmitted' type='hidden' />
         <input class='questInfo' type='hidden' value='<?php echo $questInfo; ?>' />
+        <input class='dbErr' type='hidden' value='<?php echo $db_err; ?>' />
+        <input class='dbLog' type='hidden' value='<?php echo $db_log; ?>' />
         <div class='submit-div'>
           <input id='back' type='submit' value='&larr; Go back' class='back-btn submit-btn' />
           <input id='submit' type='submit' value='Submit answer &rarr;' class='answer-btn submit-btn' disabled/>
@@ -297,19 +325,50 @@ function redirect_to_login()
         return htmlEscapes[match]; });
     }
   
+    function isUndef(x)
+    {
+      return typeof(x) === 'undefined';
+    }
+    
+    function quote(str, delim)
+    {
+      if ( isUndef(delim) ) {
+        delim = "\"";
+      }
+      return delim + str + delim;
+    }
+    
     function processFormSubmit(button)
     {
       if ( _endOfQuestionnaire ) {
        $('.logout-link')[0].click();
       }
       else {
+        $('#ansSubmitted').val(0); 
         var goingBack = ( button.currentTarget.id == "back" );
-        $('#ansSubmitted').val( goingBack ? -1 : 1);
-        if ( !goingBack ) {
+        if ( goingBack ) {
+          $('#ansSubmitted').val(-1); 
+        }
+        else if ( !_isExplanation) { // Don't enter here unless we have coords to submit!
+          $('#ansSubmitted').val(1);
+          for ( var i = 0; i < _searchQueries.length; i++ ) {
+            _searchQueries[i] = quote(_searchQueries[i]);
+          }
           $('#ansSearches').val(_searchQueries.join(","));
           $('#ansCoords').val(_markerCoords.lat() + "," + _markerCoords.lng());
         }
       }
+    }
+    
+    function logAnyDBIssues()
+    {
+      if ( $('.dbErr').val().length > 0 ) {
+        log({logType:'error'}, $('.dbErr').val());
+      }
+      if ( $('.dbLog').val().length > 0 ) {
+        log({logType:'warn'}, $('.dbLog').val());
+      }
+    
     }
   </script>
 </body>

@@ -37,8 +37,12 @@ class MySql {
     {
       /*** if we are here, something has gone wrong with the database ***/
       $message = 'We are unable to process your request. Please try again later"';
-      echo $e->getMessage();
+      $_SESSION[$this->C['MYSQL_ERROR_MSG']] = $e->getMessage();
+      //echo $_SESSION[$this->C['MYSQL_ERROR_MSG']];
+      return $e->getCode();
     }
+    unset($_SESSION[$this->C['MYSQL_ERROR_MSG']]);
+    return 0;
   }
   
   function verify_credentials($username, $salted_password)
@@ -135,26 +139,46 @@ class MySql {
     }
   }
   
-  function save_answer($username, $qno, $answer)
+  function save_answer($uid, $taskno, $qno, $coords, $searches)
   {
-    $this->check_username_defined($username);
+    $dbh = $this->initNewPDO();
+    $dbh2 = $this->initNewPDO();
+    $answers_tbl = $this->C['TBL_ANSWERS'];
+    $tokens = explode(",", $coords);
+    $lat = $tokens[0];
+    $lng = $tokens[1];
+    $geom_txt = "GeomFromText('POINT(" . $lat . " " . $lng . ")')";
+    echo $geom_txt;
+    $geom_type = "point";
+    /*** prepare the select statement ***/
+    $stmt = $dbh->prepare("INSERT INTO " . $answers_tbl . " (taskno,qno,geom_type,id) VALUES (:taskno,:qno,:geom_type,:uid)");
+    /*** bind the parameters ***/
+    $stmt->bindParam(':taskno', $taskno, PDO::PARAM_INT);
+    $stmt->bindParam(':qno', $qno, PDO::PARAM_INT);
+    $stmt->bindParam(':geom_type', $geom_type, PDO::PARAM_STR);
+    //$stmt->bindParam(':geom_txt', $geom_txt, PDO::PARAM_STR);
+    $stmt->bindParam(':uid', $uid, PDO::PARAM_INT);
+    $ret_code = $this->execute($stmt);
+    $rowsUpdated = $stmt->rowCount();
     
-    $query = "INSERT INTO ".$this->C['TBL_ANSWERS']." (uname, qno, ans) values (?, ?, ?)";
-    if ( $stmt = $this->conn->prepare($query) ) {
-      $stmt->bind_param('sds', $username, $qno, $answer);
-      $stmt->execute();
-      if ( $stmt->affected_rows == 1 )
-        return true;
+    if ( $ret_code == 23000 ) {
+      $stmt2 = $dbh2->prepare("UPDATE " . $answers_tbl . " SET geom_type=:geom_type WHERE id=:uid AND taskno=:taskno AND qno=:qno");
+      /*** bind the parameters ***/
+      $stmt2->bindParam(':uid', $uid, PDO::PARAM_INT);
+      $stmt2->bindParam(':taskno', $taskno, PDO::PARAM_INT);
+      $stmt2->bindParam(':qno', $qno, PDO::PARAM_INT);
+      $stmt2->bindParam(':geom_type', $geom_type, PDO::PARAM_STR);
+      //$stmt2->bindParam(':geom_txt', $geom_txt, PDO::PARAM_STR);
+      $ret_code = $this->execute($stmt2);
+      $rowsUpdated = $stmt2->rowCount();
     }
     
-    $query = "UPDATE ".$this->C['TBL_ANSWERS']." SET ans = ? WHERE uname = ? AND qno = ?";
-    if ( $stmt = $this->conn->prepare($query) ) {
-      $stmt->bind_param('ssd', $answer, $username, $qno);
-      $stmt->execute();
-      if ( $stmt->affected_rows == 1 )
-        return true;
+    if ( $ret_code == 0 ) {
+      if ( $rowsUpdated == 0) {
+        $_SESSION[$this->C['MYSQL_LOG']] = "Nothing done during update of user (ID: " . $uid . ")";
+      }
+      return true;
     }
-    
     return false;
   }
   

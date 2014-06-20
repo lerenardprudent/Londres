@@ -23,5 +23,8 @@
   "QUEST_TEXT_EXPL"     : "exp",
   "QUEST_TEXT_BEGIN"    : "beg",
   "QUEST_TEXT_END"      : "end",
-  "QUEST_TEXT_SHOW_HEAD": "head"
+  "QUEST_TEXT_SHOW_HEAD": "head",
+  "MYSQL_ERROR_MSG"     : "mysqlerr",
+  "MYSQL_ERROR_CODE"    : "mysqlcode",
+  "MYSQL_LOG"           : "mysqllog"
 }

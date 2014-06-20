@@ -48,9 +48,8 @@ class User {
     return $this->mysql->get_curr_quest($this->username);
   }
   
-  function save_answer($answer) {
-    $curr_quest = $this->mysql->get_curr_quest($this->username);
-    $this->mysql->save_answer($this->username, $curr_quest, $answer);
+  function save_answer($taskno, $qno, $coords, $searches) {
+    $this->mysql->save_answer($this->uid, $taskno, $qno, $coords, $searches);
   }
   
   function update_current_question()

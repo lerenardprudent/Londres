@@ -12,6 +12,7 @@ $pwd_key = $C['PWD_KEY'];
 
 if (isset($_GET[$C['STAT_KEY']]) && $_GET[$C['STAT_KEY']] == $C['SESS_END_VAL']) {
   $U->logout();
+  session_destroy();
 }
 
 if ($_POST && isset($_POST[$uname_key]) && isset($_POST[$pwd_key])) {
