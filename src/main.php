@@ -33,6 +33,7 @@ if ($U->authorised()) {
   }
   
   $isExplanation = false;
+  $noHeading = false;
   if ( $qok ) {
     $info = $Q->$taskno->$qno;
     $qtext = $info->html;
@@ -42,6 +43,9 @@ if ($U->authorised()) {
     }
     if ( isset($info->end) && $info->end ) {
       array_push($questInfo, $C['QUEST_TEXT_END']);
+    }
+    if ( isset($info->show_heading) && !$info->show_heading ) {
+      $noHeading = true;
     }
   }
   else {
@@ -149,6 +153,8 @@ function redirect_to_login()
     var showTextInterlude = ( isExpl || _endOfQuestionnaire );
     
     if ( showTextInterlude ) {
+      $('.quest-block').removeClass('quest-block').addClass('explanation-block');
+      $('.quest-text').removeClass('quest-text').addClass('explanation-text').find('span').css('margin', '0 auto').css('display', 'table');
       $('.show-with-map').hide();
       $('.submit-btn').prop('disabled', false).val(_endOfQuestionnaire ? "Terminate questionnaire" : "Continue");
       if (_endOfQuestionnaire) {
@@ -156,6 +162,7 @@ function redirect_to_login()
       }
     }
     else {
+      log("Preparing map display");
       $(window).resize( handleWindowResize );
       $(window).resize();
       
@@ -190,31 +197,28 @@ function redirect_to_login()
       <span class='headingText'>VERITAS London</span>
       <a style='float:right' class='logout-link'>Log out</a>
       <p class='mini-line-break' />
-      <div class='quest-block show-with-map'>
-        <div class='quest-no'><span><?php if (!$isExplanation) { echo "Question " . str_replace(",", "&#8212;", $curr_pos); } ?></span></div>
-        <p class='mini-line-break' />
-        <div class='quest-text'><span><?php if (!$isExplanation) { echo $qtext; } ?></span></div>
+      <div class='quest-block'>
+        <div class='quest-no'><span><?php if ( !$noHeading ) { if ($isExplanation) { echo "Task " . $taskno; } else { echo "Question " . str_replace(",", "&#8212;", $curr_pos); } } ?></span></div>
+        <div class='quest-text'><span><?php echo $qtext; ?></span></div>
       </div>
       <p class='mini-line-break' />
       <div class='search-slider show-with-map'>
-        <div class='search-container'>
-          <input id='searchfield' class='searchf' placeholder='What do you wish to find on the map?' type='text'>
-          <a class='search-button'>
-            <i class='icon-search'></i>
-          </a>
+          <div class='search-container'>
+            <input id='searchfield' class='searchf' placeholder='What do you wish to find on the map?' type='text'>
+            <a class='search-button'>
+              <i class='icon-search'></i>
+            </a>
+          </div>
         </div>
-      </div>
-      <div class='explanation-block'>
-        <span id='explText' ><?php if ( $isExplanation ) { echo $qtext; } ?></span>
-      </div>
-      <form method="post" action="" style='height: 200px'>
+      <form method="post" action="" class='form'>
         <input id='ansQID' name='ansQID' type='hidden' value='<?php echo $_SESSION[$curr_pos_key]; ?>'/>
         <input id='ansCoords' name='ansCoords' type='hidden' />
         <input id='ansSearches' name='ansSearches' type='hidden' />
         <input id='ansSubmitted' name='ansSubmitted' type='hidden' />
         <input class='questInfo' type='hidden' value='<?php echo $questInfo; ?>' />
         <div class='submit-div'>
-          <input id='submit' type='submit' value='Submit answer &rarr;' class='submit-btn' disabled/>
+          <input id='back' type='submit' value='&larr; Go back' class='back-btn submit-btn show-with-map' disabled/>
+          <input id='submit' type='submit' value='Submit answer &rarr;' class='answer-btn submit-btn' disabled/>
         </div>
       </form>
     </div>

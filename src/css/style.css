@@ -54,7 +54,7 @@ a { text-decoration: none; }
 }
 
 #topPanel {
-  height: 110px;
+  min-height: 110px;
   width: 100%;
   padding: 0 5px;
   position: relative;
@@ -187,39 +187,52 @@ a { text-decoration: none; }
 }
 
 .submit-div {
-  /*display: inline-block;
-  float: right;*/
+  display: inline-block;
+  position: relative;
+  width:100%;
+}
+
+.back-btn {
+  float: left
+}
+
+.answer-btn {
+  float: right
 }
 
 .submit-btn {
-  position: absolute;
-  bottom: 2px;
-  right: 0;
+  width: 120px;
 }
 
 .quest-block {
-  display: block;
-  position: absolute;
-  left: 27em;
-  padding: 12px;
+  display: inline-block;
+  position: relative;
+  max-width: 55%;
+  margin: 12px 10%;
   background-color: lightyellow;
   border-radius: 15px;
   border: 1px solid lightgrey;
+  padding: 12px;
+}
+
+.explanation-block {
+  margin: 100px auto 10px auto;
+  width: 600px;
+}
+
+.explanation-text {
+  color: blue;
 }
 
 .quest-text {
   color: red
 }
+
 .quest-no {
   text-decoration: underline
 }
 
-.explanation-block {
-  width: 500px;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-  margin-top: 200px;
-  font-size: 20px;
-  font-style: italic;
+.form {
+  display: inline-block;
+  width: 100%;
 }

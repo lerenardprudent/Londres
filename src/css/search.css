@@ -10,9 +10,9 @@ body {
 }
 
 .search-slider {
-  width: 25em;
-  float: left;
-  margin-top: 10px;
+  position: absolute;
+  right: 0;
+  bottom: 40px;
 }
 
 .search-container {
