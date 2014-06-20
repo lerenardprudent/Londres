@@ -1,0 +1,45 @@
+@font-face {
+  font-family: 'Pacifico';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Pacifico Regular'), local('Pacifico-Regular'), url('../fonts/Pacifico.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Scada';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Scada'), local('Scada-Regular'), url('../fonts/Scada-400.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Scada';
+  font-style: normal;
+  font-weight: 700;
+  src: local('Scada Bold'), local('Scada-Bold'), url('../fonts/Scada-700.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Cabin';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Cabin Regular'), local('Cabin-Regular'), url('../fonts/Cabin-400.woff') format('woff');
+}
+@font-face {
+  font-family: 'Cabin';
+  font-style: normal;
+  font-weight: 500;
+  src: local('Cabin Medium'), local('Cabin-Medium'), url('../fonts/Cabin-500.woff') format('woff');
+}
+@font-face {
+  font-family: 'Cabin';
+  font-style: normal;
+  font-weight: 600;
+  src: local('Cabin SemiBold'), local('Cabin-SemiBold'), url('../fonts/Cabin-600.woff') format('woff');
+}
+@font-face {
+  font-family: 'Cabin';
+  font-style: normal;
+  font-weight: 700;
+  src: local('Cabin Bold'), local('Cabin-Bold'), url('../fonts/Cabin-700.woff') format('woff');
+}

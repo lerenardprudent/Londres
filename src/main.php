@@ -105,17 +105,16 @@ function redirect_to_login()
 <script type="text/javascript" src="constants.js"></script>
 <script type="text/javascript" src="questionnaire.js"></script>
 <script type="text/javascript" src="carto.js"></script>
-<link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="css/style.css" type="text/css" />
 <link rel="stylesheet" href="css/search.css" media="screen" type="text/css" />
 
 <!-- GOOGLE MAPS -->
 <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD4qnbkOe5X7pll7qyIFtkeLzjzkbPnAGo&amp;libraries=places,drawing,geometry,panoramio,weather&region=ca&sensor=false"></script>
 
-<!-- FONTAWESOME -->
-  <link href='http://fonts.googleapis.com/css?family=Scada:400,700' rel='stylesheet' type='text/css'>
-  <link href='http://fonts.googleapis.com/css?family=Cabin:400,500,600,700' rel='stylesheet' type='text/css'>
-  <link href='http://homepages.uc.edu/~arthurra/resource/font-awesome/font-awesome.css' rel='stylesheet'>
-  <link rel='stylesheet prefetch' href='http://netdna.bootstrapcdn.com/font-awesome/2.0/css/font-awesome.css'>
+<!-- FONTS -->
+<link rel="stylesheet" href="css/fonts.css" type="text/css" />
+<link rel="stylesheet" href="css/font-awesome.css" type="text/css" />
+<link rel="stylesheet" href="css/font-awesome-2.css" type="text/css" />
   
   
 <!-- BOOTSTRAP SCRIPTS
@@ -154,7 +153,7 @@ function redirect_to_login()
     
     if ( showTextInterlude ) {
       $('.quest-block').removeClass('quest-block').addClass('explanation-block');
-      $('.quest-text').removeClass('quest-text').addClass('explanation-text').find('span').css('margin', '0 auto').css('display', 'table');
+      $('.quest-text').removeClass('quest-text').addClass('explanation-text');
       $('.show-with-map').hide();
       $('.submit-btn').prop('disabled', false).val(_endOfQuestionnaire ? "Terminate questionnaire" : "Continue");
       if (_endOfQuestionnaire) {

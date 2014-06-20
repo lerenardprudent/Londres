@@ -220,6 +220,15 @@ a { text-decoration: none; }
   width: 600px;
 }
 
+.explanation-block > div > span {
+  display: table;
+  margin: 0 auto;
+}
+
+.explanation-block > .quest-no  > span {
+  font-family: "Pacifico";
+  font-size: 20px;
+}
 .explanation-text {
   color: blue;
 }
