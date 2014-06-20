@@ -16,13 +16,12 @@ $tokens = explode(',', $curr_pos);
 $taskno = $tokens[0];
 $qno = $tokens[1];
 $qok = true;
-$endOfQuestionnaire = false;
 $questInfo = array();
 
 if ($U->authorised()) {
   if (isset($_POST['ansSubmitted']) ) {
     $gotoNext = ( $_POST['ansSubmitted'] > 0 );
-    $next_pos = ( $gotoNext ? find_next_quest() : "2,1" );
+    $next_pos = find_next_quest($gotoNext);
     if ( $next_pos !== false ) {
       $_SESSION[$curr_pos_key] = $next_pos;
       $curr_pos = $next_pos;
@@ -32,6 +31,11 @@ if ($U->authorised()) {
       // TODO : Update DB
     }
   }
+  $first_screen = ($curr_pos == '0,0');
+  $x = get_object_vars($Q);
+  $y = $x[count($x)-1];
+  $last_pos = (count($x)-1) . "," . (count($y)-1);
+  $last_screen = ($curr_pos == $last_pos);
   
   $isExplanation = false;
   $noHeading = false;
@@ -42,7 +46,10 @@ if ($U->authorised()) {
       $isExplanation = true;
       array_push($questInfo, $C['QUEST_TEXT_EXPL']);
     }
-    if ( isset($info->end) && $info->end ) {
+    if ( $first_screen ) {
+      array_push($questInfo, $C['QUEST_TEXT_BEGIN']);
+    }
+    if ( $last_screen ) {
       array_push($questInfo, $C['QUEST_TEXT_END']);
     }
     if ( isset($info->show_heading) && !$info->show_heading ) {
@@ -60,19 +67,23 @@ else {
   redirect_to_login();
 }
 
-function find_next_quest()
+function find_next_quest($forw_dir)
 {
   global $curr_pos;
   global $taskno;
   global $qno;
   global $Q;
   
-  $next_q = strval(intval($qno)+1);
+  $inc = 1;
+  if ( !isset($forw_dir) || !$forw_dir ) {
+    $inc = -1;
+  }
+  $next_q = strval(intval($qno)+$inc);
   if ( property_exists($Q->$taskno, $next_q )) {
     return $taskno . "," . $next_q;
   }
   
-  $next_t = strval(intval($taskno)+1);
+  $next_t = strval(intval($taskno)+$inc);
   $qq = "0";
   if ( property_exists($Q, $next_t) ) {
     if ( property_exists($Q->$next_t, $qq) ) {
@@ -149,6 +160,7 @@ function redirect_to_login()
     $('.submit-btn').click(processFormSubmit);
     
     var isExpl = ($('.questInfo').val().indexOf(Consts.get('QUEST_TEXT_EXPL')) >= 0);
+    var firstScreen = ($('.questInfo').val().indexOf(Consts.get('QUEST_TEXT_BEGIN')) >= 0);
     _endOfQuestionnaire = ($('.questInfo').val().indexOf(Consts.get('QUEST_TEXT_END')) >= 0);
     var showTextInterlude = ( isExpl || _endOfQuestionnaire );
     
@@ -156,9 +168,14 @@ function redirect_to_login()
       $('.quest-block').removeClass('quest-block').addClass('explanation-block');
       $('.quest-text').removeClass('quest-text').addClass('explanation-text');
       $('.show-with-map').hide();
-      $('.answer-btn').prop('disabled', false).val(_endOfQuestionnaire ? "Terminate questionnaire" : "Continue");
+      $('.answer-btn').prop('disabled', false).val("Continue →");
+      if ( firstScreen ) {
+        $('.back-btn').hide();
+        $('.answer-btn').val("Begin →");
+      }
       if (_endOfQuestionnaire) {
         $('.logout-link').hide();
+        $('.answer-btn').val("Terminate questionnaire");
       }
     }
     else {

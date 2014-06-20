@@ -21,6 +21,7 @@
   "SRC_PHP_QUEST"       : "main.php",
   "SRC_JS_QUEST"        : "carto.js",
   "QUEST_TEXT_EXPL"     : "exp",
+  "QUEST_TEXT_BEGIN"    : "beg",
   "QUEST_TEXT_END"      : "end",
   "QUEST_TEXT_SHOW_HEAD": "head"
 }

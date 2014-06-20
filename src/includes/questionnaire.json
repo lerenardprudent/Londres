@@ -24,8 +24,7 @@
   "3" : {
     "0" : { "type" : "exp",
             "html" : "Thank you for participating!",
-            "show_heading" : 0,
-            "end"  : 1
+            "show_heading" : 0
           }
   }
 }
