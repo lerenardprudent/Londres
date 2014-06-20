@@ -201,7 +201,7 @@ a { text-decoration: none; }
 }
 
 .submit-btn {
-  width: 120px;
+  min-width: 120px;
 }
 
 .quest-block {

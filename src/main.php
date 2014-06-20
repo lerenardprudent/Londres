@@ -21,7 +21,8 @@ $questInfo = array();
 
 if ($U->authorised()) {
   if (isset($_POST['ansSubmitted']) ) {
-    $next_pos = find_next_quest();
+    $gotoNext = ( $_POST['ansSubmitted'] > 0 );
+    $next_pos = ( $gotoNext ? find_next_quest() : "2,1" );
     if ( $next_pos !== false ) {
       $_SESSION[$curr_pos_key] = $next_pos;
       $curr_pos = $next_pos;
@@ -155,7 +156,7 @@ function redirect_to_login()
       $('.quest-block').removeClass('quest-block').addClass('explanation-block');
       $('.quest-text').removeClass('quest-text').addClass('explanation-text');
       $('.show-with-map').hide();
-      $('.submit-btn').prop('disabled', false).val(_endOfQuestionnaire ? "Terminate questionnaire" : "Continue");
+      $('.answer-btn').prop('disabled', false).val(_endOfQuestionnaire ? "Terminate questionnaire" : "Continue");
       if (_endOfQuestionnaire) {
         $('.logout-link').hide();
       }
@@ -216,7 +217,7 @@ function redirect_to_login()
         <input id='ansSubmitted' name='ansSubmitted' type='hidden' />
         <input class='questInfo' type='hidden' value='<?php echo $questInfo; ?>' />
         <div class='submit-div'>
-          <input id='back' type='submit' value='&larr; Go back' class='back-btn submit-btn show-with-map' disabled/>
+          <input id='back' type='submit' value='&larr; Go back' class='back-btn submit-btn' />
           <input id='submit' type='submit' value='Submit answer &rarr;' class='answer-btn submit-btn' disabled/>
         </div>
       </form>
@@ -279,15 +280,18 @@ function redirect_to_login()
         return htmlEscapes[match]; });
     }
   
-    function processFormSubmit()
+    function processFormSubmit(button)
     {
       if ( _endOfQuestionnaire ) {
        $('.logout-link')[0].click();
       }
       else {
-        $('#ansSearches').val(_searchQueries.join(","));
-        $('#ansCoords').val(_markerCoords.lat() + "," + _markerCoords.lng());
-        $('#ansSubmitted').val(true);
+        var goingBack = ( button.currentTarget.id == "back" );
+        $('#ansSubmitted').val( goingBack ? -1 : 1);
+        if ( !goingBack ) {
+          $('#ansSearches').val(_searchQueries.join(","));
+          $('#ansCoords').val(_markerCoords.lat() + "," + _markerCoords.lng());
+        }
       }
     }
   </script>
