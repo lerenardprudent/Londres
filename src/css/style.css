@@ -245,3 +245,7 @@ a { text-decoration: none; }
   display: inline-block;
   width: 100%;
 }
+
+.search-mode-places {
+  background-color: lightgreen !important;
+}

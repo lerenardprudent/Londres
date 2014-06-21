@@ -159,15 +159,19 @@ function noteAnyDBIssues()
 <link rel="stylesheet" href="css/font-awesome.css" type="text/css" />
 <link rel="stylesheet" href="css/font-awesome-2.css" type="text/css" />
   
+<!-- NOTY -->
+<script type="text/javascript" src="js/noty/jquery.noty.js"></script>
+<script type="text/javascript" src="js/noty/layouts/center.js"></script>
+<script type="text/javascript" src="js/noty/themes/default.js"></script>	
   
 <!-- BOOTSTRAP SCRIPTS
 <script type="text/javascript" src="js/bootstrap/bootstrap.min.js"></script>
 <script type="text/javascript" src="js/bootstrap/bootstrap-filestyle.min.js"> </script>
 <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css"> -->
 
-<!-- IMPROMPTU SCRIPTS -->
+<!-- IMPROMPTU SCRIPTS
 <script type="text/javascript" src="js/impromptu/jquery-impromptu.js"></script>
-<link rel="stylesheet" href="css/jquery-impromptu.css" />
+<link rel="stylesheet" href="css/jquery-impromptu.css" />-->
 
 <!-- ##################### END OF INCLUDES SECTION ######################### -->
 
@@ -183,6 +187,7 @@ function noteAnyDBIssues()
   var _searchQueries = [];
   var _endOfQuestionnaire = false;
   var _isExplanation = false;
+  var _searchModePlaces = false;
 </script>
 
 <script type="text/javascript">
@@ -190,8 +195,10 @@ function noteAnyDBIssues()
     var logoutHref = Consts.get('SRC_PHP_LOGIN') + '?' + Consts.get('STAT_KEY') + '=' + Consts.get('SESS_END_VAL');
     $('.logout-link').attr('href', logoutHref);
     $('.submit-btn').click(processFormSubmit);
-    
     logAnyDBIssues();
+    
+    $('.search-button').click( switchSearchMode );
+    setSearchSliderAttrs();
     
     _isExplanation = ($('.questInfo').val().indexOf(Consts.get('QUEST_TEXT_EXPL')) >= 0);
     var firstScreen = ($('.questInfo').val().indexOf(Consts.get('QUEST_TEXT_BEGIN')) >= 0);
@@ -222,20 +229,15 @@ function noteAnyDBIssues()
       searchField.on('keypress', function(e) {
         if (e.which == 13 ) {
           var searchString = $(this).val();
-          searchBtn.click();
+          if ( searchString.length > 0 ) {
+            doGoogleSearch(searchString);
+            searchField.val("");
+          }
         }
       });
       searchBtn.on('mouseover', function(e) {
         searchField.focus();
       });
-      searchBtn.click( function() {
-        var searchString = searchField.val();
-        if ( searchString.length > 0 ) {
-          doGoogleSearch(searchString);
-          searchField.val("");
-        }
-      });
-      
       initMap();
     }
   });
@@ -377,7 +379,57 @@ function noteAnyDBIssues()
       if ( $('.dbLog').val().length > 0 ) {
         log({logType:'warn'}, $('.dbLog').val());
       }
+    }
     
+    function switchSearchMode()
+    {
+      $('.search-button').toggleClass('search-mode-places');
+      setSearchSliderAttrs();
+    }
+
+    function setSearchSliderAttrs()
+    {
+      var searchBtn = $('.search-button');
+      _searchModePlaces = searchBtn.hasClass('search-mode-places');
+      searchBtn.prop('title', "Toggle search mode (Currently: " + (_searchModePlaces ? "PLACES" : "LOCATION") + ")");
+      $('.searchf').attr('placeholder', "For what " + (_searchModePlaces ? "place" : "location") + " are you searching?");
+    }
+    
+    function showPopupMsg(d, f)
+    {
+      if (d == 1) {
+        generate("success", f)
+      }
+      else if (d == 2) {
+        generate("error", f)
+      }
+      else if (d == 3) {
+        generate("alert", f)
+      }
+      else if (d == 4) {
+        generate("information", f)
+      }
+      else if (d == 5) {
+        generate("warning", f)
+      } else if (d == 6) {
+        generate("notification", f)
+      }
+    
+      setTimeout(function () {
+          $.noty.closeAll()
+      }, 4000);
+    }
+    
+    function generate(e, d)
+    {
+      var f = noty({
+          text: d,
+          type: e,
+          dismissQueue: false,
+          layout: "center",
+          theme: "defaultTheme"
+      });
+      return f;
     }
   </script>
 </body>

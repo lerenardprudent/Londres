@@ -44,7 +44,7 @@ function doGoogleSearch(searchStr)
   log("Searched for \"" + searchStr + "\"");
   _searchQueries.push(searchStr);
   // Force search slider to close
-  alert(searchStr);
+  geocodeAddress(searchStr);
 }
 
 function handleMapClick(e)
@@ -70,6 +70,19 @@ function geocodeMarker(lat_lng, centerOnMarker)
 	_geocoder.geocode( { latLng:lat_lng}, geocoderRespHandler );
 }
 
+function geocodeAddress(addr, centerOnMarker)
+{
+	var regionHint = "London, UK";
+	addr += regionHint;
+		
+	var geocoderRespHandler = geocoderResponse;
+	if (centerOnMarker) {
+		geocoderRespHandler = geocoderResponseCenterMap;
+	}
+	
+	_geocoder.geocode( { 'address': addr }, geocoderRespHandler );
+}
+
 function geocoderResponse(results, status)
 {
   var ok = false;
@@ -85,6 +98,9 @@ function geocoderResponse(results, status)
                       escapeSpecialChars(_markerAddr) +
                     "</span></div>";
     _infoBubble.setContent(contentHTML);
+  }
+  else if (status == google.maps.GeocoderStatus.ZERO_RESULTS) {
+    showPopupMsg(3,"Location not found.");
   }
   
   return { 'ok' : ok, 'addr' : _markerAddr, 'coords' : _markerCoords };
