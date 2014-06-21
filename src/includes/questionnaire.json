@@ -19,7 +19,7 @@
     "1" : { "type" : "quest",
             "html" : "Can you locate your school using a pushpin?" },
     "2" : { "type" : "quest",
-            "html" : "Can you locate the London Olympic Stadium using a pushpin?" }
+            "html" : "Can you locate the London Olympic Shmadium using a pushpin?" }
   },
   "3" : {
     "0" : { "type" : "exp",

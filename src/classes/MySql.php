@@ -147,35 +147,36 @@ class MySql {
     $tokens = explode(",", $coords);
     $lat = $tokens[0];
     $lng = $tokens[1];
-    $geom_txt = "GeomFromText('POINT(" . $lat . " " . $lng . ")')";
-    echo $geom_txt;
     $geom_type = "point";
+    $geom_txt = "POINT(" . $lat . " " . $lng . ")";
+    $ret_code = -1;
     /*** prepare the select statement ***/
-    $stmt = $dbh->prepare("INSERT INTO " . $answers_tbl . " (taskno,qno,geom_type,id) VALUES (:taskno,:qno,:geom_type,:uid)");
+    $stmt = $dbh->prepare("INSERT INTO " . $answers_tbl . " (taskno,qno,geom_type,id,searches,geom) VALUES (:taskno,:qno,:geom_type,:uid,:searches,GeomFromText(:geom_txt))");
     /*** bind the parameters ***/
     $stmt->bindParam(':taskno', $taskno, PDO::PARAM_INT);
     $stmt->bindParam(':qno', $qno, PDO::PARAM_INT);
     $stmt->bindParam(':geom_type', $geom_type, PDO::PARAM_STR);
-    //$stmt->bindParam(':geom_txt', $geom_txt, PDO::PARAM_STR);
     $stmt->bindParam(':uid', $uid, PDO::PARAM_INT);
+    $stmt->bindParam(':searches', $searches, PDO::PARAM_STR);
+    $stmt->bindParam(':geom_txt', $geom_txt, PDO::PARAM_STR);
     $ret_code = $this->execute($stmt);
     $rowsUpdated = $stmt->rowCount();
     
     if ( $ret_code == 23000 ) {
-      $stmt2 = $dbh2->prepare("UPDATE " . $answers_tbl . " SET geom_type=:geom_type WHERE id=:uid AND taskno=:taskno AND qno=:qno");
-      /*** bind the parameters ***/
+      $stmt2 = $dbh2->prepare("UPDATE " . $answers_tbl . " SET geom_type=:geom_type, geom=GeomFromText(:geom_txt),searches=:searches WHERE id=:uid AND taskno=:taskno AND qno=:qno");
       $stmt2->bindParam(':uid', $uid, PDO::PARAM_INT);
       $stmt2->bindParam(':taskno', $taskno, PDO::PARAM_INT);
       $stmt2->bindParam(':qno', $qno, PDO::PARAM_INT);
       $stmt2->bindParam(':geom_type', $geom_type, PDO::PARAM_STR);
-      //$stmt2->bindParam(':geom_txt', $geom_txt, PDO::PARAM_STR);
+      $stmt2->bindParam(':geom_txt', $geom_txt, PDO::PARAM_STR);
+      $stmt2->bindParam(':searches', $searches, PDO::PARAM_STR);
       $ret_code = $this->execute($stmt2);
       $rowsUpdated = $stmt2->rowCount();
     }
     
     if ( $ret_code == 0 ) {
       if ( $rowsUpdated == 0) {
-        $_SESSION[$this->C['MYSQL_LOG']] = "Nothing done during update of user (ID: " . $uid . ")";
+        $this->log_back( "Nothing done during update of user (ID: " . $uid . ")" );
       }
       return true;
     }
@@ -203,6 +204,11 @@ class MySql {
     if (empty($username)) {
       die("Could not complete DB request: User name is undefined");
     }
+  }
+  
+  function log_back($log_msg)
+  {
+    $_SESSION[$this->C['MYSQL_LOG']] = $log_msg;
   }
 }
 

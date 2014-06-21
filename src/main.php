@@ -83,13 +83,20 @@ function find_next_quest($goBack)
   if ( isset($goBack) && $goBack ) {
     $inc = -1;
   }
+  
   $next_q = strval(intval($qno)+$inc);
   if ( property_exists($Q->$taskno, $next_q )) {
     return $taskno . "," . $next_q;
   }
   
   $next_t = strval(intval($taskno)+$inc);
-  $qq = "0";
+  if ( $goBack ) {
+    $z = get_object_vars($Q->$next_t);
+    $qq = strval(count($z)-1);
+  }
+  else {
+    $qq = "0";
+  }
   if ( property_exists($Q, $next_t) ) {
     if ( property_exists($Q->$next_t, $qq) ) {
       return $next_t . "," . $qq;
@@ -119,7 +126,7 @@ function noteAnyDBIssues()
   
   $log_key = $C['MYSQL_LOG'];
   if ( isset($_SESSION[$log_key]) ) {
-    $db_log = $_SESSION[$log_key];
+    $db_log = htmlentities($_SESSION[$log_key], ENT_QUOTES);
     unset($_SESSION[$log_key]);
   }
 }
@@ -340,16 +347,18 @@ function noteAnyDBIssues()
     
     function processFormSubmit(button)
     {
-      if ( _endOfQuestionnaire ) {
-       $('.logout-link')[0].click();
+      $('#ansSubmitted').val(0); 
+      var goingBack = ( button.currentTarget.id == "back" );
+      if ( goingBack ) {
+        $('#ansSubmitted').val(-1); 
       }
       else {
-        $('#ansSubmitted').val(0); 
-        var goingBack = ( button.currentTarget.id == "back" );
-        if ( goingBack ) {
-          $('#ansSubmitted').val(-1); 
+        if ( _isExplanation ) {
+          if (_endOfQuestionnaire) {
+            $('.logout-link')[0].click();
+          }
         }
-        else if ( !_isExplanation) { // Don't enter here unless we have coords to submit!
+        else { // Don't enter here unless we have coords to submit!
           $('#ansSubmitted').val(1);
           for ( var i = 0; i < _searchQueries.length; i++ ) {
             _searchQueries[i] = quote(_searchQueries[i]);
