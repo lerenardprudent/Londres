@@ -41,8 +41,8 @@ function initMap()
     
 function doGoogleSearch(searchStr)
 {
-  log("Searched for \"" + searchStr + "\"");
-  _searchQueries.push(searchStr);
+  log("Searched for " + quote(searchStr,"'"));
+  _searchQueries.push((_searchModePlaces ? "P:" : "L:") + quote(searchStr));
   // Force search slider to close
   geocodeAddress(searchStr);
 }
@@ -92,7 +92,7 @@ function geocoderResponse(results, status)
     var res_index = 0;
     _markerAddr = results[res_index].formatted_address;
 		_markerCoords = results[res_index].geometry.location;
-    
+    log(results.length + " match" + (results.length == 1 ? "" : "es") + " found - choosing "  + quote(_markerAddr,"'"));
     placeMapMarker(_markerCoords);
     var contentHTML = "<div id='infoBubbleContent'><span>" +
                       escapeSpecialChars(_markerAddr) +
@@ -100,7 +100,7 @@ function geocoderResponse(results, status)
     _infoBubble.setContent(contentHTML);
   }
   else if (status == google.maps.GeocoderStatus.ZERO_RESULTS) {
-    showPopupMsg(3,"Location not found.");
+    showPopupMsg(5, "Location not found.");
   }
   
   return { 'ok' : ok, 'addr' : _markerAddr, 'coords' : _markerCoords };

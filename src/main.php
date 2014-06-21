@@ -362,11 +362,8 @@ function noteAnyDBIssues()
         }
         else { // Don't enter here unless we have coords to submit!
           $('#ansSubmitted').val(1);
-          for ( var i = 0; i < _searchQueries.length; i++ ) {
-            _searchQueries[i] = quote(_searchQueries[i]);
-          }
           $('#ansSearches').val(_searchQueries.join(","));
-          $('#ansCoords').val(_markerCoords.lat() + "," + _markerCoords.lng());
+          $('#ansCoords').val(_markerCoords.lat() + ", " + _markerCoords.lng());
         }
       }
     }
@@ -384,6 +381,7 @@ function noteAnyDBIssues()
     function switchSearchMode()
     {
       $('.search-button').toggleClass('search-mode-places');
+      $('.searchf').select();
       setSearchSliderAttrs();
     }
 
