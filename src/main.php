@@ -161,6 +161,15 @@ function noteAnyDBIssues()
 <link rel="stylesheet" href="css/style.css" type="text/css" />
 <link rel="stylesheet" href="css/search.css" media="screen" type="text/css" />
 
+<!-- BOOTSTRAP SCRIPTS -->
+<link rel="stylesheet" href="css/bootstrap/bootstrap.min.css">
+<script type="text/javascript" src="js/bootstrap/bootstrap.min.js"></script>
+<!--<link rel="stylesheet" href="modal/css/bootstrap-modal-bs3patch.css">
+<link rel="stylesheet" href="modal/css/bootstrap-modal.css">
+<script type="text/javascript" src="modal/js/bootstrap-modalmanager.js"> </script>
+<script type="text/javascript" src="modal/js/bootstrap-modal.js"> </script>
+<script type="text/javascript" src="js/bootstrap/bootstrap-filestyle.min.js"> </script>-->
+
 <!-- GOOGLE MAPS -->
 <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD4qnbkOe5X7pll7qyIFtkeLzjzkbPnAGo&amp;libraries=places,drawing,geometry,panoramio,weather&region=ca&sensor=false"></script>
 
@@ -173,11 +182,6 @@ function noteAnyDBIssues()
 <script type="text/javascript" src="js/noty/jquery.noty.js"></script>
 <script type="text/javascript" src="js/noty/layouts/center.js"></script>
 <script type="text/javascript" src="js/noty/themes/default.js"></script>	
-  
-<!-- BOOTSTRAP SCRIPTS
-<script type="text/javascript" src="js/bootstrap/bootstrap.min.js"></script>
-<script type="text/javascript" src="js/bootstrap/bootstrap-filestyle.min.js"> </script>
-<link rel="stylesheet" href="css/bootstrap/bootstrap.min.css"> -->
 
 <!-- IMPROMPTU SCRIPTS
 <script type="text/javascript" src="js/impromptu/jquery-impromptu.js"></script>
@@ -198,6 +202,7 @@ function noteAnyDBIssues()
   var _endOfQuestionnaire = false;
   var _isExplanation = false;
   var _searchModePlaces = false;
+  var _placesSearchRadius = 5; // km
 </script>
 
 <script type="text/javascript">
@@ -440,5 +445,22 @@ function noteAnyDBIssues()
       return f;
     }
   </script>
+  <div class="modal fade" id="basicModal" tabindex="-1" role="dialog" aria-labelledby="basicModal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h4 class="modal-title" id="myModalLabel">Basic Modal</h4>
+        </div>
+        <div class="modal-body">
+          <h3>Modal Body</h3>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

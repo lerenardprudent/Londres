@@ -44,7 +44,12 @@ function doGoogleSearch(searchStr)
   log("Searched for " + quote(searchStr,"'"));
   _searchQueries.push((_searchModePlaces ? "P:" : "L:") + quote(searchStr));
   // Force search slider to close
-  geocodeAddress(searchStr);
+  if ( _searchModePlaces ) {
+    radialPlaceSearch(searchStr);
+  }
+  else {
+    geocodeAddress(searchStr);
+  }
 }
 
 function handleMapClick(e)
@@ -137,4 +142,90 @@ function showMarkerInfoBubble()
   _infoBubble.open(_map, _mapmarker);
   window.clearTimeout(_timer);
   _timer = setTimeout( function() {_infoBubble.close()}, 5000);
+}
+
+function radialPlaceSearch(searchString)
+{
+	//var morebtn = document.getElementById('morefinds');
+	//morebtn.style.cssText = "color:#FFFFFF; background-color:#C71F2D; cursor: pointer";
+	
+	var kwds = searchString.split(' ');
+	if(kwds.length > 0)
+	{
+		//clearAllSearchResults();
+		//_addr_changed = false;
+		_placesServ.nearbySearch({ location:_map.getCenter(), radius:_placesSearchRadius*1000, keyword:kwds }, radialSearchResponse);
+	}
+}
+
+function radialSearchResponse(results, status, pagination) 
+{
+	if (status != google.maps.places.PlacesServiceStatus.OK) {
+		/*showDialog( bilingualSubstitution("Aucun lieu correspondant aux mots-clés n'a été trouvé. Veuillez réessayer avec d'autres mots-clés ou avec une adresse. / No places matching your keywords were found. Please try again with different keywords or with an address." ));
+		clearAddressField();*/
+    alert("Places search prob");
+		return;
+	}
+	
+  /*
+	document.getElementById('findspanel').style.visibility = "visible";
+  */
+	makefindmarkers(results);
+	/*var morebtn = document.getElementById('morefinds');
+	if (pagination.hasNextPage) 
+	{
+		google.maps.event.addDomListenerOnce(morebtn, 'click', function() { pagination.nextPage(); });
+		morebtn.disabled = false;
+	}
+	else
+	{
+		morebtn.disabled = true;
+		morebtn.style.cssText = "background-color:Lightgrey; color:Grey; cursor:default";
+	}
+	$("#places").animate({scrollTop: 100000}); // Big number so it always scrolls to the bottom
+	$("#morefinds").focus();
+	_map.setOptions({ draggableCursor: ''});
+  */
+  log(results);
+}
+
+function makefindmarkers(places) 			//search results
+{
+	_bnds = new google.maps.LatLngBounds();
+	//var placesList = document.getElementById('places');
+
+	for (var i = 0, place; place = places[i]; i++)
+	{
+		var image = {url:place.icon, size:new google.maps.Size(40, 40), origin:new google.maps.Point(0, 0), anchor:new google.maps.Point(10,20), scaledSize:new google.maps.Size(20, 20)};
+		var mark = new google.maps.Marker({ map:_map, /*icon:image,*/ position:place.geometry.location, raiseOnDrag:false });
+		/*mark.ID = _findmarkers.length;
+		mark.name = place.name;
+		google.maps.event.addListener(mark, 'mouseover', placeHoverListener);
+		google.maps.event.addListener(mark, 'mouseout', function() { _infowin.close(); });
+		google.maps.event.addListener(mark, 'click', placeClickListener );
+		placesList.innerHTML += "<li id='lsm" + mark.ID + "' title=\"" + place.name + "\"><a style='color:#404040; width:186px;' href='javascript:selectfindmarker(" + mark.ID + ")'>" + (mark.ID+1) + ". " + place.name + "</a></li>";*/
+		_bnds.extend(place.geometry.location);
+		//_zoomSnapTo = true;
+		addAddress(mark, place.reference);
+		//_findmarkers.push(mark);
+	}
+	_map.fitBounds(_bnds);
+}
+
+function addAddress(mark, ref)
+{	
+	_placesServ.getDetails(
+		{reference:ref},
+		function(details, status) {
+			if (status == google.maps.places.PlacesServiceStatus.OK) {
+				log('Set ' + mark.name + details.name + details.formatted_address);
+				mark.address = details.formatted_address;
+				mark.vicinity = details.vicinity;
+			}
+			else if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
+				setTimeout(function() {
+                addAddress(mark, ref);
+			}, 200);
+        }
+	});
 }
