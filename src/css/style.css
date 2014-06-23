@@ -249,3 +249,34 @@ a { text-decoration: none; }
 .search-mode-places {
   background-color: lightgreen !important;
 }
+
+.logout-link {
+  position: absolute;
+  top:0;
+  right:0;
+}
+
+.logout-icon {
+  display: block;
+	width: 30px;
+	height: 30px;
+	background: url('../img/logout2.png');
+	text-indent: -99999px;
+  background-position: 0 0;
+  background-repeat:no-repeat;
+}
+
+.logout-icon:hover
+{
+  background-position: -31px 0;
+}
+
+.retry 
+{
+  font-style: italic
+}
+
+.secs-left
+{
+  font-weight: bold
+}

@@ -11,9 +11,15 @@ $uname_key = $C['USR_NAME_KEY'];
 $pwd_key = $C['PWD_KEY'];
 
 if (isset($_GET[$C['STAT_KEY']]) && $_GET[$C['STAT_KEY']] == $C['SESS_END_VAL']) {
-  $U->logout();
+  if ( $U->authorised() ) {
+    $U->logout();
+  }
   session_destroy();
+  header("location: " . $C['SRC_PHP_LOGIN']);
+  echo "DONE";
 }
+
+$_SESSION = array();
 
 if ($_POST && isset($_POST[$uname_key]) && isset($_POST[$pwd_key])) {
   $username = filter_var($_POST[$uname_key], FILTER_SANITIZE_STRING);
@@ -31,7 +37,7 @@ else if ( isset($_GET[$C['REDIRECT_KEY']]) ) {
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
-<title>Login to access</title>
+<title>Welcome to VERITAS</title>
 <script src="js/jquery/jquery-1.10.2.min.js"></script>  
 <link rel="stylesheet" type="text/css" href="css/login.css">
 <script type="text/javascript">

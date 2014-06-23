@@ -2,25 +2,28 @@
 
 require_once 'classes/Constants.php';
 require_once 'classes/User.php';
+require_once 'classes/Questionnaire.php';
 session_start();
 
 $C = new Constants();
 $U = new User();
 
-$Q = json_decode(utf8_encode(file_get_contents('includes/questionnaire.json')));
+$Q = new Questionnaire();
 
 $sess_curr_pos = -1;
 $curr_pos_key = $C['CURR_POS_KEY'];
-$curr_pos = $_SESSION[$curr_pos_key];
-$tokens = explode(',', $curr_pos);
-$taskno = $tokens[0];
-$qno = $tokens[1];
+$sep = $C['CURR_POS_SEPARATOR'];
 $qok = true;
 $questInfo = array();
 $db_err = "";
 $db_log = "";
 
 if ($U->authorised()) {
+  $curr_pos = $_SESSION[$curr_pos_key];
+  $tokens = explode($sep, $curr_pos);
+  $taskno = $tokens[0];
+  $qno = $tokens[1];
+  
   if (isset($_POST['ansSubmitted']) ) {
     $goBack = ( $_POST['ansSubmitted'] < 0 );
     if ( $_POST['ansSubmitted'] > 0 ) {
@@ -31,32 +34,35 @@ if ($U->authorised()) {
     if ( $next_pos !== false ) {
       $_SESSION[$curr_pos_key] = $next_pos;
       $curr_pos = $next_pos;
-      $tokens = explode(',', $curr_pos);
+      $tokens = explode($sep, $curr_pos);
       $taskno = $tokens[0];
       $qno = $tokens[1];
+      if ( !$goBack) {
+        $U->update_curr_pos();
+      }
     }
   }
-  $first_screen = ($curr_pos == '0,0');
-  $x = get_object_vars($Q);
-  $y = $x[count($x)-1];
-  $last_pos = (count($x)-1) . "," . (count($y)-1);
-  $last_screen = ($curr_pos == $last_pos);
+  
+  if ( !$U->instr_ok() ) {
+    header("location: ".$C['SRC_PHP_INDEX']);
+  }
   
   $isExplanation = false;
   $noHeading = false;
   if ( $qok ) {
-    $info = $Q->$taskno->$qno;
+    $info = $Q[$taskno]->$qno;
     $qtext = $info->html;
     if ( $info->type == $C['QUEST_TEXT_EXPL'] ) {
       $isExplanation = true;
       array_push($questInfo, $C['QUEST_TEXT_EXPL']);
     }
-    if ( $first_screen ) {
+    if ( $Q->is_first_screen($curr_pos) ) {
       array_push($questInfo, $C['QUEST_TEXT_BEGIN']);
     }
-    if ( $last_screen ) {
+    if ( $Q->is_final_screen($curr_pos) ) {
       array_push($questInfo, $C['QUEST_TEXT_END']);
     }
+    array_push($questInfo, $curr_pos);
     if ( isset($info->show_heading) && !$info->show_heading ) {
       $noHeading = true;
     }
@@ -78,6 +84,7 @@ function find_next_quest($goBack)
   global $taskno;
   global $qno;
   global $Q;
+  global $sep;
   
   $inc = 1;
   if ( isset($goBack) && $goBack ) {
@@ -85,22 +92,25 @@ function find_next_quest($goBack)
   }
   
   $next_q = strval(intval($qno)+$inc);
-  if ( property_exists($Q->$taskno, $next_q )) {
-    return $taskno . "," . $next_q;
+  
+  if ( property_exists($Q[$taskno], $next_q )) {
+    return $taskno . $sep . $next_q;
   }
   
   $next_t = strval(intval($taskno)+$inc);
   if ( $goBack ) {
-    $z = get_object_vars($Q->$next_t);
+    $z = get_object_vars($Q[$next_t]);
     $qq = strval(count($z)-1);
   }
   else {
     $qq = "0";
   }
-  if ( property_exists($Q, $next_t) ) {
-    if ( property_exists($Q->$next_t, $qq) ) {
-      return $next_t . "," . $qq;
-    }
+  
+  if ( property_exists($Q[$next_t], $qq) ) {
+    return $next_t . $sep . $qq;
+  }
+  else {
+    echo "NOPE";
   }
   
   return false;
@@ -247,10 +257,10 @@ function noteAnyDBIssues()
   <div id="container">
     <div id='topPanel'>
       <span class='headingText'>VERITAS London</span>
-      <a style='float:right' class='logout-link'>Log out</a>
+      <a title='Log out' class='logout-icon logout-link'>Log out</a>
       <p class='mini-line-break' />
       <div class='quest-block'>
-        <div class='quest-no'><span><?php if ( !$noHeading ) { if ($isExplanation) { echo "Task " . $taskno; } else { echo "Question " . str_replace(",", "&#8212;", $curr_pos); } } ?></span></div>
+        <div class='quest-no'><span><?php if ( !$noHeading ) { if ($isExplanation) { echo "Task " . $taskno; } else { echo "Question " . str_replace($C['CURR_POS_SEPARATOR'], "&#8212;", $curr_pos); } } ?></span></div>
         <div class='quest-text'><span><?php echo $qtext; ?></span></div>
       </div>
       <p class='mini-line-break' />

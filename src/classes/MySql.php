@@ -48,12 +48,12 @@ class MySql {
   function verify_credentials($username, $salted_password)
   {
     $dbh = $this->initNewPDO();
+    $usrtbl = $this->C['TBL_USERS'];
     $uid_key = $this->C['USR_ID_KEY'];
     $curr_pos_key = $this->C['CURR_POS_KEY'];
-    $usrtbl = $this->C['TBL_USERS'];
-
+    
     /*** prepare the select statement ***/
-    $stmt = $dbh->prepare("SELECT uid, curr_pos FROM " . $usrtbl . " WHERE uname = :phpro_username AND pwd = :phpro_password");
+    $stmt = $dbh->prepare("SELECT " . $uid_key . "," . $curr_pos_key . ", uname FROM " . $usrtbl . " WHERE uname = :phpro_username AND pwd = :phpro_password");
     /*** bind the parameters ***/
     $stmt->bindParam(':phpro_username', $username, PDO::PARAM_STR);
     $stmt->bindParam(':phpro_password', $salted_password, PDO::PARAM_STR, 40);
@@ -68,14 +68,7 @@ class MySql {
       return false;
     }
     /*** if we do have a result, all is well ***/
-    else {
-      /*** set the session user_id variable ***/
-      $_SESSION[$uid_key] = $row[$uid_key];
-      $_SESSION[$curr_pos_key] = $row[$curr_pos_key];
-
-      /*** tell the user we are logged in ***/
-      return true;
-    }
+    return implode("|", array( $row[$uid_key], $row[$curr_pos_key], $row['uname']));
   }
   
   function set_connected($uid, $val = true)
@@ -89,44 +82,17 @@ class MySql {
     $this->execute($stmt);
   }
   
-  function get_curr_quest($username)
+  function update_curr_pos($uid, $new_curr_pos)
   {
-    $this->check_username_defined($username);
+    $_SESSION[$this->C['MAX_POS_KEY']] = $new_curr_pos;
     
-    $query = "SELECT curr_quest FROM ".$this->C['TBL_USERS']." where uname = ?";
+    $dbh = $this->initNewPDO();
+    $users_table = $this->C['TBL_USERS'];
     
-    if ( $stmt = $this->conn->prepare($query) ) {
-      $stmt->bind_param('s', $username);
-      $stmt->execute();
-      $stmt->bind_result($curr_quest);
-      if ( $stmt->fetch() ) {
-        $stmt->close();
-        return $curr_quest;
-      }
-    }
-    return -1;
-  }
-  
-  function update_current_question($username, $new_curr)
-  {
-    $this->check_username_defined($username);
-    
-    $query = "SELECT curr_quest FROM ".$this->C['TBL_USERS']." where uname = ? LIMIT 1";
-    if ( $stmt = $this->conn->prepare($query) ) {
-      $admin_name = $this->C['USR_NAME_ADMIN'];
-      $stmt->bind_param('s', $admin_name);
-      $stmt->execute();
-      $stmt->bind_result($admin_curr_quest);
-      if ( $stmt->fetch() ) {
-        $stmt->close();
-        if ($new_curr <= $admin_curr_quest || $username == $this->C['USR_NAME_ADMIN']) {
-          $this->update_curr($username, $new_curr);
-          return $new_curr;
-        }
-        return -$new_curr;
-      }
-    }
-    return -1;
+    $stmt = $dbh->prepare("UPDATE " . $users_table . " SET curr_pos = :curr_pos WHERE uid = :uid");
+    $stmt->bindParam(':uid', $uid, PDO::PARAM_INT);
+    $stmt->bindParam(':curr_pos', $new_curr_pos, PDO::PARAM_STR);
+    $this->execute($stmt);
   }
   
   function update_curr($username, $curr_quest)
@@ -183,33 +149,34 @@ class MySql {
     return false;
   }
   
-  function admin_connected()
-  {
-    $query = "SELECT connected FROM ".$this->C['TBL_USERS']." where uname = ? LIMIT 1";
-    if ( $stmt = $this->conn->prepare($query) ) {
-      $admin_name = $this->C['USR_NAME_ADMIN'];
-      $stmt->bind_param('s', $admin_name);
-      $stmt->execute();
-      $stmt->bind_result($admin_connected);
-      if ( $stmt->fetch() ) {
-        $stmt->close();
-        return $admin_connected;
-      }
-    }
-    return false;
-  }
-  
-  function check_username_defined($username)
-  {
-    if (empty($username)) {
-      die("Could not complete DB request: User name is undefined");
-    }
-  }
-  
   function log_back($log_msg)
   {
     $_SESSION[$this->C['MYSQL_LOG']] = $log_msg;
   }
+
+  function admin_connected()
+  {
+    $dbh = $this->initNewPDO();
+    $usrtbl = $this->C['TBL_USERS'];
+    $admin_uname = $this->C['USR_NAME_ADMIN'];
+    
+    $stmt = $dbh->prepare("SELECT connected, curr_pos FROM " . $usrtbl . " WHERE uname = :admin_uname");
+    /*** bind the parameters ***/
+    $stmt->bindParam(':admin_uname', $admin_uname, PDO::PARAM_STR);
+
+    /*** execute the prepared statement ***/
+    $this->execute($stmt);
+    /*** check for a result ***/
+    $row = $stmt->fetch();
+    
+    /*** if we have no result then fail boat ***/
+    if ($row == false || $row['connected'] == "0" ) {
+      return false; 
+    }
+    
+    return $row['curr_pos'];
+  }
+  
 }
 
 ?>

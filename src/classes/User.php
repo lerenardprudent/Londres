@@ -1,14 +1,18 @@
 <?php
 require_once 'MySql.php';
 require_once 'classes/Constants.php';
+require_once 'classes/Questionnaire.php';
 
 class User {
+  private $is_instructor;
+  
   function __construct() {
     $this->mysql = new MySql();
     $this->C = new Constants();
-    if ( isset($_SESSION[$this->C['USR_ID_KEY']]) ) {
-      $this->uid = $_SESSION[$this->C['USR_ID_KEY']];
-    }
+    $this->Q = new Questionnaire();
+    $this->uid = -1;
+    $this->curr_pos = "0" . $this->C['CURR_POS_SEPARATOR'] . "0";
+    $this->is_instructor = false;
   }
   
   function validate_credentials($username, $password) {
@@ -16,12 +20,10 @@ class User {
     $password = sha1( $password );
     
     $valid = $this->mysql->verify_credentials($username, $password);
-    if ( $valid ) {
+    if ( $valid !== false ) {
+      $this->login($valid);
       $_SESSION[$this->C['STAT_KEY']] = $this->C['SESS_AUTH_VAL'];
-      $this->uid = $_SESSION[$this->C['USR_ID_KEY']];
-   //   $this->username = $username;
-   //   $curr_quest = $this->mysql->get_curr_quest($this->username);
-      header("location: ".$this->C['SRC_PHP_INDEX']); //."?".$this->C['USR_ID_KEY']."=".$_SESSION[$this->C['USR_ID_KEY']]."&".$this->C['Q_STATUS_KEY']."=".($curr_quest == 1 ? 0 : 1));
+      header("location: ".$this->C['SRC_PHP_INDEX']);
     }
     else {
       return "Please enter a correct username and/or password!";
@@ -29,11 +31,24 @@ class User {
   }
   
   function authorised() {
-    return (isset($_SESSION[$this->C['STAT_KEY']]) && $_SESSION[$this->C['STAT_KEY']] == $this->C['SESS_AUTH_VAL']);
+    $is_authorised = (isset($_SESSION[$this->C['STAT_KEY']]) && $_SESSION[$this->C['STAT_KEY']] == $this->C['SESS_AUTH_VAL']);
+    if ($is_authorised) {
+      $this->uid = $_SESSION[$this->C['USR_ID_KEY']];
+      $this->curr_pos = $_SESSION[$this->C['MAX_POS_KEY']];
+    }
+    
+    return $is_authorised;
   }
   
-  function login() {
-    $this->mysql->set_connected($this->uid);
+  function login($db_vals) {
+    $tokens = explode("|", $db_vals);
+    $uid = $tokens[0];
+    $curr_pos = $tokens[1];
+    $_SESSION[$this->C['USR_ID_KEY']] = $uid;
+    $_SESSION[$this->C['CURR_POS_KEY']] = $curr_pos;
+    $_SESSION[$this->C['MAX_POS_KEY']] = $curr_pos;
+    $this->mysql->set_connected($uid);
+    $this->is_instructor = ( $tokens[2] == $this->C['USR_NAME_ADMIN'] );
   }
   
   function logout() {
@@ -44,23 +59,84 @@ class User {
     $this->mysql->set_connected($this->uid, false);
   }
   
-  function get_current_question() {
-    return $this->mysql->get_curr_quest($this->username);
-  }
-  
   function save_answer($taskno, $qno, $coords, $searches) {
     $this->mysql->save_answer($this->uid, $taskno, $qno, $coords, $searches);
   }
   
-  function update_current_question()
+  function reset_curr_pos()
   {
-    $curr_quest = $this->mysql->get_curr_quest($this->username);
-    return $this->mysql->update_current_question($this->username, $curr_quest+1);
+    $init_pos = $this->Q->get_initial_pos();
+    $this->update_pos($init_pos);
+    $_SESSION[$this->C['CURR_POS_KEY']] = $init_pos;
   }
   
-  function instructor_connected() {
+  function update_curr_pos()
+  {
+    $curr_pos = $_SESSION[$this->C['CURR_POS_KEY']];
+    if ( $this->pos_greater($curr_pos) ) {
+      $this->update_pos($curr_pos);
+    }
+  }
+  
+  function update_pos($new_pos)
+  {
+    $this->curr_pos = $new_pos;
+    $this->mysql->update_curr_pos($this->uid, $this->curr_pos);
+  }
+  
+  function instructor_connected()
+  {
     return $this->mysql->admin_connected();   
   }
+  
+  function instructor_ahead()
+  {
+    $prob = "";
+      if ( !$this->is_instructor ) {
+      $instr_pos = $this->instructor_connected();
+      if ( !$instr_pos ) {
+        $prob = '<p class="retry">Instructor not connected!</p>' .
+                "<p class='retry-info'>Will retry in <span class='secs-left'></span> seconds...</p>";
+      }
+      else if ($this->pos_less($instr_pos) ) {
+        $prob = '<p class="pause">The instructor is currently demonstrating Question ' . str_replace($this->C['CURR_POS_SEPARATOR'], "&ndash;", $instr_pos) . '.</p>'.
+                '<input id="hack" name="hack" type="text" style="display: none" />';
+      }
+    }
+    return $prob;
+  }
+  
+  function instr_ok()
+  {
+    return strlen($this->instructor_ahead()) == 0;
+  }
+  
+  function pos_greater($pos)
+  {
+    $tokens1 = explode($this->C['CURR_POS_SEPARATOR'], $pos);
+    $tokens2 = explode($this->C['CURR_POS_SEPARATOR'], $this->curr_pos);
+    
+    $t1 = intval($tokens1[0]);
+    $q1 = intval($tokens1[1]);
+    $t2 = intval($tokens2[0]);
+    $q2 = intval($tokens2[1]);
+    
+    return $t1 > $t2 || ( $t1 == $t2 && $q1 > $q2 );
+  }
+  
+  function pos_less($pos)
+  {
+    $tokens1 = explode($this->C['CURR_POS_SEPARATOR'], $pos);
+    $tokens2 = explode($this->C['CURR_POS_SEPARATOR'], $this->curr_pos);
+    $t1 = intval($tokens1[0]);
+    $q1 = intval($tokens1[1]);
+    $t2 = intval($tokens2[0]);
+    $q2 = intval($tokens2[1]);
+    
+    return $t1 < $t2 || ( $t1 == $t2 && $q1 < $q2 );
+  }
+  
+  
 }
 
 ?>

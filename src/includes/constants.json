@@ -12,6 +12,7 @@
   "USR_NAME_KEY"        : "uname",
   "USR_ID_KEY"          : "uid",
   "CURR_POS_KEY"        : "curr_pos",
+  "MAX_POS_KEY"         : "max_pos",
   "PWD_KEY"             : "pwd",
   "USR_NAME_UNDEFINED"  : "undefined",
   "USR_NAME_ADMIN"      : "admin",
@@ -26,5 +27,6 @@
   "QUEST_TEXT_SHOW_HEAD": "head",
   "MYSQL_ERROR_MSG"     : "mysqlerr",
   "MYSQL_ERROR_CODE"    : "mysqlcode",
-  "MYSQL_LOG"           : "mysqllog"
+  "MYSQL_LOG"           : "mysqllog",
+  "CURR_POS_SEPARATOR"  : ","
 }
