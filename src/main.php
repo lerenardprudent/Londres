@@ -164,15 +164,6 @@ function noteAnyDBIssues()
 <link rel="stylesheet" href="css/style.css" type="text/css" />
 <link rel="stylesheet" href="css/search.css" media="screen" type="text/css" />
 
-<!-- BOOTSTRAP SCRIPTS -->
-<link rel="stylesheet" href="css/bootstrap/bootstrap.min.css">
-<script type="text/javascript" src="js/bootstrap/bootstrap.min.js"></script>
-<!--<link rel="stylesheet" href="modal/css/bootstrap-modal-bs3patch.css">
-<link rel="stylesheet" href="modal/css/bootstrap-modal.css">
-<script type="text/javascript" src="modal/js/bootstrap-modalmanager.js"> </script>
-<script type="text/javascript" src="modal/js/bootstrap-modal.js"> </script>
-<script type="text/javascript" src="js/bootstrap/bootstrap-filestyle.min.js"> </script>-->
-
 <!-- GOOGLE MAPS -->
 <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD4qnbkOe5X7pll7qyIFtkeLzjzkbPnAGo&amp;libraries=places,drawing,geometry,panoramio,weather&region=ca&sensor=false"></script>
 
@@ -180,6 +171,10 @@ function noteAnyDBIssues()
 <link rel="stylesheet" href="css/fonts.css" type="text/css" />
 <link rel="stylesheet" href="css/font-awesome.css" type="text/css" />
 <link rel="stylesheet" href="css/font-awesome-2.css" type="text/css" />
+
+<!-- BOOTSTRAP SCRIPTS -->
+<link rel="stylesheet" href="css/bootstrap/bootstrap.min.css">
+<script type="text/javascript" src="js/bootstrap/bootstrap.min.js"></script>
   
 <!-- NOTY -->
 <script type="text/javascript" src="js/noty/jquery.noty.js"></script>
