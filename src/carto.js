@@ -8,7 +8,7 @@ function initMap()
     panControl:false,
     scaleControl: true,
     streetViewControl: false,
-    mapTypeControl: false,
+    mapTypeControl: true,
     draggableCursor: 'crosshair',
     mapTypeId: google.maps.MapTypeId.ROADMAP		//HYBRID, SATELLITE, TERRAIN
   }	  
@@ -35,6 +35,7 @@ function initMap()
   
   /********* Map listeners *************/
   google.maps.event.addListener(_map, 'click', handleMapClick);
+  google.maps.event.addListener(_map, 'maptypeid_changed', logMapTypeChange );
   google.maps.event.addListener(_mapmarker, 'dragend', handleMarkerDrag);
   google.maps.event.addListener(_mapmarker, 'click', showMarkerInfoBubble);
 }
@@ -42,7 +43,7 @@ function initMap()
 function doGoogleSearch(searchStr)
 {
   log("Searched for " + quote(searchStr,"'"));
-  _searchQueries.push((_searchModePlaces ? "P:" : "L:") + quote(searchStr));
+  _searchActivity.push((_searchModePlaces ? "PL_SEARCH:" : "LOC_SEARCH:") + quote(searchStr));
   // Force search slider to close
   if ( _searchModePlaces ) {
     radialPlaceSearch(searchStr);
@@ -229,4 +230,9 @@ function addAddress(mark, ref)
 			}, 200);
         }
 	});
+}
+
+function logMapTypeChange()
+{
+  _searchActivity.push( "VIEW_CHANGE:" + quote(_map.getMapTypeId()) );
 }

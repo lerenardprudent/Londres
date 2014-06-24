@@ -27,7 +27,7 @@ if ($U->authorised()) {
   if (isset($_POST['ansSubmitted']) ) {
     $goBack = ( $_POST['ansSubmitted'] < 0 );
     if ( $_POST['ansSubmitted'] > 0 ) {
-      $U->save_answer( $taskno, $qno, $_POST['ansAnswered'], $_POST['ansCoords'], $_POST['ansAddr'], $_POST['ansSearches'] );
+      $U->save_answer( $taskno, $qno, $_POST['ansAnswered'], $_POST['ansCoords'], $_POST['ansAddr'], $_POST['ansSearchActivity'] );
       noteAnyDBIssues();
     }
     $next_pos = find_next_quest($goBack);
@@ -201,7 +201,7 @@ function noteAnyDBIssues()
 	var _placesServ;
   var _infoBubble;
   var _timer;
-  var _searchQueries = [];
+  var _searchActivity = [];
   var _endOfQuestionnaire = false;
   var _isExplanation = false;
   var _searchModePlaces = false;
@@ -301,7 +301,7 @@ function noteAnyDBIssues()
         <input id='ansAnswered' name='ansAnswered' type='hidden' />
         <input id='ansCoords' name='ansCoords' type='hidden' />
         <input id='ansAddr' name='ansAddr' type='hidden' />
-        <input id='ansSearches' name='ansSearches' type='hidden' />
+        <input id='ansSearchActivity' name='ansSearchActivity' type='hidden' />
         <input id='ansSubmitted' name='ansSubmitted' type='hidden' />
         <input class='questInfo' type='hidden' value='<?php echo $questInfo; ?>' />
         <input class='dbErr' type='hidden' value='<?php echo $db_err; ?>' />
@@ -444,7 +444,7 @@ function noteAnyDBIssues()
         else if ( !button.hasClass('confirm-btn') ) { 
           $('#ansSubmitted').val(1);
           $('#ansAnswered').val(1);
-          $('#ansSearches').val(_searchQueries.join(","));
+          $('#ansSearchActivity').val(_searchActivity.join(","));
           $('#ansCoords').val(_markerCoords.lat() + ", " + _markerCoords.lng());
           $('#ansAddr').val(_markerAddr);
         }
