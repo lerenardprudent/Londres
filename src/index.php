@@ -12,11 +12,10 @@ $Q = new Questionnaire();
 $sess_curr_pos = -1;
 $curr_pos_key = $C['CURR_POS_KEY'];
 if ($U->authorised()) {
-  
+  $sess_curr_pos = $_SESSION[$curr_pos_key];
   $instr_html = $U->instructor_ahead();
   
   if (isset($_POST['submit'])) {
-    $sess_curr_pos = $_SESSION[$curr_pos_key];
     $curr_pos = $sess_curr_pos;
   }
 }

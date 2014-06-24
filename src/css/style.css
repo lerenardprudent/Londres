@@ -252,8 +252,8 @@ a { text-decoration: none; }
 
 .logout-link {
   position: absolute;
-  top:0;
-  right:0;
+  top:5px;
+  right:5px;
 }
 
 .logout-icon {
@@ -279,4 +279,32 @@ a { text-decoration: none; }
 .secs-left
 {
   font-weight: bold
+}
+
+.radio-div {
+  display: block;
+}
+
+.radio-text {
+  font-weight: bold !important;
+}
+
+.ans-option {
+  display:none;
+}
+
+.temp-disabl {
+  color: lightgrey !important;
+}
+
+.marker-addr {
+  font-style: italic;
+}
+
+.pointer {
+  cursor: pointer;
+}
+
+.under-radio {
+  margin-left: 20px;
 }

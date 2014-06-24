@@ -59,8 +59,8 @@ class User {
     $this->mysql->set_connected($this->uid, false);
   }
   
-  function save_answer($taskno, $qno, $coords, $searches) {
-    $this->mysql->save_answer($this->uid, $taskno, $qno, $coords, $searches);
+  function save_answer($taskno, $qno, $answered, $coords, $addr, $searches) {
+    $this->mysql->save_answer($this->uid, $taskno, $qno, $answered, $coords, $addr, $searches);
   }
   
   function reset_curr_pos()

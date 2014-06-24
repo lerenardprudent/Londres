@@ -96,6 +96,7 @@ function geocoderResponse(results, status)
     ok = true;
     var res_index = 0;
     _markerAddr = results[res_index].formatted_address;
+    $('.marker-addr').text(_markerAddr);
 		_markerCoords = results[res_index].geometry.location;
     log(results.length + " match" + (results.length == 1 ? "" : "es") + " found - choosing "  + quote(_markerAddr,"'"));
     placeMapMarker(_markerCoords);
@@ -126,8 +127,8 @@ function placeMapMarker(coords)
   _mapmarker.setVisible(true);
   if ( firstTimeHere ) {
     _mapmarker.setAnimation(null);
+    $('.temp-disabl').removeClass('temp-disabl').prop('disabled', false);
   }
-  $('.submit-btn').prop('disabled', false);
   showMarkerInfoBubble();
 }
 

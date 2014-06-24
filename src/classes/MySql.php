@@ -105,7 +105,7 @@ class MySql {
     }
   }
   
-  function save_answer($uid, $taskno, $qno, $coords, $searches)
+  function save_answer($uid, $taskno, $qno, $answered, $coords, $addr, $searches)
   {
     $dbh = $this->initNewPDO();
     $dbh2 = $this->initNewPDO();
@@ -117,22 +117,26 @@ class MySql {
     $geom_txt = "POINT(" . $lat . " " . $lng . ")";
     $ret_code = -1;
     /*** prepare the select statement ***/
-    $stmt = $dbh->prepare("INSERT INTO " . $answers_tbl . " (taskno,qno,geom_type,id,searches,geom) VALUES (:taskno,:qno,:geom_type,:uid,:searches,GeomFromText(:geom_txt))");
+    $stmt = $dbh->prepare("INSERT INTO " . $answers_tbl . " (taskno,qno,answered,geom_type,id,searches,addr,geom) VALUES (:taskno,:qno,:answered,:geom_type,:uid,:searches,:addr, GeomFromText(:geom_txt))");
     /*** bind the parameters ***/
     $stmt->bindParam(':taskno', $taskno, PDO::PARAM_INT);
     $stmt->bindParam(':qno', $qno, PDO::PARAM_INT);
+    $stmt->bindParam(':answered', $answered, PDO::PARAM_INT);
     $stmt->bindParam(':geom_type', $geom_type, PDO::PARAM_STR);
     $stmt->bindParam(':uid', $uid, PDO::PARAM_INT);
     $stmt->bindParam(':searches', $searches, PDO::PARAM_STR);
+    $stmt->bindParam(':addr', $addr, PDO::PARAM_STR);
     $stmt->bindParam(':geom_txt', $geom_txt, PDO::PARAM_STR);
     $ret_code = $this->execute($stmt);
     $rowsUpdated = $stmt->rowCount();
     
     if ( $ret_code == 23000 ) {
-      $stmt2 = $dbh2->prepare("UPDATE " . $answers_tbl . " SET geom_type=:geom_type, geom=GeomFromText(:geom_txt),searches=:searches WHERE id=:uid AND taskno=:taskno AND qno=:qno");
+      $stmt2 = $dbh2->prepare("UPDATE " . $answers_tbl . " SET answered=:answered, addr=:addr, geom_type=:geom_type, geom=GeomFromText(:geom_txt),searches=:searches WHERE id=:uid AND taskno=:taskno AND qno=:qno");
       $stmt2->bindParam(':uid', $uid, PDO::PARAM_INT);
       $stmt2->bindParam(':taskno', $taskno, PDO::PARAM_INT);
       $stmt2->bindParam(':qno', $qno, PDO::PARAM_INT);
+      $stmt2->bindParam(':answered', $answered, PDO::PARAM_INT);
+      $stmt2->bindParam(':addr', $addr, PDO::PARAM_STR);
       $stmt2->bindParam(':geom_type', $geom_type, PDO::PARAM_STR);
       $stmt2->bindParam(':geom_txt', $geom_txt, PDO::PARAM_STR);
       $stmt2->bindParam(':searches', $searches, PDO::PARAM_STR);

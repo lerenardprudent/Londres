@@ -27,7 +27,7 @@ if ($U->authorised()) {
   if (isset($_POST['ansSubmitted']) ) {
     $goBack = ( $_POST['ansSubmitted'] < 0 );
     if ( $_POST['ansSubmitted'] > 0 ) {
-      $U->save_answer( $taskno, $qno, $_POST['ansCoords'], $_POST['ansSearches'] );
+      $U->save_answer( $taskno, $qno, $_POST['ansAnswered'], $_POST['ansCoords'], $_POST['ansAddr'], $_POST['ansSearches'] );
       noteAnyDBIssues();
     }
     $next_pos = find_next_quest($goBack);
@@ -153,6 +153,9 @@ function noteAnyDBIssues()
 
 <!-- JQUERY -->
 <script type="text/javascript" src="js/jquery/jquery-1.10.2.min.js"></script>
+<link rel="stylesheet" type="text/css" href="css/jquery-ui.css" />	
+<link rel="stylesheet" type="text/css" href="css/jquery-ui-1.10.3.custom.min.css" />
+<script type="text/javascript" src="js/jquery/jquery-ui-1.10.3.custom.min.js"></script>
 
 <!-- PROJECT SCRIPTS -->
 <script type="text/javascript" src="constants.js"></script>
@@ -209,7 +212,7 @@ function noteAnyDBIssues()
   $(document).ready( function() {
     var logoutHref = Consts.get('SRC_PHP_LOGIN') + '?' + Consts.get('STAT_KEY') + '=' + Consts.get('SESS_END_VAL');
     $('.logout-link').attr('href', logoutHref);
-    $('.submit-btn').click(processFormSubmit);
+    $('.submit-btn').click(function() { processFormSubmit($(this)); });
     logAnyDBIssues();
     
     $('.search-button').click( switchSearchMode );
@@ -253,6 +256,22 @@ function noteAnyDBIssues()
       searchBtn.on('mouseover', function(e) {
         searchField.focus();
       });
+      
+      $('.answer-btn').attr('type','button').addClass('confirm-btn');
+      $('.confirm-btn').click( function() { 
+        if ( $(this).hasClass('confirm-btn') ) { 
+          $('#confirmModal').modal(); 
+          var radioBtns = $('input[name=ansConfirm]');
+          radioBtns.change(function() { 
+            var idxSelected = radioBtns.index($('input[name=ansConfirm]:checked'));
+            radioBtns.eq(1-idxSelected).parent().next().find('select').hide('blind', 300);
+            radioBtns.eq(idxSelected).parent().next().find('select').show('blind', 300);
+            setSubmitBtnEnabledStatus();
+          });
+          $('.ans-option').change( setSubmitBtnEnabledStatus );
+        } });
+      $('.btn-primary').click(function() { $('.close').click(); $('.answer-btn').toggleClass('confirm-btn').attr('type', 'submit').click(); });
+      
       initMap();
     }
   });
@@ -279,7 +298,9 @@ function noteAnyDBIssues()
         </div>
       <form method="post" action="" class='form'>
         <input id='ansQID' name='ansQID' type='hidden' value='<?php echo $_SESSION[$curr_pos_key]; ?>'/>
+        <input id='ansAnswered' name='ansAnswered' type='hidden' />
         <input id='ansCoords' name='ansCoords' type='hidden' />
+        <input id='ansAddr' name='ansAddr' type='hidden' />
         <input id='ansSearches' name='ansSearches' type='hidden' />
         <input id='ansSubmitted' name='ansSubmitted' type='hidden' />
         <input class='questInfo' type='hidden' value='<?php echo $questInfo; ?>' />
@@ -287,7 +308,51 @@ function noteAnyDBIssues()
         <input class='dbLog' type='hidden' value='<?php echo $db_log; ?>' />
         <div class='submit-div'>
           <input id='back' type='submit' value='&larr; Go back' class='back-btn submit-btn' />
-          <input id='submit' type='submit' value='Submit answer &rarr;' class='answer-btn submit-btn' disabled/>
+          <input id='submit' type='submit' value='Submit answer &rarr;' class='answer-btn submit-btn'/>
+        </div>
+        <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModal" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModalLabel">Confirm answer</h4>
+              </div>
+              <div class="modal-body">
+                <div>
+                  <div class='radio-div'>
+                    <input type="radio" name="ansConfirm" id="yes" class='temp-disabl pointer' value="1" disabled />
+                    <label for="yes" class='radio-text temp-disabl pointer'>Submit address designated by pushpin</label>
+                  </div>
+                  <div class='under-radio'>
+                    <p class='marker-addr'></p>
+                    <select class='ans-option'>
+                      <option>-- Please rate your confidence level --</option>
+                      <option>Very sure</option>
+                      <option>Quite sure</option>
+                      <option>Neither sure nor unsure</option>
+                      <option>Quite unsure</option>
+                      <option>Very unsure</option>
+                    </select>
+                  </div>
+                  <div class='radio-div' style='margin-top: 20px'>
+                    <input type="radio" name="ansConfirm" id="r2" class='pointer' value="2" />
+                    <label for="r2" class='radio-text pointer'>Submit no answer</label>
+                  </div>
+                  <div class='under-radio'>
+                    <select class='ans-option'>
+                      <option>-- Please indicate your reason --</option>
+                      <option>Cannot locate place on map</option>
+                      <option>Do not wish to answer</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" disabled>Submit</button>
+              </div>
+            </div>
+          </div>
         </div>
       </form>
     </div>
@@ -365,7 +430,7 @@ function noteAnyDBIssues()
     function processFormSubmit(button)
     {
       $('#ansSubmitted').val(0); 
-      var goingBack = ( button.currentTarget.id == "back" );
+      var goingBack = ( button.hasClass('back-btn' ) );
       if ( goingBack ) {
         $('#ansSubmitted').val(-1); 
       }
@@ -375,10 +440,13 @@ function noteAnyDBIssues()
             $('.logout-link')[0].click();
           }
         }
-        else { // Don't enter here unless we have coords to submit!
+        /* This function gets triggered whether the button is of type submit or not, so we need to make sure that we are ready to submit by looking for absence of class confirm-btn */
+        else if ( !button.hasClass('confirm-btn') ) { 
           $('#ansSubmitted').val(1);
+          $('#ansAnswered').val(1);
           $('#ansSearches').val(_searchQueries.join(","));
           $('#ansCoords').val(_markerCoords.lat() + ", " + _markerCoords.lng());
+          $('#ansAddr').val(_markerAddr);
         }
       }
     }
@@ -444,23 +512,16 @@ function noteAnyDBIssues()
       });
       return f;
     }
+    
+    function setSubmitBtnEnabledStatus()
+    {
+      var radioBtns = $('input[name=ansConfirm]');
+      var idxSelected = radioBtns.index($('input[name=ansConfirm]:checked'));
+      var ansSelect = radioBtns.eq(idxSelected).parent().next().find('select');
+      var idx = ansSelect[0].selectedIndex;
+      $('.btn-primary').prop('disabled', idx == 0);
+    }
+    
   </script>
-  <div class="modal fade" id="basicModal" tabindex="-1" role="dialog" aria-labelledby="basicModal" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-          <h4 class="modal-title" id="myModalLabel">Basic Modal</h4>
-        </div>
-        <div class="modal-body">
-          <h3>Modal Body</h3>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary">Save changes</button>
-        </div>
-      </div>
-    </div>
-  </div>
 </body>
 </html>
