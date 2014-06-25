@@ -525,5 +525,12 @@ function noteAnyDBIssues()
     }
     
   </script>
+  <div id="draggable" class="ui-widget-content places-control">
+    <div class="ui-widget-header">
+      <span>Results</span>
+      <button class='close-places-control close' onclick='removePlaceMarkers();'>x</button>
+    </div>
+    <ol class='places-list'></ol>
+  </div>
 </body>
 </html>

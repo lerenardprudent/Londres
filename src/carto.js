@@ -202,25 +202,31 @@ function removePlaceMarkers()
 		removePlaceMarker(i);
 	}
 	_placeMarkers = [];
-	//clearfindpanel();
+	banishPlacesControl();
 	_map.setOptions({ draggableCursor: 'crosshair'});
 }
 
 function removePlaceMarker(id) 
 {
-	/*_infowin.close();
-	if(_findmarkers[id] == null){ return; }
+	_infoBubble.close();
+	if (_placeMarkers[id] == null) { return; }
 	var l = document.getElementById('lsm'+id);
-	try{ l.parentNode.removeChild(l); } catch(er){}
-	try{ clearListeners(_findmarkers[id], 'click'); } catch(er){}
-	try{ _findmarkers[id].setMap(null);} catch(er){ _findmarkers[id] = null; }
-	try{_findmarkers[id] = null; } catch(er){}*/
+	try { l.parentNode.removeChild(l); } catch(er){}
+	try { clearListeners(_placeMarkers[id], 'click'); } catch(er){}
+	try { _placeMarkers[id].setMap(null);} catch(er){ _placeMarkers[id] = null; }
+	try {_placeMarkers[id] = null; } catch(er){}
+}
+
+function banishPlacesControl()
+{
+  $('.places-list').html("");
+  $('.places-control').hide();
 }
 
 function pinPlaceMarkers(places) 			//search results
 {
 	_bnds = new google.maps.LatLngBounds();
-	//var placesList = document.getElementById('places');
+	var placesList = $('.places-list');
 
 	for (var i = 0, place; place = places[i]; i++)
 	{
@@ -237,13 +243,16 @@ function pinPlaceMarkers(places) 			//search results
 		google.maps.event.addListener(marker, 'mouseover', showPlaceMarkerAddr);
 		google.maps.event.addListener(marker, 'mouseout', function() { _infoBubble.close(); });
 		google.maps.event.addListener(marker, 'click', pinMapMarkerAtPlace );
-		//placesList.innerHTML += "<li id='lsm" + mark.ID + "' title=\"" + place.name + "\"><a style='color:#404040; width:186px;' href='javascript:selectfindmarker(" + marke.ID + ")'>" + (marker.ID+1) + ". " + place.name + "</a></li>";*/
 		_bnds.extend(place.geometry.location);
 		_zoomSnapTo = true;
 		addAddress(marker, place.reference);
 		_placeMarkers.push(marker);
+    placesList.append(  "<li id='lsm" + marker.ID + "' title=\"" + place.name + "\">" +
+                          "<a href='javascript:selectPlaceMarker(" + marker.ID + ")'>" + /*(marker.ID+1) + ". " + */place.name + "</a>"+
+                        "</li>");
 	}
 	_map.fitBounds(_bnds);
+  $('.places-control').draggable().show();
 }
 
 function addAddress(mark, ref)
@@ -255,6 +264,7 @@ function addAddress(mark, ref)
 				log('Set ' + mark.name + details.name + details.formatted_address);
 				mark.address = details.formatted_address;
 				mark.vicinity = details.vicinity;
+        $('#lsm'  + mark.ID).prop('title', mark.address);
 			}
 			else if (status === google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
 				setTimeout(function() {
@@ -273,19 +283,18 @@ function showPlaceMarkerAddr() {
 	_infoBubble.setContent(getPlaceInfoBubbleHtml(this));
   _infoBubble.set('pixelOffset', _placesIBOffset );
 	_infoBubble.open(_map, this);
-  var h = $('.bubble-tbl').height();
-  var w = $('.bubble-tbl').width()
-  $('.info-bubble-place-details').height(h*1.2);
-  $('.info-bubble-place-details').width(w*1.2);
+  var innerDiv = $('.info-bubble-place-details').children().eq(0);
+  var h = innerDiv.height();
+  var w = innerDiv.width();
+  var scale = 1.1;
+  $('.info-bubble-place-details').height(h*scale);
+  $('.info-bubble-place-details').width(w*scale);
 };
 
 function getPlaceInfoBubbleHtml(place)
 {
   var html =  "<div class='info-bubble-place-details'>" +
-                "<table class='bubble-tbl'>" +
-                  "<tr><td>Name</td><td>" + place.name + "</td></tr>" +
-                  "<tr><td>Address</td><td>" + place.address + "</td></tr>" +
-                "</table>" +
+                "<span>" + place.name + "</span>" +
               "</div>";
   return html;
 }
@@ -299,4 +308,11 @@ function pinMapMarkerAtPlace()
   _markerAddr = this.name + ", " + addr;
   $('.marker-addr').text(_markerAddr);
   _markerCoords = coords;
+}
+
+function selectPlaceMarker(id)
+{
+	var markerPos = _placeMarkers[id].getPosition();
+	_map.panTo(markerPos);
+	google.maps.event.trigger(_placeMarkers[id], 'mouseover');
 }

@@ -309,9 +309,6 @@ a { text-decoration: none; }
   margin-left: 20px;
 }
 
-#draggable, #draggable2 { width: 100px; height: 100px; padding: 0.5em; float: left; margin: 0 10px 10px 0; }
-#draggable p { cursor: move; }
-
 .info-bubble-place-details {
   display: inline-block;
   overflow: hidden;
@@ -320,4 +317,52 @@ a { text-decoration: none; }
 table tr td {
     padding-left: 3px;
     padding-right: 3px;
+}
+
+.places-control {
+  display: none;
+  cursor: move;
+  position: absolute;
+  bottom: 0;
+  right: 100px;
+  font-size: 10px;
+  
+  /*width: 100px; 
+  height: 100px; 
+  padding: 0.5em; 
+  float: left; 
+  margin: 0 10px 10px 0; */
+}
+
+.places-control div {
+  padding: 1px
+}
+
+.places-control span {
+  line-height: 1.5;
+}
+
+li:nth-child(2n+1) {
+    background-color: #fdfdfd;
+    /*height: 12px;*/
+    padding: 2px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+li {
+    background-color: #f4f4f4;
+    /*height: 12px;*/
+    padding: 2px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.close-places-control {
+  font-size: 15px !important;
+}
+
+.places-list {
+  padding-left: 30px;
+  margin-bottom: 0
 }
