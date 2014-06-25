@@ -36,6 +36,13 @@ function initMap()
   /********* Map listeners *************/
   google.maps.event.addListener(_map, 'click', handleMapClick);
   google.maps.event.addListener(_map, 'maptypeid_changed', logMapTypeChange );
+  google.maps.event.addListener(_map, 'bounds_changed', function(event) {
+		var zoomLevel = _map.getZoom();
+		if ( _zoomSnapTo && zoomLevel > _closeUpZoomLevel ) {
+			_zoomSnapTo = false;
+			_map.setZoom(_closeUpZoomLevel);
+		}
+	});
   google.maps.event.addListener(_mapmarker, 'dragend', handleMarkerDrag);
   google.maps.event.addListener(_mapmarker, 'click', showMarkerInfoBubble);
 }
@@ -141,6 +148,7 @@ function handleMarkerDrag(e)
 
 function showMarkerInfoBubble()
 {
+  _infoBubble.set('pixelOffset', null );
   _infoBubble.open(_map, _mapmarker);
   window.clearTimeout(_timer);
   _timer = setTimeout( function() {_infoBubble.close()}, 5000);
@@ -152,10 +160,9 @@ function radialPlaceSearch(searchString)
 	//morebtn.style.cssText = "color:#FFFFFF; background-color:#C71F2D; cursor: pointer";
 	
 	var kwds = searchString.split(' ');
-	if(kwds.length > 0)
+	if (kwds.length > 0)
 	{
-		//clearAllSearchResults();
-		//_addr_changed = false;
+		removePlaceMarkers();
 		_placesServ.nearbySearch({ location:_map.getCenter(), radius:_placesSearchRadius*1000, keyword:kwds }, radialSearchResponse);
 	}
 }
@@ -163,16 +170,14 @@ function radialPlaceSearch(searchString)
 function radialSearchResponse(results, status, pagination) 
 {
 	if (status != google.maps.places.PlacesServiceStatus.OK) {
-		/*showDialog( bilingualSubstitution("Aucun lieu correspondant aux mots-clés n'a été trouvé. Veuillez réessayer avec d'autres mots-clés ou avec une adresse. / No places matching your keywords were found. Please try again with different keywords or with an address." ));
-		clearAddressField();*/
-    alert("Places search prob");
+		alert("Places search prob");
 		return;
 	}
 	
   /*
 	document.getElementById('findspanel').style.visibility = "visible";
   */
-	makefindmarkers(results);
+	pinPlaceMarkers(results);
 	/*var morebtn = document.getElementById('morefinds');
 	if (pagination.hasNextPage) 
 	{
@@ -188,28 +193,55 @@ function radialSearchResponse(results, status, pagination)
 	$("#morefinds").focus();
 	_map.setOptions({ draggableCursor: ''});
   */
-  log(results);
 }
 
-function makefindmarkers(places) 			//search results
+function removePlaceMarkers()
+{
+	for (var i = 0; i < _placeMarkers.length; i++)
+	{ 
+		removePlaceMarker(i);
+	}
+	_placeMarkers = [];
+	//clearfindpanel();
+	_map.setOptions({ draggableCursor: 'crosshair'});
+}
+
+function removePlaceMarker(id) 
+{
+	/*_infowin.close();
+	if(_findmarkers[id] == null){ return; }
+	var l = document.getElementById('lsm'+id);
+	try{ l.parentNode.removeChild(l); } catch(er){}
+	try{ clearListeners(_findmarkers[id], 'click'); } catch(er){}
+	try{ _findmarkers[id].setMap(null);} catch(er){ _findmarkers[id] = null; }
+	try{_findmarkers[id] = null; } catch(er){}*/
+}
+
+function pinPlaceMarkers(places) 			//search results
 {
 	_bnds = new google.maps.LatLngBounds();
 	//var placesList = document.getElementById('places');
 
 	for (var i = 0, place; place = places[i]; i++)
 	{
-		var image = {url:place.icon, size:new google.maps.Size(40, 40), origin:new google.maps.Point(0, 0), anchor:new google.maps.Point(10,20), scaledSize:new google.maps.Size(20, 20)};
-		var mark = new google.maps.Marker({ map:_map, /*icon:image,*/ position:place.geometry.location, raiseOnDrag:false });
-		/*mark.ID = _findmarkers.length;
-		mark.name = place.name;
-		google.maps.event.addListener(mark, 'mouseover', placeHoverListener);
-		google.maps.event.addListener(mark, 'mouseout', function() { _infowin.close(); });
-		google.maps.event.addListener(mark, 'click', placeClickListener );
-		placesList.innerHTML += "<li id='lsm" + mark.ID + "' title=\"" + place.name + "\"><a style='color:#404040; width:186px;' href='javascript:selectfindmarker(" + mark.ID + ")'>" + (mark.ID+1) + ". " + place.name + "</a></li>";*/
+		var image = {
+      url:place.icon, 
+      size:new google.maps.Size(40, 40), 
+      origin:new google.maps.Point(0, 0), 
+      anchor:new google.maps.Point(10,20), 
+      scaledSize:new google.maps.Size(20, 20)
+    };
+		var marker = new google.maps.Marker({ map:_map, icon:image, position:place.geometry.location, raiseOnDrag:false });
+		marker.ID = _placeMarkers.length;
+		marker.name = place.name;
+		google.maps.event.addListener(marker, 'mouseover', showPlaceMarkerAddr);
+		google.maps.event.addListener(marker, 'mouseout', function() { _infoBubble.close(); });
+		//google.maps.event.addListener(marker, 'click', placeClickListener );
+		//placesList.innerHTML += "<li id='lsm" + mark.ID + "' title=\"" + place.name + "\"><a style='color:#404040; width:186px;' href='javascript:selectfindmarker(" + marke.ID + ")'>" + (marker.ID+1) + ". " + place.name + "</a></li>";*/
 		_bnds.extend(place.geometry.location);
-		//_zoomSnapTo = true;
-		addAddress(mark, place.reference);
-		//_findmarkers.push(mark);
+		_zoomSnapTo = true;
+		addAddress(marker, place.reference);
+		_placeMarkers.push(marker);
 	}
 	_map.fitBounds(_bnds);
 }
@@ -235,4 +267,25 @@ function addAddress(mark, ref)
 function logMapTypeChange()
 {
   _searchActivity.push( "VIEW_CHANGE:" + quote(_map.getMapTypeId()) );
+}
+
+function showPlaceMarkerAddr() {
+	_infoBubble.setContent(getPlaceInfoBubbleHtml(this));
+  _infoBubble.set('pixelOffset', _placesIBOffset );
+	_infoBubble.open(_map, this);
+  var h = $('.bubble-tbl').height();
+  var w = $('.bubble-tbl').width()
+  $('.info-bubble-place-details').height(h*1.2);
+  $('.info-bubble-place-details').width(w*1.2);
+};
+
+function getPlaceInfoBubbleHtml(place)
+{
+  var html =  "<div class='info-bubble-place-details'>" +
+                "<table class='bubble-tbl'>" +
+                  "<tr><td>Name</td><td>" + place.name + "</td></tr>" +
+                  "<tr><td>Address</td><td>" + place.address + "</td></tr>" +
+                "</table>" +
+              "</div>";
+  return html;
 }

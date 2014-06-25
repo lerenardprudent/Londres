@@ -201,6 +201,10 @@ function noteAnyDBIssues()
   var _isExplanation = false;
   var _searchModePlaces = false;
   var _placesSearchRadius = 5; // km
+  var _placeMarkers = [];
+  var _zoomSnapTo = false;
+  var _closeUpZoomLevel = 15;
+  var _placesIBOffset = new google.maps.Size(-10, 0);
 </script>
 
 <script type="text/javascript">
