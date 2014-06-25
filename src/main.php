@@ -27,7 +27,7 @@ if ($U->authorised()) {
   if (isset($_POST['ansSubmitted']) ) {
     $goBack = ( $_POST['ansSubmitted'] < 0 );
     if ( $_POST['ansSubmitted'] > 0 ) {
-      $U->save_answer( $taskno, $qno, $_POST['ansAnswered'], $_POST['ansCoords'], $_POST['ansAddr'], $_POST['ansSearchActivity'] );
+      $U->save_answer( $taskno, $qno, $_POST['ansAnswered'], $_POST['ansInfo'], $_POST['ansCoords'], $_POST['ansAddr'], $_POST['ansSearchActivity'] );
       noteAnyDBIssues();
     }
     $next_pos = find_next_quest($goBack);
@@ -294,6 +294,7 @@ function noteAnyDBIssues()
       <form method="post" action="" class='form'>
         <input id='ansQID' name='ansQID' type='hidden' value='<?php echo $_SESSION[$curr_pos_key]; ?>'/>
         <input id='ansAnswered' name='ansAnswered' type='hidden' />
+        <input id='ansInfo' name='ansInfo' type='hidden' />
         <input id='ansCoords' name='ansCoords' type='hidden' />
         <input id='ansAddr' name='ansAddr' type='hidden' />
         <input id='ansSearchActivity' name='ansSearchActivity' type='hidden' />
@@ -320,7 +321,7 @@ function noteAnyDBIssues()
                   </div>
                   <div class='under-radio'>
                     <p class='marker-addr'></p>
-                    <select class='ans-option'>
+                    <select id='confOptions' class='ans-option'>
                       <option>-- Please rate your confidence level --</option>
                       <option>Very sure</option>
                       <option>Quite sure</option>
@@ -334,7 +335,7 @@ function noteAnyDBIssues()
                     <label for="r2" class='radio-text pointer'>Submit no answer</label>
                   </div>
                   <div class='under-radio'>
-                    <select class='ans-option'>
+                    <select id='reasonOptions' class='ans-option'>
                       <option>-- Please indicate your reason --</option>
                       <option>Cannot locate place on map</option>
                       <option>Do not wish to answer</option>
@@ -438,9 +439,11 @@ function noteAnyDBIssues()
         /* This function gets triggered whether the button is of type submit or not, so we need to make sure that we are ready to submit by looking for absence of class confirm-btn */
         else if ( !button.hasClass('confirm-btn') ) { 
           $('#ansSubmitted').val(1);
-          $('#ansAnswered').val(1);
+          var answered = $('input[name=ansConfirm]:checked').prop('id') == 'yes';
+          $('#ansAnswered').val(answered ? 1 : 0);
+          $('#ansInfo').val(answered ? $('#confOptions')[0].selectedIndex : ($('#confOptions option').length-1) + $('#reasonOptions')[0].selectedIndex );
           $('#ansSearchActivity').val(_searchActivity.join(","));
-          $('#ansCoords').val(_markerCoords.lat() + ", " + _markerCoords.lng());
+          $('#ansCoords').val(answered ? _markerCoords.lat() + " " + _markerCoords.lng() : "0 0");
           $('#ansAddr').val(_markerAddr);
         }
       }

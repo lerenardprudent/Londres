@@ -105,40 +105,41 @@ class MySql {
     }
   }
   
-  function save_answer($uid, $taskno, $qno, $answered, $coords, $addr, $searches)
+  function save_answer($uid, $taskno, $qno, $answered, $ans_info, $coords, $addr, $searches)
   {
     $dbh = $this->initNewPDO();
     $dbh2 = $this->initNewPDO();
     $answers_tbl = $this->C['TBL_ANSWERS'];
-    $tokens = explode(",", $coords);
-    $lat = $tokens[0];
-    $lng = $tokens[1];
     $geom_type = "point";
-    $geom_txt = "POINT(" . $lat . " " . $lng . ")";
+    $geom_str = ( $answered ? "GeomFromText(:geom_txt)" : "null" );
+    $geom_txt = "POINT(" . $coords . ")";
     $ret_code = -1;
+    
     /*** prepare the select statement ***/
-    $stmt = $dbh->prepare("INSERT INTO " . $answers_tbl . " (taskno,qno,answered,geom_type,id,searches,addr,geom) VALUES (:taskno,:qno,:answered,:geom_type,:uid,:searches,:addr, GeomFromText(:geom_txt))");
+    $stmt = $dbh->prepare("INSERT INTO " . $answers_tbl . " (taskno,qno,answered,ansinfo,geom_type,id,searches,addr,geom) VALUES (:taskno,:qno,:answered,:ans_info, :geom_type,:uid,:searches,:addr," . $geom_str . ")");
     /*** bind the parameters ***/
     $stmt->bindParam(':taskno', $taskno, PDO::PARAM_INT);
     $stmt->bindParam(':qno', $qno, PDO::PARAM_INT);
     $stmt->bindParam(':answered', $answered, PDO::PARAM_INT);
+    $stmt->bindParam(':ans_info', $ans_info, PDO::PARAM_INT);
     $stmt->bindParam(':geom_type', $geom_type, PDO::PARAM_STR);
     $stmt->bindParam(':uid', $uid, PDO::PARAM_INT);
     $stmt->bindParam(':searches', $searches, PDO::PARAM_STR);
     $stmt->bindParam(':addr', $addr, PDO::PARAM_STR);
-    $stmt->bindParam(':geom_txt', $geom_txt, PDO::PARAM_STR);
+    if ( $answered ) { $stmt->bindParam(':geom_txt', $geom_txt, PDO::PARAM_STR); }
     $ret_code = $this->execute($stmt);
     $rowsUpdated = $stmt->rowCount();
     
     if ( $ret_code == 23000 ) {
-      $stmt2 = $dbh2->prepare("UPDATE " . $answers_tbl . " SET answered=:answered, addr=:addr, geom_type=:geom_type, geom=GeomFromText(:geom_txt),searches=:searches WHERE id=:uid AND taskno=:taskno AND qno=:qno");
+      $stmt2 = $dbh2->prepare("UPDATE " . $answers_tbl . " SET answered=:answered, ansinfo=:ans_info, addr=:addr, geom_type=:geom_type, geom=" . $geom_str . ",searches=:searches WHERE id=:uid AND taskno=:taskno AND qno=:qno");
       $stmt2->bindParam(':uid', $uid, PDO::PARAM_INT);
       $stmt2->bindParam(':taskno', $taskno, PDO::PARAM_INT);
       $stmt2->bindParam(':qno', $qno, PDO::PARAM_INT);
       $stmt2->bindParam(':answered', $answered, PDO::PARAM_INT);
+      $stmt2->bindParam(':ans_info', $ans_info, PDO::PARAM_INT);
       $stmt2->bindParam(':addr', $addr, PDO::PARAM_STR);
       $stmt2->bindParam(':geom_type', $geom_type, PDO::PARAM_STR);
-      $stmt2->bindParam(':geom_txt', $geom_txt, PDO::PARAM_STR);
+      if ( $answered ) { $stmt2->bindParam(':geom_txt', $geom_txt, PDO::PARAM_STR); }
       $stmt2->bindParam(':searches', $searches, PDO::PARAM_STR);
       $ret_code = $this->execute($stmt2);
       $rowsUpdated = $stmt2->rowCount();
