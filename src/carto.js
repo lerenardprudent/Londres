@@ -107,7 +107,7 @@ function geocoderResponse(results, status)
     $('.marker-addr').text(_markerAddr);
 		_markerCoords = results[res_index].geometry.location;
     log(results.length + " match" + (results.length == 1 ? "" : "es") + " found - choosing "  + quote(_markerAddr,"'"));
-    placeMapMarker(_markerCoords);
+    pinMapMarker(_markerCoords);
     var contentHTML = "<div id='infoBubbleContent'><span>" +
                       escapeSpecialChars(_markerAddr) +
                     "</span></div>";
@@ -128,7 +128,7 @@ function geocoderResponseCenterMap(results, status)
   }
 }
 
-function placeMapMarker(coords)
+function pinMapMarker(coords)
 {
   var firstTimeHere = !_mapmarker.visible;
   _mapmarker.setPosition(coords);
@@ -236,7 +236,7 @@ function pinPlaceMarkers(places) 			//search results
 		marker.name = place.name;
 		google.maps.event.addListener(marker, 'mouseover', showPlaceMarkerAddr);
 		google.maps.event.addListener(marker, 'mouseout', function() { _infoBubble.close(); });
-		//google.maps.event.addListener(marker, 'click', placeClickListener );
+		google.maps.event.addListener(marker, 'click', pinMapMarkerAtPlace );
 		//placesList.innerHTML += "<li id='lsm" + mark.ID + "' title=\"" + place.name + "\"><a style='color:#404040; width:186px;' href='javascript:selectfindmarker(" + marke.ID + ")'>" + (marker.ID+1) + ". " + place.name + "</a></li>";*/
 		_bnds.extend(place.geometry.location);
 		_zoomSnapTo = true;
@@ -288,4 +288,15 @@ function getPlaceInfoBubbleHtml(place)
                 "</table>" +
               "</div>";
   return html;
+}
+
+function pinMapMarkerAtPlace()
+{
+  _infoBubble.close();
+	var addr = this.address ? this.address : ( this.vicinity ? this.vicinity : "" );
+  var coords = this.getPosition();
+	pinMapMarker(coords);
+  _markerAddr = this.name + ", " + addr;
+  $('.marker-addr').text(_markerAddr);
+  _markerCoords = coords;
 }
