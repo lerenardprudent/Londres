@@ -18,6 +18,8 @@ if ($U->authorised()) {
   if (isset($_POST['submit'])) {
     $curr_pos = $sess_curr_pos;
   }
+  
+  $is_instructor = $_SESSION[$C['IS_INSTR_KEY']];
 }
 else {
   /* Redirect to login screen */
@@ -40,6 +42,9 @@ function redirect_to_login()
 <link rel="stylesheet" href="css/login.css">
 <link rel="stylesheet" href="css/style.css" />
 <script type="text/javascript" src="js/jquery/jquery-1.10.2.min.js"></script>
+<link rel="stylesheet" type="text/css" href="css/jquery-ui.css" />	
+<link rel="stylesheet" type="text/css" href="css/jquery-ui-1.10.3.custom.min.css" />
+<script type="text/javascript" src="js/jquery/jquery-ui-1.10.3.custom.min.js"></script>
 <script type="text/javascript" src="constants.js"></script>
 <script type="text/javascript">
   var uname_key = 'uid';
@@ -108,6 +113,12 @@ function redirect_to_login()
     }
     ?>
     <input type="submit" id="submit" value="<?php if ( $Q->is_final_screen($sess_curr_pos) ) echo "Repeat questionnaire"; else if ( $sess_curr_pos != "0,0" ) echo "Resume questionnaire"; else echo "Start questionnaire"; ?>" name="submit" />
+    <?php if ($is_instructor) { echo "<input type='button' onclick=\"$('.new-users').show();\" value='Generate user codes' />"; } ?>
+    <div class='new-users'>
+      <span>How many new users?</span>
+      <input class='num-new-users' type='number' min='1' width='50px' />
+      <input type='button' onclick='generateCodes();' value='Go' />
+    </div>
   </form>
   <p />
 </div>
@@ -132,6 +143,37 @@ function redirect_to_login()
     $('.retry-info').text("Retrying...");
     setTimeout(function() { $('input').click() }, 500 );
   }
+  
+  function generateCodes()
+  {
+    var newUsers = $('.num-new-users').val();
+    if ( newUsers.length > 0 ) {
+      wipeCodes();
+      var n = parseInt(newUsers);
+      for (var i = 0; i < n; i++) {
+        $('.codes-list').append("<li>" + Array(n).join(i));
+      }
+      var draggable = $('.draggable');
+      draggable.css('display', 'inline-block').draggable();
+    }
+  }
+  
+  function wipeCodes()
+  {
+    $('.codes-list').html("");
+    $('.draggable').hide();
+  }
+  
 </script>
+<div class="ui-widget-content new-codes draggable">
+  <div class='draggable-contents'>
+    <div class="draggable-heading ui-widget-header">
+      <span>New user codes</span>
+    </div>
+    <ul class='codes-list'></ul>
+    <input type='button' value='Print' disabled />
+    <input type='button' onclick='wipeCodes();' value='Close' />
+  </div>
+</div>
 </body>
 </html>

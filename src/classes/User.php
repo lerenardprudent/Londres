@@ -49,6 +49,7 @@ class User {
     $_SESSION[$this->C['MAX_POS_KEY']] = $curr_pos;
     $this->mysql->set_connected($uid);
     $this->is_instructor = ( $tokens[2] == $this->C['USR_NAME_ADMIN'] );
+    $_SESSION[$this->C['IS_INSTR_KEY']] = $this->is_instructor;
   }
   
   function logout() {
@@ -136,7 +137,10 @@ class User {
     return $t1 < $t2 || ( $t1 == $t2 && $q1 < $q2 );
   }
   
-  
+  function is_instructor()
+  {
+    return $this->is_instructor;
+  }
 }
 
 ?>

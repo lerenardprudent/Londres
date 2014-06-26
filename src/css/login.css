@@ -35,20 +35,22 @@ label {
 }
 
 input {
-  width: 15%;
+  /*width: 15%;*/
   height: 30px;
   position: relative;
   top:-4px;
-  font-size: 20px;
+  font-size: 14px;
   padding: 0 .3ex;
   color: #555555;
 }
 
 input#submit {
-  width: 15%;
   font-size: 14px;
 }
 
+button {
+  font-size: 14px;
+}
 small {
   font-size: 16px;
   position: relative;

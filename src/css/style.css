@@ -314,8 +314,17 @@ a { text-decoration: none; }
   overflow: hidden;
 }
 
+.draggable {
+  display:none;
+  position: relative;
+}
+
+.draggable .draggable-heading {
+  cursor: move;
+  padding: 2px;
+}
+
 .places-control {
-  display: none;
   position: absolute;
   bottom: 0;
   right: 100px;
@@ -324,7 +333,6 @@ a { text-decoration: none; }
 
 .places-control > div {
   padding: 1px;
-  cursor: move;
   background-color: lightblue
 }
 
@@ -339,7 +347,7 @@ li {
     white-space: nowrap;
 }
 
-.close-places-control {
+.close-draggable{
   font-size: 15px !important;
   position: absolute;
   right: 4px;
@@ -351,8 +359,11 @@ li {
   margin-bottom: 0
 }
 
+ul {
+  list-style-type: none;
+}
+
 .places-control ul {
-    list-style-type: none;
     counter-reset: numCounter;
     padding-left: 0px;
     background-color: #F2F2F0;
@@ -372,4 +383,16 @@ li {
   text-align: right;
   font-weight: bold;
   margin-right: 3px;
+}
+
+.codes-list li {
+  border: 1px solid black;
+}
+
+.new-codes {
+  padding: 2px
+}
+
+.new-users {
+  display:none
 }
