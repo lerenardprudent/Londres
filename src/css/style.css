@@ -314,55 +314,62 @@ a { text-decoration: none; }
   overflow: hidden;
 }
 
-table tr td {
-    padding-left: 3px;
-    padding-right: 3px;
-}
-
 .places-control {
   display: none;
-  cursor: move;
   position: absolute;
   bottom: 0;
   right: 100px;
   font-size: 10px;
-  
-  /*width: 100px; 
-  height: 100px; 
-  padding: 0.5em; 
-  float: left; 
-  margin: 0 10px 10px 0; */
 }
 
-.places-control div {
-  padding: 1px
+.places-control > div {
+  padding: 1px;
+  cursor: move;
+  background-color: lightblue
 }
 
 .places-control span {
   line-height: 1.5;
 }
 
-li:nth-child(2n+1) {
-    background-color: #fdfdfd;
-    /*height: 12px;*/
-    padding: 2px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
 li {
     background-color: #f4f4f4;
-    /*height: 12px;*/
-    padding: 2px;
+    padding: 0px 3px 1px 1px;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 .close-places-control {
   font-size: 15px !important;
+  position: absolute;
+  right: 4px;
+  top: 0
 }
 
 .places-list {
   padding-left: 30px;
   margin-bottom: 0
+}
+
+.places-control ul {
+    list-style-type: none;
+    counter-reset: numCounter;
+    padding-left: 0px;
+    background-color: #F2F2F0;
+}
+
+.places-control li:nth-child(2n+1):before {
+  background-color: white;
+}
+
+.places-control li:nth-child(2n+1) {
+  background-color: white;
+}
+
+.place-number {
+  display: inline-block;
+  width: 20px;
+  text-align: right;
+  font-weight: bold;
+  margin-right: 3px;
 }

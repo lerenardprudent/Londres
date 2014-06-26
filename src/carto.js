@@ -248,11 +248,15 @@ function pinPlaceMarkers(places) 			//search results
 		addAddress(marker, place.reference);
 		_placeMarkers.push(marker);
     placesList.append(  "<li id='lsm" + marker.ID + "' title=\"" + place.name + "\">" +
-                          "<a href='javascript:selectPlaceMarker(" + marker.ID + ")'>" + /*(marker.ID+1) + ". " + */place.name + "</a>"+
+                          "<div class='place-number'>" + (marker.ID+1) + ".</div><a href='javascript:selectPlaceMarker(" + marker.ID + ")'>" + /*(marker.ID+1) + ". " + */place.name + "</a>"+
                         "</li>");
 	}
 	_map.fitBounds(_bnds);
   $('.places-control').draggable().show();
+  var w = $('.places-list').outerWidth();
+  var h = $('.places-list').height()+20;
+  log("Setting places control dimensions to " + w + "x" + h);
+  $('.places-control').width(w).height(h);
 }
 
 function addAddress(mark, ref)

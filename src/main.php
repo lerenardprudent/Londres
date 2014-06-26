@@ -527,10 +527,10 @@ function noteAnyDBIssues()
   </script>
   <div id="draggable" class="ui-widget-content places-control">
     <div class="ui-widget-header">
-      <span>Results</span>
-      <button class='close-places-control close' onclick='removePlaceMarkers();'>x</button>
+      <span>Search results</span>
+      <button class='close-places-control close' onclick='removePlaceMarkers();' title='Closes panel and removes search result icons from map'>x</button>
     </div>
-    <ol class='places-list'></ol>
+    <ul class='places-list'></ul>
   </div>
 </body>
 </html>
