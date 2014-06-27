@@ -29,5 +29,7 @@
   "MYSQL_ERROR_CODE"    : "mysqlcode",
   "MYSQL_LOG"           : "mysqllog",
   "CURR_POS_SEPARATOR"  : ",",
-  "IS_INSTR_KEY"        : "is_instr"
+  "IS_INSTR_KEY"        : "is_instr",
+  "CREATE_USERS_KEY"    : "createusers",
+  "CREATED_USERS_KEY"   : "justcreated"
 }

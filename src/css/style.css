@@ -385,14 +385,29 @@ ul {
   margin-right: 3px;
 }
 
+.codes-list {
+  padding-left: 0;
+}
+
 .codes-list li {
   border: 1px solid black;
+  width: 95%;
+  text-align: right;
+  font-style: italic;
 }
 
 .new-codes {
-  padding: 2px
+  border: 2px solid black
 }
 
 .new-users {
   display:none
+}
+
+.num-new-users {
+  width: 50px
+}
+
+.draggable-contents {
+  padding: 2px;
 }

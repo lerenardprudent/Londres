@@ -24,6 +24,7 @@ class Questionnaire extends ArrayObject {
   {
     if (isset($this->const_elems->{$key}))
       return $this->const_elems->{$key};
+    debug_print_backtrace();
     die("Config element '".$key."' not found.");
   }
   

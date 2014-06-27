@@ -182,6 +182,58 @@ class MySql {
     return $row['curr_pos'];
   }
   
+  function get_users_codes()
+  {
+    $dbh = $this->initNewPDO();
+    $usrtbl = $this->C['TBL_USERS'];
+    $admin_uname = $this->C['USR_NAME_ADMIN'];
+    $stmt = $dbh->prepare("SELECT pwd FROM " . $usrtbl . " WHERE uname != :admin_uname");
+    $stmt->bindParam(':admin_uname', $admin_uname, PDO::PARAM_STR);
+    $this->execute($stmt);
+    $rows = $stmt->fetchAll();
+    $codes = array();
+    foreach ( $rows as $row ) {
+      $code = $row['pwd'];
+      array_push($codes, $code);
+    }
+    return $codes;
+  }
+  
+  function create_entries($codes)
+  {
+    $dbh = $this->initNewPDO();
+    $usrtbl = $this->C['TBL_USERS'];
+    $params = array();
+    for ( $x = 0; $x < count($codes); $x++ ) {
+      array_push($params, "('xyz', :code" . $x . ")");
+    }
+    $values = implode(",", $params);
+    $sql = "INSERT INTO " . $usrtbl . " (uname, pwd) VALUES " . $values;
+    $stmt = $dbh->prepare($sql);
+    for ( $x = 0; $x < count($codes); $x++ ) {
+      $stmt->bindParam(':code' . $x, $codes[$x], PDO::PARAM_STR);
+    }
+    $this->execute($stmt);
+  }
+  
+  function delete_entries($codes)
+  {
+    $dbh = $this->initNewPDO();
+    $usrtbl = $this->C['TBL_USERS'];
+    $w = array();
+    for ( $x = 0; $x < count($codes); $x++ ) {
+      array_push($w, "pwd = :code" . $x);
+    }
+    $where = " WHERE " . implode(" OR ", $w);
+    $sql = "DELETE FROM " . $usrtbl . $where;
+    $stmt = $dbh->prepare($sql);
+    for ( $x = 0; $x < count($codes); $x++ ) {
+      $stmt->bindParam(':code' . $x, $codes[$x], PDO::PARAM_STR);
+    }
+    $this->execute($stmt);
+    $num_del = $stmt->rowCount();
+    return $num_del == count($codes);
+  }
 }
 
 ?>

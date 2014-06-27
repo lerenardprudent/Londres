@@ -8,6 +8,7 @@ session_start();
 $C = new Constants();
 $U = new User();
 $Q = new Questionnaire(); 
+$code_leng = 6;
 
 $sess_curr_pos = -1;
 $curr_pos_key = $C['CURR_POS_KEY'];
@@ -18,7 +19,15 @@ if ($U->authorised()) {
   if (isset($_POST['submit'])) {
     $curr_pos = $sess_curr_pos;
   }
-  
+  else {
+    if ( isset($_POST['undo_create']) && isset($_POST[$C['CREATED_USERS_KEY']]) ) {
+      delete_users_by_pwd(explode(",", $_POST[$C['CREATED_USERS_KEY']]));
+    }
+    
+    if ( isset($_POST['gen_users']) && isset($_POST[$C['CREATE_USERS_KEY']]) ) {
+      $generated_codes = generate_new_codes(intval($_POST[$C['CREATE_USERS_KEY']]));
+    }
+  }
   $is_instructor = $_SESSION[$C['IS_INSTR_KEY']];
 }
 else {
@@ -30,6 +39,56 @@ function redirect_to_login()
 {
   global $C;
   header("location: ".$C['SRC_PHP_LOGIN'] . "?" . $C['REDIRECT_KEY'] . "=1");
+}
+
+function generate_new_codes($n)
+{
+  global $U;
+  global $code_leng;
+  
+  $all_curr_codes = $U->get_all_users_codes();
+  $new_codes = array();
+  if ( $all_curr_codes ) {
+    while ( count($new_codes) < $n ) {
+      $new_code = generate_random_code($code_leng);
+      if ( !in_array(sha1($new_code), $all_curr_codes) ) {
+        array_push($new_codes, $new_code);
+      }
+    }
+  }
+  $U->create_users($new_codes);
+  return $new_codes;
+}
+
+function generate_random_code($leng) { 
+
+    $chars = "abcdefghijkmnopqrstuvwxyz023456789"; 
+    srand((double)microtime()*1000000); 
+    $i = 0; 
+    $pass = '' ; 
+
+    while ($i < $leng) { 
+        $num = rand() % 33; 
+        $tmp = substr($chars, $num, 1); 
+        $pass = $pass . $tmp; 
+        $i++; 
+    } 
+
+    return $pass; 
+} 
+
+function create_li_elems($new_codes)
+{
+  foreach ( $new_codes as $code ) {
+    echo "<li>" . $code . "</li>";
+  }
+}
+
+function delete_users_by_pwd($pwds)
+{
+  global $U;
+  $ok = $U->delete_users($pwds);
+  echo ( $ok ? "Done" : "Error" );
 }
 
 ?>
@@ -45,6 +104,8 @@ function redirect_to_login()
 <link rel="stylesheet" type="text/css" href="css/jquery-ui.css" />	
 <link rel="stylesheet" type="text/css" href="css/jquery-ui-1.10.3.custom.min.css" />
 <script type="text/javascript" src="js/jquery/jquery-ui-1.10.3.custom.min.js"></script>
+<link rel="stylesheet" href="css/bootstrap/bootstrap.min.css">
+<script type="text/javascript" src="js/bootstrap/bootstrap.min.js"></script>
 <script type="text/javascript" src="constants.js"></script>
 <script type="text/javascript">
   var uname_key = 'uid';
@@ -91,6 +152,10 @@ function redirect_to_login()
       $('input[type="submit"]').prop('disabled', $(this).prop('value').length == 0);
       $(this).keyup(function() {$('input[type="submit"]').prop('disabled', $(this).val().length == 0);});
     });
+    
+    if ( $('.codes-list').children().length > 0 ) {
+      $('.draggable').css('display', 'inline-block').draggable({handle: ".draggable-heading"});
+    }
   });
 </script>
 </head>
@@ -116,8 +181,21 @@ function redirect_to_login()
     <?php if ($is_instructor) { echo "<input type='button' onclick=\"$('.new-users').show();\" value='Generate user codes' />"; } ?>
     <div class='new-users'>
       <span>How many new users?</span>
-      <input class='num-new-users' type='number' min='1' width='50px' />
-      <input type='button' onclick='generateCodes();' value='Go' />
+      <input class='num-new-users' name='<?php echo $C['CREATE_USERS_KEY']; ?>' type='number' min='1' />
+      <input name='gen_users' type='submit' value='Go' />
+      <input name='<?php echo $C['CREATED_USERS_KEY']; ?>' type='hidden' value='<?php if (isset($generated_codes)) {echo implode(",", $generated_codes); } ?>' />
+    </div>
+    
+    <div class="ui-widget-content new-codes draggable">
+      <div class="draggable-heading ui-widget-header">
+        <span>New user codes</span>
+        <button class='close-draggable close' onclick='wipeCodes();' title='Closes panel and removes search result icons from map'>x</button>
+      </div>
+      <div class='draggable-contents'>
+        <ul class='codes-list'><?php if ( isset($generated_codes) ) { create_li_elems($generated_codes); } ; ?></ul>
+        <input type='button' value='Print access codes' disabled />
+        <input name='undo_create' type='submit' value='Undo user creation' />
+      </div>
     </div>
   </form>
   <p />
@@ -144,20 +222,6 @@ function redirect_to_login()
     setTimeout(function() { $('input').click() }, 500 );
   }
   
-  function generateCodes()
-  {
-    var newUsers = $('.num-new-users').val();
-    if ( newUsers.length > 0 ) {
-      wipeCodes();
-      var n = parseInt(newUsers);
-      for (var i = 0; i < n; i++) {
-        $('.codes-list').append("<li>" + Array(n).join(i));
-      }
-      var draggable = $('.draggable');
-      draggable.css('display', 'inline-block').draggable();
-    }
-  }
-  
   function wipeCodes()
   {
     $('.codes-list').html("");
@@ -165,15 +229,5 @@ function redirect_to_login()
   }
   
 </script>
-<div class="ui-widget-content new-codes draggable">
-  <div class='draggable-contents'>
-    <div class="draggable-heading ui-widget-header">
-      <span>New user codes</span>
-    </div>
-    <ul class='codes-list'></ul>
-    <input type='button' value='Print' disabled />
-    <input type='button' onclick='wipeCodes();' value='Close' />
-  </div>
-</div>
 </body>
 </html>

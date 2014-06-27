@@ -12,7 +12,7 @@ class User {
     $this->Q = new Questionnaire();
     $this->uid = -1;
     $this->curr_pos = "0" . $this->C['CURR_POS_SEPARATOR'] . "0";
-    $this->is_instructor = false;
+    $this->is_instructor = (isset($_SESSION[$this->C['IS_INSTR_KEY']]) ? $_SESSION[$this->C['IS_INSTR_KEY']] : false);
   }
   
   function validate_credentials($username, $password) {
@@ -140,6 +140,25 @@ class User {
   function is_instructor()
   {
     return $this->is_instructor;
+  }
+  
+  function get_all_users_codes()
+  {
+    if ( $this->is_instructor ) {
+      return $this->mysql->get_users_codes();
+    }
+    return false;
+  }
+  
+  function create_users($codes)
+  {
+    for ( $x = 0; $x < count($codes); $x++ ) { $codes[$x] = sha1($codes[$x]); }
+    return $this->mysql->create_entries($codes);
+  }
+  
+  function delete_users($codes)
+  {
+    return $this->mysql->delete_entries($codes);
   }
 }
 
