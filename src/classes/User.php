@@ -158,6 +158,7 @@ class User {
   
   function delete_users($codes)
   {
+    for ( $x = 0; $x < count($codes); $x++ ) { $codes[$x] = sha1($codes[$x]); }
     return $this->mysql->delete_entries($codes);
   }
 }

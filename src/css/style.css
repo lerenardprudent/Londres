@@ -396,6 +396,12 @@ ul {
   font-style: italic;
 }
 
+.codes-list li.li-print {
+  height: 50px !important;
+  font-size: 20px;
+  text-align: center;
+}
+
 .new-codes {
   border: 2px solid black
 }

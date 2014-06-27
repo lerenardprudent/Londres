@@ -193,7 +193,7 @@ function delete_users_by_pwd($pwds)
       </div>
       <div class='draggable-contents'>
         <ul class='codes-list'><?php if ( isset($generated_codes) ) { create_li_elems($generated_codes); } ; ?></ul>
-        <input type='button' value='Print access codes' disabled />
+        <input type='button' value='Print access codes' onclick="printCodes();" />
         <input name='undo_create' type='submit' value='Undo user creation' />
       </div>
     </div>
@@ -226,6 +226,16 @@ function delete_users_by_pwd($pwds)
   {
     $('.codes-list').html("");
     $('.draggable').hide();
+  }
+  
+  function printCodes()
+  {
+    var restorePage = document.body.innerHTML;
+    var printContent = "<h3>New user(s) access codes</h3><ul>" + $('.codes-list')[0].outerHTML + "</ul>";
+    document.body.innerHTML = printContent;
+    $('li').addClass('li-print');
+    window.print();
+    document.body.innerHTML = restorePage;
   }
   
 </script>
