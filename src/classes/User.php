@@ -15,11 +15,11 @@ class User {
     $this->is_instructor = (isset($_SESSION[$this->C['IS_INSTR_KEY']]) ? $_SESSION[$this->C['IS_INSTR_KEY']] : false);
   }
   
-  function validate_credentials($username, $password) {
+  function validate_credentials($password) {
     /* Encrypt before sending */
     $password = sha1( $password );
     
-    $valid = $this->mysql->verify_credentials($username, $password);
+    $valid = $this->mysql->verify_credentials($password);
     if ( $valid !== false ) {
       $this->login($valid);
       $_SESSION[$this->C['STAT_KEY']] = $this->C['SESS_AUTH_VAL'];
@@ -44,6 +44,7 @@ class User {
     $tokens = explode("|", $db_vals);
     $uid = $tokens[0];
     $curr_pos = $tokens[1];
+    
     $_SESSION[$this->C['USR_ID_KEY']] = $uid;
     $_SESSION[$this->C['CURR_POS_KEY']] = $curr_pos;
     $_SESSION[$this->C['MAX_POS_KEY']] = $curr_pos;
@@ -69,6 +70,12 @@ class User {
     $init_pos = $this->Q->get_initial_pos();
     $this->update_pos($init_pos);
     $_SESSION[$this->C['CURR_POS_KEY']] = $init_pos;
+  }
+  
+  function set_attributes($gender, $pos)
+  {
+    echo "HERE";
+    $this->mysql->update_attrs($this->uid, $gender, $pos);
   }
   
   function update_curr_pos()
@@ -135,6 +142,18 @@ class User {
     $q2 = intval($tokens2[1]);
     
     return $t1 < $t2 || ( $t1 == $t2 && $q1 < $q2 );
+  }
+  
+  function pos_leq($pos)
+  {
+    $tokens1 = explode($this->C['CURR_POS_SEPARATOR'], $pos);
+    $tokens2 = explode($this->C['CURR_POS_SEPARATOR'], $this->curr_pos);
+    $t1 = intval($tokens1[0]);
+    $q1 = intval($tokens1[1]);
+    $t2 = intval($tokens2[0]);
+    $q2 = intval($tokens2[1]);
+    
+    return $t1 <= $t2 || ( $t1 == $t2 && $q1 <= $q2 );
   }
   
   function is_instructor()

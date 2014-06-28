@@ -1,11 +1,13 @@
 body {
-  font-family: helvetica, arial, sans-serif;
+  font-family: trebuchet ms;
+  background-image: url('../img/london.jpg');
+  background-repeat: repeat;
 }
 
 #login {
   text-align: center;
   border: 1px solid #CFCFCF;
-  min-height: 330px;
+  min-height: 230px;
   width: 705px;
   position: absolute;
   left: 50%;
@@ -14,6 +16,9 @@ body {
   margin-top: -165px;
   -moz-border-radius-bottomright: 30px;
   -webkit-border-bottom-right-radius: 30px;
+  background-color: #D8D8D8;
+  opacity: 0.9;
+  border-radius: 60px;
 }
 
 h2 {
@@ -31,12 +36,16 @@ h2 {
 }
 
 label {
-  font-size: 24px;
+  font-size: 22px;
+}
+
+input[type="submit"] {
+  height: 30px;
 }
 
 input {
   /*width: 15%;*/
-  height: 30px;
+  height: 25px;
   position: relative;
   top:-4px;
   font-size: 14px;

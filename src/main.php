@@ -204,7 +204,7 @@ function noteAnyDBIssues()
   var _placeMarkers = [];
   var _zoomSnapTo = false;
   var _closeUpZoomLevel = 15;
-  var _placesIBOffset = new google.maps.Size(-10, 0);
+  var _placesIBOffset;
 </script>
 
 <script type="text/javascript">

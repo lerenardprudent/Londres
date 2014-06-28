@@ -31,5 +31,7 @@
   "CURR_POS_SEPARATOR"  : ",",
   "IS_INSTR_KEY"        : "is_instr",
   "CREATE_USERS_KEY"    : "createusers",
-  "CREATED_USERS_KEY"   : "justcreated"
+  "CREATED_USERS_KEY"   : "justcreated",
+  "GENDER_KEY"          : "gender",
+  "DOB_KEY"             : "dob"
 }

@@ -45,7 +45,7 @@ class MySql {
     return 0;
   }
   
-  function verify_credentials($username, $salted_password)
+  function verify_credentials($salted_password)
   {
     $dbh = $this->initNewPDO();
     $usrtbl = $this->C['TBL_USERS'];
@@ -53,9 +53,8 @@ class MySql {
     $curr_pos_key = $this->C['CURR_POS_KEY'];
     
     /*** prepare the select statement ***/
-    $stmt = $dbh->prepare("SELECT " . $uid_key . "," . $curr_pos_key . ", uname FROM " . $usrtbl . " WHERE uname = :phpro_username AND pwd = :phpro_password");
+    $stmt = $dbh->prepare("SELECT " . $uid_key . "," . $curr_pos_key . ", uname FROM " . $usrtbl . " WHERE pwd = :phpro_password");
     /*** bind the parameters ***/
-    $stmt->bindParam(':phpro_username', $username, PDO::PARAM_STR);
     $stmt->bindParam(':phpro_password', $salted_password, PDO::PARAM_STR, 40);
 
     /*** execute the prepared statement ***/
@@ -233,6 +232,19 @@ class MySql {
     $this->execute($stmt);
     $num_del = $stmt->rowCount();
     return $num_del == count($codes);
+  }
+  
+  function update_attrs($uid, $gender, $dob)
+  {
+    $dbh = $this->initNewPDO();
+    $usrtbl = $this->C['TBL_USERS'];
+    $stmt = $dbh->prepare("UPDATE " . $usrtbl . " SET sex=:sex, bdate=:dob WHERE uid = :uid");
+    $stmt->bindParam(':uid', $uid, PDO::PARAM_INT);
+    $stmt->bindParam(':sex', $gender, PDO::PARAM_STR);
+    $stmt->bindParam(':dob', $dob, PDO::PARAM_STR);
+
+    /*** execute the prepared statement ***/
+    $this->execute($stmt);
   }
 }
 

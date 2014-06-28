@@ -12,12 +12,16 @@ $code_leng = 6;
 
 $sess_curr_pos = -1;
 $curr_pos_key = $C['CURR_POS_KEY'];
+$first_time = false;
+
 if ($U->authorised()) {
   $sess_curr_pos = $_SESSION[$curr_pos_key];
   $instr_html = $U->instructor_ahead();
+  $btn_text = validate_pos();
   
+  $is_instructor = $U->is_instructor();
   if (isset($_POST['submit'])) {
-    $curr_pos = $sess_curr_pos;
+    $curr_pos = $sess_curr_pos; // $curr_pos variable gets set only once user clicks on Start/Resume/Repeat Questionnaire
   }
   else {
     if ( isset($_POST['undo_create']) && isset($_POST[$C['CREATED_USERS_KEY']]) ) {
@@ -28,7 +32,6 @@ if ($U->authorised()) {
       $generated_codes = generate_new_codes(intval($_POST[$C['CREATE_USERS_KEY']]));
     }
   }
-  $is_instructor = $_SESSION[$C['IS_INSTR_KEY']];
 }
 else {
   /* Redirect to login screen */
@@ -91,6 +94,31 @@ function delete_users_by_pwd($pwds)
   echo ( $ok ? "Done" : "Error" );
 }
 
+function validate_pos()
+{
+  global $U, $Q, $C;
+  global $sess_curr_pos;
+  global $first_time;
+  
+  if ( $U->pos_leq($Q->get_final_pos()) ) {
+    $_SESSION[$C['CURR_POS_KEY']] = $Q->get_final_pos(); /* Set it again in case the value was bogatively high */
+    return "Repeat questionnaire";
+  }
+  
+  if ( $U->pos_less( $Q->get_initial_pos() ) ) {
+    return "Resume questionnaire";
+  }
+  
+  if ( $U->pos_greater( $Q->get_initial_pos() ) ) {
+    $first_time = true;
+  }
+  
+  /* This triggers a call to reset_curr_pos() later on in this file */
+  $_SESSION[$C['CURR_POS_KEY']] = $Q->get_final_pos(); 
+  
+  return "Start questionnaire";
+}
+
 ?>
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional/EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -98,14 +126,12 @@ function delete_users_by_pwd($pwds)
 <head>
 <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
 <title>VERITAS Londres</title>
-<link rel="stylesheet" href="css/login.css">
+<!--<link rel="stylesheet" href="css/login.css">-->
 <link rel="stylesheet" href="css/style.css" />
 <script type="text/javascript" src="js/jquery/jquery-1.10.2.min.js"></script>
 <link rel="stylesheet" type="text/css" href="css/jquery-ui.css" />	
 <link rel="stylesheet" type="text/css" href="css/jquery-ui-1.10.3.custom.min.css" />
 <script type="text/javascript" src="js/jquery/jquery-ui-1.10.3.custom.min.js"></script>
-<link rel="stylesheet" href="css/bootstrap/bootstrap.min.css">
-<script type="text/javascript" src="js/bootstrap/bootstrap.min.js"></script>
 <script type="text/javascript" src="constants.js"></script>
 <script type="text/javascript">
   var uname_key = 'uid';
@@ -156,6 +182,11 @@ function delete_users_by_pwd($pwds)
     if ( $('.codes-list').children().length > 0 ) {
       $('.draggable').css('display', 'inline-block').draggable({handle: ".draggable-heading"});
     }
+    
+    $("input[name='" + Consts.get('DOB_KEY') + "']").on('keyup', function(e) {
+      var dob = $(this).val();
+      $('#submit').prop('disabled', dob.length == 0 || $('input[name="gender"]:checked').length == 0);
+    });
   });
 </script>
 </head>
@@ -163,7 +194,7 @@ function delete_users_by_pwd($pwds)
 <a title='Log out' class='logout-icon logout-link'>Log out</a>
 <div id="container">
   <p>
-    <h3>You're in!</h3>
+    <h3>Welcome to VERITAS! <?php if ( $is_instructor ) { echo "[You have <i>instructor</i> priviledges]"; } ?></h3>
   </p>
   <form method="post" action="">
     <?php
@@ -171,13 +202,41 @@ function delete_users_by_pwd($pwds)
       echo $instr_html;
     }
     else if ( isset($curr_pos) ) {
+      $gender = "";
+      $dob = "";
+      if ( isset($_POST[$C['DOB_KEY']] ) ) {
+        $dob = $_POST[$C['DOB_KEY']];
+      }
+      if ( isset($_POST[$C['GENDER_KEY']] ) ) {
+        $gender = $_POST[$C['GENDER_KEY']];
+      }
+      if ( isset($gender) && isset($dob) ) {
+        $U->set_attributes($gender, $dob);
+      }
+      
       if ( $curr_pos == $Q->get_final_pos() ) {
         $U->reset_curr_pos();
       }
-      header("location: " . $C['SRC_PHP_QUEST']);
+      
+      header("location: " . $C['SRC_PHP_QUEST'] );
     }
     ?>
-    <input type="submit" id="submit" value="<?php if ( $Q->is_final_screen($sess_curr_pos) ) echo "Repeat questionnaire"; else if ( $sess_curr_pos != "0,0" ) echo "Resume questionnaire"; else echo "Start questionnaire"; ?>" name="submit" />
+    <div style='display: <?php echo ( $first_time ? 'block' : 'none' ); ?>'>
+      <span class='radio-div'>
+        <label>You are:</label>
+        <input id='m' type="radio" name="<?php echo $C['GENDER_KEY']; ?>" value='M' onclick="maybeEnableSubmitBtn();" />
+        <label for='m'>Male</label>
+        <input id='f' type="radio" name="<?php echo $C['GENDER_KEY']; ?>" value='F' onclick="maybeEnableSubmitBtn();"/>
+        <label for='f'>Female</label>
+        <p/>
+      </span>
+      <span>
+        <label>Your date of birth:</label>
+        <input name='<?php echo $C['DOB_KEY']; ?>' type='date' />
+      </span>
+      <p/>
+    </div>
+    <input type="submit" id="submit" value="<?php echo $btn_text; ?>" name="submit" <?php echo ($first_time ? "disabled" : ""); ?>" />
     <?php if ($is_instructor) { echo "<input type='button' onclick=\"$('.new-users').show();\" value='Generate user codes' />"; } ?>
     <div class='new-users'>
       <span>How many new users?</span>
@@ -236,6 +295,11 @@ function delete_users_by_pwd($pwds)
     $('li').addClass('li-print');
     window.print();
     document.body.innerHTML = restorePage;
+  }
+  
+  function maybeEnableSubmitBtn()
+  {
+    $('#submit').prop('disabled', $("input[name='" + Consts.get('DOB_KEY') + "']").val().length == 0);
   }
   
 </script>

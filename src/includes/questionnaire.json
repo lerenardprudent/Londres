@@ -1,7 +1,7 @@
 {
   "0" : {
     "0" : { "type" : "exp",
-            "html" : "Welcome to VERITAS! Here come your tasks.",
+            "html" : "Here come your tasks.",
             "show_heading" : 0
           }
   },
