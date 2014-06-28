@@ -1,6 +1,6 @@
 function initMap()
 {
-  _latLngLondon = new google.maps.LatLng(51.507224, -0.126103); // Montreal
+  _latLngLondon = new google.maps.LatLng(51.507224, -0.126103); // London
   var mapOptions = {
     zoom: 15,
     center: _latLngLondon,
@@ -32,6 +32,8 @@ function initMap()
     content: "<div id='content'><b>Address</b></div>"
   }
   _infoBubble = new google.maps.InfoWindow(infoWinOptions);
+
+  _placesIBOffset = new google.maps.Size(-10, 0);
   
   /********* Map listeners *************/
   google.maps.event.addListener(_map, 'click', handleMapClick);
@@ -45,6 +47,14 @@ function initMap()
 	});
   google.maps.event.addListener(_mapmarker, 'dragend', handleMarkerDrag);
   google.maps.event.addListener(_mapmarker, 'click', showMarkerInfoBubble);
+  
+  var dbCoords = $('#ansCoords').val();
+  if ( dbCoords.length > 0 ) {
+    setMarkerAddr($('#ansAddr').val());
+    /* Let's put pin at coords that we pulled from DB */
+    var tkns = dbCoords.split(" ");
+    pinMapMarker(new google.maps.LatLng(tkns[0], tkns[1]));
+  }
 }
     
 function doGoogleSearch(searchStr)
@@ -103,15 +113,10 @@ function geocoderResponse(results, status)
   if (status == google.maps.GeocoderStatus.OK) {
     ok = true;
     var res_index = 0;
-    _markerAddr = results[res_index].formatted_address;
-    $('.marker-addr').text(_markerAddr);
+    setMarkerAddr(results[res_index].formatted_address);
 		_markerCoords = results[res_index].geometry.location;
     log(results.length + " match" + (results.length == 1 ? "" : "es") + " found - choosing "  + quote(_markerAddr,"'"));
     pinMapMarker(_markerCoords);
-    var contentHTML = "<div id='infoBubbleContent'><span>" +
-                      escapeSpecialChars(_markerAddr) +
-                    "</span></div>";
-    _infoBubble.setContent(contentHTML);
   }
   else if (status == google.maps.GeocoderStatus.ZERO_RESULTS) {
     showPopupMsg(5, "Location not found.");
@@ -137,6 +142,10 @@ function pinMapMarker(coords)
     _mapmarker.setAnimation(null);
     $('.temp-disabl').removeClass('temp-disabl').prop('disabled', false);
   }
+  var contentHTML = "<div id='infoBubbleContent'><span>" +
+                      escapeSpecialChars(_markerAddr) +
+                    "</span></div>";
+  _infoBubble.setContent(contentHTML);
   showMarkerInfoBubble();
 }
 
@@ -309,8 +318,7 @@ function pinMapMarkerAtPlace()
 	var addr = this.address ? this.address : ( this.vicinity ? this.vicinity : "" );
   var coords = this.getPosition();
 	pinMapMarker(coords);
-  _markerAddr = this.name + ", " + addr;
-  $('.marker-addr').text(_markerAddr);
+  setMarkerAddr(this.name + ", " + addr);
   _markerCoords = coords;
 }
 
@@ -319,4 +327,10 @@ function selectPlaceMarker(id)
 	var markerPos = _placeMarkers[id].getPosition();
 	_map.panTo(markerPos);
 	google.maps.event.trigger(_placeMarkers[id], 'mouseover');
+}
+
+function setMarkerAddr(addr)
+{
+  _markerAddr = addr;
+  $('.marker-addr').text(addr);
 }

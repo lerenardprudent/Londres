@@ -40,6 +40,13 @@ if ($U->authorised()) {
       if ( !$goBack) {
         $U->update_curr_pos();
       }
+      $existing_ans = $U->question_answered($taskno, $qno);
+      if ( $existing_ans ) {
+        $ans_tokens = explode("|", $existing_ans);
+        $db_ans_x = $ans_tokens[0];
+        $db_ans_y = $ans_tokens[1];
+        $db_ans_addr = $ans_tokens[2];
+      }
     }
   }
   
@@ -299,8 +306,8 @@ function noteAnyDBIssues()
         <input id='ansQID' name='ansQID' type='hidden' value='<?php echo $_SESSION[$curr_pos_key]; ?>'/>
         <input id='ansAnswered' name='ansAnswered' type='hidden' />
         <input id='ansInfo' name='ansInfo' type='hidden' />
-        <input id='ansCoords' name='ansCoords' type='hidden' />
-        <input id='ansAddr' name='ansAddr' type='hidden' />
+        <input id='ansCoords' name='ansCoords' value='<?php if (isset($db_ans_x)) { echo $db_ans_x . " " . $db_ans_y; } ?>' type='hidden' />
+        <input id='ansAddr' name='ansAddr' value='<?php if (isset($db_ans_addr)) { echo $db_ans_addr; } ?>' type='hidden' />
         <input id='ansSearchActivity' name='ansSearchActivity' type='hidden' />
         <input id='ansSubmitted' name='ansSubmitted' type='hidden' />
         <input class='questInfo' type='hidden' value='<?php echo $questInfo; ?>' />

@@ -252,14 +252,14 @@ class MySql {
     $dbh = $this->initNewPDO();
     $tbl_ans = $this->C['TBL_ANSWERS'];
     
-    $stmt = $dbh->prepare("SELECT answered FROM " . $tbl_ans . " WHERE id=:uid AND taskno=:taskno AND qno=:qno AND answered=1");
+    $stmt = $dbh->prepare("SELECT x(geom) AS x, y(geom) as y, addr FROM " . $tbl_ans . " WHERE id=:uid AND taskno=:taskno AND qno=:qno AND answered=1");
     $stmt->bindParam(':uid', $uid, PDO::PARAM_INT);
     $stmt->bindParam(':taskno', $taskno, PDO::PARAM_INT);
     $stmt->bindParam(':qno', $qno, PDO::PARAM_INT);
 
     $this->execute($stmt);
     $row = $stmt->fetch();
-    return $row !== false;
+    return ($row !== false ? implode("|", array($row['x'], $row['y'], $row['addr'])) : false);
   }
 }
 
