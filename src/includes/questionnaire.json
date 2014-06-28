@@ -15,13 +15,20 @@
   },
   "2" : {
     "0" : { "type" : "exp",
-            "html" : "Blah blah blah." },
+            "html" : "In this question we will ask you to locate your home on the map. Remember that we will keep this information private, and only the research team will see it. We will not share it with anyone else. This information is really useful for our work, but if you really do not want to give it to us, then consider locating your postcode or your street instead, if you feel more comfortable." },
     "1" : { "type" : "quest",
-            "html" : "Can you locate your school using a pushpin?" },
-    "2" : { "type" : "quest",
-            "html" : "Can you locate the London Olympic Shmadium using a pushpin?" }
+            "html" : "Can you locate your home, or the home you live in most of the time, using a pushpin?" }
   },
   "3" : {
+    "0" : { "type" : "exp",
+            "html" : "These next two questions will ask you to draw an area that covers your neighbourhood. The first question is about the neighbourhood where you live now, and the second is about the neighbourhood where you go to school."
+          },
+    "1" : { "type" : "quest",
+            "html" : "Could you draw an area that covers your <b>home neighbourhood</b> where you live now?" },
+    "2" : { "type" : "quest",
+            "html" : "Please could you draw an area that covers the <b>neighbourhood that you use around your school</b>?" }
+  },
+  "4" : {
     "0" : { "type" : "exp",
             "html" : "Thank you for participating!",
             "show_heading" : 0

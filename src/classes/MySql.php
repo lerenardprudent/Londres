@@ -246,6 +246,21 @@ class MySql {
     /*** execute the prepared statement ***/
     $this->execute($stmt);
   }
+  
+  function answer_exists($uid, $taskno, $qno)
+  {
+    $dbh = $this->initNewPDO();
+    $tbl_ans = $this->C['TBL_ANSWERS'];
+    
+    $stmt = $dbh->prepare("SELECT answered FROM " . $tbl_ans . " WHERE id=:uid AND taskno=:taskno AND qno=:qno AND answered=1");
+    $stmt->bindParam(':uid', $uid, PDO::PARAM_INT);
+    $stmt->bindParam(':taskno', $taskno, PDO::PARAM_INT);
+    $stmt->bindParam(':qno', $qno, PDO::PARAM_INT);
+
+    $this->execute($stmt);
+    $row = $stmt->fetch();
+    return $row !== false;
+  }
 }
 
 ?>

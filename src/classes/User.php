@@ -180,6 +180,11 @@ class User {
     for ( $x = 0; $x < count($codes); $x++ ) { $codes[$x] = sha1($codes[$x]); }
     return $this->mysql->delete_entries($codes);
   }
+  
+  function question_answered($taskno, $qno)
+  {
+    return $this->mysql->answer_exists($this->uid, $taskno, $qno);
+  }
 }
 
 ?>

@@ -341,8 +341,9 @@ function noteAnyDBIssues()
                   <div class='under-radio'>
                     <select id='reasonOptions' class='ans-option'>
                       <option>-- Please indicate your reason --</option>
-                      <option>Cannot locate place on map</option>
-                      <option>Do not wish to answer</option>
+                      <?php if ($taskno == 3 && $qno == 2 && $U->question_answered(3,1)) { echo "<option value='3'>School neighbourhood and home neighbourhood are identical</option>"; } ?>
+                      <option value="1">Cannot locate place on map</option>
+                      <option value="2">Do not wish to answer</option>
                     </select>
                   </div>
                 </div>
@@ -445,7 +446,7 @@ function noteAnyDBIssues()
           $('#ansSubmitted').val(1);
           var answered = $('input[name=ansConfirm]:checked').prop('id') == 'yes';
           $('#ansAnswered').val(answered ? 1 : 0);
-          $('#ansInfo').val(answered ? $('#confOptions')[0].selectedIndex : ($('#confOptions option').length-1) + $('#reasonOptions')[0].selectedIndex );
+          $('#ansInfo').val(answered ? $('#confOptions')[0].selectedIndex : ($('#confOptions option').length-1) + parseInt($('#reasonOptions')[0].selectedOptions[0].value) );
           $('#ansSearchActivity').val(_searchActivity.join(","));
           $('#ansCoords').val(answered ? _markerCoords.lat() + " " + _markerCoords.lng() : "0 0");
           $('#ansAddr').val(_markerAddr);
