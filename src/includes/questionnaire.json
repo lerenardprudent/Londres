@@ -24,9 +24,11 @@
             "html" : "These next two questions will ask you to draw an area that covers your neighbourhood. The first question is about the neighbourhood where you live now, and the second is about the neighbourhood where you go to school."
           },
     "1" : { "type" : "quest",
-            "html" : "Could you draw an area that covers your <b>home neighbourhood</b> where you live now?" },
+            "html" : "Could you draw an area that covers your <b>home neighbourhood</b> where you live now?",
+            "draw" : "true" },
     "2" : { "type" : "quest",
-            "html" : "Please could you draw an area that covers the <b>neighbourhood that you use around your school</b>?" }
+            "html" : "Please could you draw an area that covers the <b>neighbourhood that you use around your school</b>?",
+            "draw" : "true" }
   },
   "4" : {
     "0" : { "type" : "exp",

@@ -33,5 +33,6 @@
   "CREATE_USERS_KEY"    : "createusers",
   "CREATED_USERS_KEY"   : "justcreated",
   "GENDER_KEY"          : "gender",
-  "DOB_KEY"             : "dob"
+  "DOB_KEY"             : "dob",
+  "DRAW_KEY"            : "draw"
 }

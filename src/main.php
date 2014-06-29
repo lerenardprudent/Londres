@@ -73,6 +73,11 @@ if ($U->authorised()) {
     if ( isset($info->show_heading) && !$info->show_heading ) {
       $noHeading = true;
     }
+    $draw_mode = false;
+    if ( isset($info->draw) && $info->draw) {
+      $draw_mode = true;
+      array_push($questInfo, $C['DRAW_KEY']);
+    }
   }
   else {
     echo "ERROR! Question not found :(";
@@ -172,7 +177,7 @@ function noteAnyDBIssues()
 <link rel="stylesheet" href="css/search.css" media="screen" type="text/css" />
 
 <!-- GOOGLE MAPS -->
-<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD4qnbkOe5X7pll7qyIFtkeLzjzkbPnAGo&amp;libraries=places,drawing,geometry,panoramio,weather&region=ca&sensor=false"></script>
+<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD4qnbkOe5X7pll7qyIFtkeLzjzkbPnAGo&amp;libraries=places,drawing&region=uk&sensor=false"></script>
 
 <!-- FONTS -->
 <link rel="stylesheet" href="css/fonts.css" type="text/css" />
@@ -212,6 +217,10 @@ function noteAnyDBIssues()
   var _zoomSnapTo = false;
   var _closeUpZoomLevel = 15;
   var _placesIBOffset;
+  var _drawing = false;
+  var _drawingManager;
+  var _drawnPolygon = null;
+  
 </script>
 
 <script type="text/javascript">
@@ -227,6 +236,7 @@ function noteAnyDBIssues()
     _isExplanation = ($('.questInfo').val().indexOf(Consts.get('QUEST_TEXT_EXPL')) >= 0);
     var firstScreen = ($('.questInfo').val().indexOf(Consts.get('QUEST_TEXT_BEGIN')) >= 0);
     _endOfQuestionnaire = ($('.questInfo').val().indexOf(Consts.get('QUEST_TEXT_END')) >= 0);
+    _drawing = ($('.questInfo').val().indexOf(Consts.get('DRAW_KEY')) >= 0);
     
     if ( _isExplanation ) {
       $('.quest-block').removeClass('quest-block').addClass('explanation-block');

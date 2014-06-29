@@ -36,7 +36,6 @@ function initMap()
   _placesIBOffset = new google.maps.Size(-10, 0);
   
   /********* Map listeners *************/
-  google.maps.event.addListener(_map, 'click', handleMapClick);
   google.maps.event.addListener(_map, 'maptypeid_changed', logMapTypeChange );
   google.maps.event.addListener(_map, 'bounds_changed', function(event) {
 		var zoomLevel = _map.getZoom();
@@ -45,8 +44,25 @@ function initMap()
 			_map.setZoom(_closeUpZoomLevel);
 		}
 	});
-  google.maps.event.addListener(_mapmarker, 'dragend', handleMarkerDrag);
-  google.maps.event.addListener(_mapmarker, 'click', showMarkerInfoBubble);
+  
+  if ( _drawing ) {
+    _drawingManager = new google.maps.drawing.DrawingManager({
+      drawingControl: true,
+      drawingControlOptions: {
+        position: google.maps.ControlPosition.TOP_CENTER,
+        drawingModes: [google.maps.drawing.OverlayType.POLYGON]
+      }
+    });
+    google.maps.event.addListener(_drawingManager, 'overlaycomplete', processDrawnPolygon);
+    $('#map').click(deletePolyAlreadyOnMap);
+    _drawingManager.setMap(_map);
+    _map.setOptions({draggableCursor:null});
+  }
+  else {
+    google.maps.event.addListener(_map, 'click', handleMapClick);
+    google.maps.event.addListener(_mapmarker, 'dragend', handleMarkerDrag);
+    google.maps.event.addListener(_mapmarker, 'click', showMarkerInfoBubble);
+  }
   
   var dbCoords = $('#ansCoords').val();
   if ( dbCoords.length > 0 ) {
@@ -333,4 +349,22 @@ function setMarkerAddr(addr)
 {
   _markerAddr = addr;
   $('.marker-addr').text(addr);
+}
+
+function processDrawnPolygon(e)
+{
+	var tempPoly = e.overlay;
+	var tempPath = tempPoly.getPath().getArray();
+	
+  _drawnPolygon = tempPoly;
+  _drawnPolyJustAdded = true;
+}
+
+function deletePolyAlreadyOnMap()
+{
+  if (_drawingManager.getDrawingMode() == "polygon" && _drawnPolygon != null && !_drawnPolyJustAdded) {
+    _drawnPolygon.setMap(null);
+    _drawnPolygon = null;
+  }
+  _drawnPolyJustAdded = false;
 }
