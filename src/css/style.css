@@ -295,6 +295,7 @@ a { text-decoration: none; }
 
 .temp-disabl {
   color: lightgrey !important;
+  cursor: default !important;
 }
 
 .marker-addr {

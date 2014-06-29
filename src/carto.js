@@ -54,7 +54,8 @@ function initMap()
       }
     });
     google.maps.event.addListener(_drawingManager, 'overlaycomplete', processDrawnPolygon);
-    $('#map').click(deletePolyAlreadyOnMap);
+    
+    setTimeout(googleMapHacks, 3000);
     _drawingManager.setMap(_map);
     _map.setOptions({draggableCursor:null});
   }
@@ -156,7 +157,7 @@ function pinMapMarker(coords)
   _mapmarker.setVisible(true);
   if ( firstTimeHere ) {
     _mapmarker.setAnimation(null);
-    $('.temp-disabl').removeClass('temp-disabl').prop('disabled', false);
+    setSubmitAnswerOptionEnabled();
   }
   var contentHTML = "<div id='infoBubbleContent'><span>" +
                       escapeSpecialChars(_markerAddr) +
@@ -356,8 +357,12 @@ function processDrawnPolygon(e)
 	var tempPoly = e.overlay;
 	var tempPath = tempPoly.getPath().getArray();
 	
-  _drawnPolygon = tempPoly;
-  _drawnPolyJustAdded = true;
+  /* Validate what has been drawn to make sure it's not bogative */
+  if ( tempPath.length > 2 ) {
+    _drawnPolygon = tempPoly;
+    _drawnPolyJustAdded = true;
+    setSubmitAnswerOptionEnabled();
+  }
 }
 
 function deletePolyAlreadyOnMap()
@@ -365,6 +370,17 @@ function deletePolyAlreadyOnMap()
   if (_drawingManager.getDrawingMode() == "polygon" && _drawnPolygon != null && !_drawnPolyJustAdded) {
     _drawnPolygon.setMap(null);
     _drawnPolygon = null;
+    setSubmitAnswerOptionEnabled(false);
   }
   _drawnPolyJustAdded = false;
+}
+
+function googleMapHacks()
+{
+  /* Hack to listen for map clicks in drawing mode (since Google Maps disable click events in this type of situation */
+  var gmDomHackSelect = $('.gm-style').children().eq(0);
+  gmDomHackSelect.click(deletePolyAlreadyOnMap);
+  
+  /* Hack to swap order of drawing control buttons */
+  $('.gmnoprint').eq(2).children().eq(0).insertAfter($('.gmnoprint').eq(2).children().eq(1));
 }

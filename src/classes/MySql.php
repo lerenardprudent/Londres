@@ -109,9 +109,15 @@ class MySql {
     $dbh = $this->initNewPDO();
     $dbh2 = $this->initNewPDO();
     $answers_tbl = $this->C['TBL_ANSWERS'];
-    $geom_type = "point";
+    if ( count(explode(",", $coords)) > 1 ) {
+      $geom_type = "polygon";
+      $geom_txt = "POLYGON((" . $coords . "))";
+    }
+    else {
+      $geom_type = "point";
+      $geom_txt = "POINT(" . $coords . ")";
+    }
     $geom_str = ( $answered ? "GeomFromText(:geom_txt)" : "null" );
-    $geom_txt = "POINT(" . $coords . ")";
     $ret_code = -1;
     
     /*** prepare the select statement ***/

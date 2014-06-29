@@ -17,6 +17,7 @@ $qok = true;
 $questInfo = array();
 $db_err = "";
 $db_log = "";
+$draw_mode = false;
 
 if ($U->authorised()) {
   $curr_pos = $_SESSION[$curr_pos_key];
@@ -73,7 +74,6 @@ if ($U->authorised()) {
     if ( isset($info->show_heading) && !$info->show_heading ) {
       $noHeading = true;
     }
-    $draw_mode = false;
     if ( isset($info->draw) && $info->draw) {
       $draw_mode = true;
       array_push($questInfo, $C['DRAW_KEY']);
@@ -220,6 +220,7 @@ function noteAnyDBIssues()
   var _drawing = false;
   var _drawingManager;
   var _drawnPolygon = null;
+  var _drawnPolyJustAdded = false;
   
 </script>
 
@@ -337,8 +338,8 @@ function noteAnyDBIssues()
               <div class="modal-body">
                 <div>
                   <div class='radio-div'>
-                    <input type="radio" name="ansConfirm" id="yes" class='temp-disabl pointer' value="1" disabled />
-                    <label for="yes" class='radio-text temp-disabl pointer'>Submit address designated by pushpin</label>
+                    <input type="radio" name="ansConfirm" id="yes" class='radio-yes temp-disabl pointer' value="1" disabled />
+                    <label for="yes" class='radio-text radio-yes temp-disabl pointer'><?php echo ($draw_mode ? "Submit region designated by polygon" : "Submit address designated by pushpin"); ?></label>
                   </div>
                   <div class='under-radio'>
                     <p class='marker-addr'></p>
@@ -465,8 +466,21 @@ function noteAnyDBIssues()
           $('#ansAnswered').val(answered ? 1 : 0);
           $('#ansInfo').val(answered ? $('#confOptions')[0].selectedIndex : ($('#confOptions option').length-1) + parseInt($('#reasonOptions')[0].selectedOptions[0].value) );
           $('#ansSearchActivity').val(_searchActivity.join(","));
-          $('#ansCoords').val(answered ? _markerCoords.lat() + " " + _markerCoords.lng() : "0 0");
-          $('#ansAddr').val(_markerAddr);
+          if (_drawnPolygon != null) {
+            var path = _drawnPolygon.getPath().getArray();
+            var coords = []
+            for ( var x = 0; x < path.length; x++ ) {
+              var coord = path[x].lat() + " " + path[x].lng();
+              coords.push(coord);
+              var coordsStr = coords.join(",");
+              alert(coordsStr);
+              $('#ansCoords').val(coordsStr);
+            }
+          }
+          else {
+            $('#ansCoords').val(answered ? _markerCoords.lat() + " " + _markerCoords.lng() : "0 0");
+            $('#ansAddr').val(_markerAddr);
+          }
         }
       }
     }
@@ -540,6 +554,21 @@ function noteAnyDBIssues()
       var ansSelect = radioBtns.eq(idxSelected).parent().next().find('select');
       var idx = ansSelect[0].selectedIndex;
       $('.btn-primary').prop('disabled', idx == 0);
+    }
+    
+    function setSubmitAnswerOptionEnabled(enabled)
+    {
+      if (isUndef(enabled)) {
+        enabled = true;
+      }
+      
+      if ( enabled ) {
+        $('.radio-yes').removeClass('temp-disabl').prop('disabled', false);
+      }
+      else {
+        $('.radio-yes').addClass('temp-disabl').prop('disabled', true);
+        $('#confOptions').hide();
+      }
     }
     
   </script>
