@@ -32,6 +32,28 @@
   },
   "4" : {
     "0" : { "type" : "exp",
+            "html" : "We are interested in the places you go regularly as part of your day-to-day life. If you spend time in any of the following places please mark them on the map as best as you can. Sometimes the answers to different questions might be the same place; it is ok to give the same answer more than once if it is correct. If you regularly use more than one of any place, please add these additional places.",
+            "show_heading" : 0
+          },
+    "1" : { "type" : "quest",
+            "html" : "Please could you locate a <b>newsagent/convenience store</b> that you use regularly?" },
+    "2" : { "type" : "quest",
+            "html" : "Please could you locate a <b>fast-food shop</b>, or <b>takeaway</b>, that you use regularly?" },
+    "3" : { "type" : "quest",
+            "html" : "Please could you locate a place where you like to <b>hang out/spend time</b> with your friends?" },
+    "4" : { "type" : "quest",
+            "html" : "Please could you locate a <b>youth club</b> that you might attend?" },
+    "5" : { "type" : "quest",
+            "html" : "Please could you locate a <b>sports</b> or <b>exercise club</b> you might attend <b>outside of school?</b>" },
+    "6" : { "type" : "quest",
+            "html" : "Please could you locate an <b>after-school activity</b> that you might attend (non-sporting)?" },
+    "7" : { "type" : "quest",
+            "html" : "Please could you locate a <b>friend</b> whom you visit regularly?" },
+    "8" : { "type" : "quest",
+            "html" : "Please could you locate a <b>park or green space</b> that you visit regularly?" }
+  },
+  "5" : {
+    "0" : { "type" : "exp",
             "html" : "Thank you for participating!",
             "show_heading" : 0
           }

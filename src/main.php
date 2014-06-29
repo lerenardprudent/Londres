@@ -358,7 +358,14 @@ function noteAnyDBIssues()
                   <div class='under-radio'>
                     <select id='reasonOptions' class='ans-option'>
                       <option>-- Please indicate your reason --</option>
-                      <?php if ($taskno == 3 && $qno == 2 && $U->question_answered(3,1)) { echo "<option value='3'>School neighbourhood and home neighbourhood are identical</option>"; } ?>
+                      <?php if ($taskno == 3 && $qno == 2 && $U->question_answered(3,1)) { 
+                              echo "<option value='3'>School neighbourhood and home neighbourhood are identical</option>";
+                            }
+                            else if ($taskno == 4) {
+                              echo "<option value='4'>Do not have regularly visited destination</option>" .
+                                   "<option value='5'>Do not perform this activity</option>";
+                            }
+                      ?>
                       <option value="1">Cannot locate place on map</option>
                       <option value="2">Do not wish to answer</option>
                     </select>
