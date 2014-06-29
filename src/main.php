@@ -202,7 +202,8 @@ function noteAnyDBIssues()
 <script type="text/javascript">
   var _latLngLondon;
   var _map;
-  var _mapmarker, _markerCoords, _markerAddr;
+  var _mapmarker, _markerCoords, _markerAddr, _markers = [];
+  var _maxNumMarkers = 3;
   var _geocoder;
 	var _placesServ;
   var _infoBubble;
@@ -325,6 +326,7 @@ function noteAnyDBIssues()
         <input class='dbLog' type='hidden' value='<?php echo $db_log; ?>' />
         <div class='submit-div'>
           <input id='back' type='submit' value='&larr; Go back' class='back-btn submit-btn' />
+          <?php if ($taskno == 4) { echo "<input id='addDest' type='button' value='Add destination' class='center-btn' onclick='addMarkerToMap();' disabled />"; } ?>
           <input id='submit' type='submit' value='Submit answer &rarr;' class='answer-btn submit-btn'/>
         </div>
         <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModal" aria-hidden="true">

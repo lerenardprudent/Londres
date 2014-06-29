@@ -14,16 +14,8 @@ function initMap()
   }	  
   _map = new google.maps.Map(document.getElementById('map'), mapOptions);	  
   $('#map').css('border', '2px solid lightblue');
-  var markerOptions = { 
-    map: _map, 
-    position: _latLngLondon, 
-    draggable:true,
-    animation: google.maps.Animation.DROP,
-    title:"I'm your pushpin! Drag me to a new location, or click somewhere on the map to move me there."
-  }
-  _mapmarker = new google.maps.Marker(markerOptions);
-  _mapmarker.setMap(_map);
-  _mapmarker.setVisible(false);
+  
+  addMarkerToMap();
 		
   _geocoder = new google.maps.Geocoder();
   _placesServ = new google.maps.places.PlacesService(_map);
@@ -170,6 +162,11 @@ function pinMapMarker(coords)
   if ( firstTimeHere ) {
     _mapmarker.setAnimation(null);
     setSubmitAnswerOptionEnabled();
+    var idx = _markers.push(_mapmarker);
+    _mapmarker.idx = idx-1;
+    if ( _markers.length < _maxNumMarkers ) {
+      $('#addDest').prop('disabled', false);
+    }
   }
   var contentHTML = "<div id='infoBubbleContent'><span>" +
                       escapeSpecialChars(_markerAddr) +
@@ -462,4 +459,23 @@ function polygonCentroid(pts)
    }
    f = twicearea * 3;
    return [x / f, y / f]; 
+}
+
+function addMarkerToMap()
+{
+  if ( _mapmarker != null) {
+    _mapmarker.setIcon('http://maps.google.com/mapfiles/ms/icons/green-dot.png');
+  }
+  
+  var markerOptions = { 
+    map: _map, 
+    position: _latLngLondon, 
+    draggable:true,
+    animation: google.maps.Animation.DROP,
+    title:"I'm your pushpin! Drag me to a new location, or click somewhere on the map to move me there."
+  }
+  _mapmarker = new google.maps.Marker(markerOptions);
+  _mapmarker.setMap(_map);
+  _mapmarker.setVisible(false);
+  $('#addDest').prop('disabled', true);
 }

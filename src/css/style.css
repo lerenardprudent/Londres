@@ -200,7 +200,7 @@ a { text-decoration: none; }
   float: right
 }
 
-.submit-btn {
+.submit-div > input {
   min-width: 120px;
 }
 
@@ -417,4 +417,9 @@ ul {
 
 .draggable-contents {
   padding: 2px;
+}
+
+.center-btn {
+  margin-left: auto;
+  margin-right: auto;
 }
