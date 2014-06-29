@@ -44,9 +44,8 @@ if ($U->authorised()) {
       $existing_ans = $U->question_answered($taskno, $qno);
       if ( $existing_ans ) {
         $ans_tokens = explode("|", $existing_ans);
-        $db_ans_x = $ans_tokens[0];
-        $db_ans_y = $ans_tokens[1];
-        $db_ans_addr = $ans_tokens[2];
+        $db_ans_geom_txt = $ans_tokens[0];
+        $db_ans_addr = $ans_tokens[1];
       }
     }
   }
@@ -317,7 +316,7 @@ function noteAnyDBIssues()
         <input id='ansQID' name='ansQID' type='hidden' value='<?php echo $_SESSION[$curr_pos_key]; ?>'/>
         <input id='ansAnswered' name='ansAnswered' type='hidden' />
         <input id='ansInfo' name='ansInfo' type='hidden' />
-        <input id='ansCoords' name='ansCoords' value='<?php if (isset($db_ans_x)) { echo $db_ans_x . " " . $db_ans_y; } ?>' type='hidden' />
+        <input id='ansCoords' name='ansCoords' value='<?php if (isset($db_ans_geom_txt)) { echo $db_ans_geom_txt; } ?>' type='hidden' />
         <input id='ansAddr' name='ansAddr' value='<?php if (isset($db_ans_addr)) { echo $db_ans_addr; } ?>' type='hidden' />
         <input id='ansSearchActivity' name='ansSearchActivity' type='hidden' />
         <input id='ansSubmitted' name='ansSubmitted' type='hidden' />
@@ -468,14 +467,14 @@ function noteAnyDBIssues()
           $('#ansSearchActivity').val(_searchActivity.join(","));
           if (_drawnPolygon != null) {
             var path = _drawnPolygon.getPath().getArray();
+            path.push(path[0]); // Repeat first point so that path is closed loop and polygon is valid
             var coords = []
             for ( var x = 0; x < path.length; x++ ) {
               var coord = path[x].lat() + " " + path[x].lng();
               coords.push(coord);
               var coordsStr = coords.join(",");
-              alert(coordsStr);
-              $('#ansCoords').val(coordsStr);
             }
+            $('#ansCoords').val(coordsStr);
           }
           else {
             $('#ansCoords').val(answered ? _markerCoords.lat() + " " + _markerCoords.lng() : "0 0");

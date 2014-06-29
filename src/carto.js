@@ -54,6 +54,7 @@ function initMap()
       }
     });
     google.maps.event.addListener(_drawingManager, 'overlaycomplete', processDrawnPolygon);
+    _drawingManager.setDrawingMode(google.maps.drawing.OverlayType.POLYGON);
     
     setTimeout(googleMapHacks, 3000);
     _drawingManager.setMap(_map);
@@ -66,11 +67,22 @@ function initMap()
   }
   
   var dbCoords = $('#ansCoords').val();
+  log("DB geom string", dbCoords);
   if ( dbCoords.length > 0 ) {
-    setMarkerAddr($('#ansAddr').val());
-    /* Let's put pin at coords that we pulled from DB */
-    var tkns = dbCoords.split(" ");
-    pinMapMarker(new google.maps.LatLng(tkns[0], tkns[1]));
+    var mapCenter;
+    var latLngs = convertGeomTextToLatLng(dbCoords);
+    if ( latLngs.length == 1 ) {
+      setMarkerAddr($('#ansAddr').val());
+      _markerCoords = latLngs[0];
+      pinMapMarker(_markerCoords);
+      mapCenter = _markerCoords;
+    }
+    else {
+      _drawnPolygon = new google.maps.Polygon({ paths:latLngs});
+      _drawnPolygon.setMap(_map);
+      mapCenter = calcPolyCenter();
+    }
+    _map.setCenter(mapCenter);
   }
 }
     
@@ -367,7 +379,7 @@ function processDrawnPolygon(e)
 
 function deletePolyAlreadyOnMap()
 {
-  if (_drawingManager.getDrawingMode() == "polygon" && _drawnPolygon != null && !_drawnPolyJustAdded) {
+  if (_drawingManager.getDrawingMode() == google.maps.drawing.OverlayType.POLYGON && _drawnPolygon != null && !_drawnPolyJustAdded) {
     _drawnPolygon.setMap(null);
     _drawnPolygon = null;
     setSubmitAnswerOptionEnabled(false);
@@ -379,8 +391,75 @@ function googleMapHacks()
 {
   /* Hack to listen for map clicks in drawing mode (since Google Maps disable click events in this type of situation */
   var gmDomHackSelect = $('.gm-style').children().eq(0);
-  gmDomHackSelect.click(deletePolyAlreadyOnMap);
+  var hackApplied = "NOT ";
+  if ( gmDomHackSelect.length == 1 ) {
+    gmDomHackSelect.click(deletePolyAlreadyOnMap);
+    hackApplied = "";
+  }
+  log("GM hack 1 " + hackApplied + "applied");
   
   /* Hack to swap order of drawing control buttons */
-  $('.gmnoprint').eq(2).children().eq(0).insertAfter($('.gmnoprint').eq(2).children().eq(1));
+  var gmDomHackSelect2 = $('.gmnoprint').eq(2).children();
+  hackApplied = "NOT ";
+  if ( gmDomHackSelect2.length == 2 ) {
+    gmDomHackSelect2.eq(0).insertAfter(gmDomHackSelect2.eq(1));
+    hackApplied = "";
+  }
+  log("GM hack 2 " + hackApplied + "applied");
+}
+
+function convertGeomTextToLatLng(geom_text)
+{
+  var re = /([-\.0123456789]+)/g
+  var matches = geom_text.match(re);
+  
+  /* Drop the last lat-lng from list, since it is a repeat of the first point (in order to comply with geom string polygon rules) */
+  if ( matches.length > 2 ) {
+    matches.pop();
+    matches.pop();
+  }
+  var latLngs = [];
+  for (var x = 0; x < matches.length; x += 2) {
+    var latLng = new google.maps.LatLng(matches[x],matches[x+1])
+    latLngs.push(latLng);
+  }
+  return latLngs;
+}
+
+function calcPolyCenter()
+{
+	var a = [];
+	var path = _drawnPolygon.getPath().getArray();
+	for (i = 0; i < path.length; i++){ a[i]=[path[i].lat(), path[i].lng()]; }
+	var cc = polygonCentroid(a);
+	var center = _loca =  new google.maps.LatLng(cc[0], cc[1]);
+	_drawnPolygon.cc = center;
+	return center;
+}
+
+function polygonCentroid(pts) 
+{
+   var twicearea = 0;
+   var x = 0; 
+   var y = 0;
+   var nPts = pts.length;
+   var p1, p2, f;
+   if (nPts == 2) 
+   { 
+	   p1 = pts[0];
+	   p2 = pts[1];
+	   f = [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2 ];
+	   return f; 
+   }
+   for (var i = 0, j = nPts - 1 ; i < nPts; j = i++) 
+   {
+      p1 = pts[i]; p2 = pts[j];
+      twicearea += p1[0] * p2[1];
+      twicearea -= p1[1] * p2[0];
+      f = p1[0] * p2[1] - p2[0] * p1[1];
+      x += (p1[0] + p2[0]) * f;
+      y += (p1[1] + p2[1]) * f;
+   }
+   f = twicearea * 3;
+   return [x / f, y / f]; 
 }

@@ -109,25 +109,24 @@ class MySql {
     $dbh = $this->initNewPDO();
     $dbh2 = $this->initNewPDO();
     $answers_tbl = $this->C['TBL_ANSWERS'];
-    if ( count(explode(",", $coords)) > 1 ) {
-      $geom_type = "polygon";
+    $num_coords = count(explode(",", $coords));
+    if ( $num_coords > 1 ) {
       $geom_txt = "POLYGON((" . $coords . "))";
     }
     else {
-      $geom_type = "point";
       $geom_txt = "POINT(" . $coords . ")";
     }
     $geom_str = ( $answered ? "GeomFromText(:geom_txt)" : "null" );
     $ret_code = -1;
     
     /*** prepare the select statement ***/
-    $stmt = $dbh->prepare("INSERT INTO " . $answers_tbl . " (taskno,qno,answered,ansinfo,geom_type,id,searches,addr,geom) VALUES (:taskno,:qno,:answered,:ans_info, :geom_type,:uid,:searches,:addr," . $geom_str . ")");
+    $stmt = $dbh->prepare("INSERT INTO " . $answers_tbl . " (taskno,qno,answered,ansinfo,num_coords,id,searches,addr,geom) VALUES (:taskno,:qno,:answered,:ans_info, :num_coords,:uid,:searches,:addr," . $geom_str . ")");
     /*** bind the parameters ***/
     $stmt->bindParam(':taskno', $taskno, PDO::PARAM_INT);
     $stmt->bindParam(':qno', $qno, PDO::PARAM_INT);
     $stmt->bindParam(':answered', $answered, PDO::PARAM_INT);
     $stmt->bindParam(':ans_info', $ans_info, PDO::PARAM_INT);
-    $stmt->bindParam(':geom_type', $geom_type, PDO::PARAM_STR);
+    $stmt->bindParam(':num_coords', $num_coords, PDO::PARAM_INT);
     $stmt->bindParam(':uid', $uid, PDO::PARAM_INT);
     $stmt->bindParam(':searches', $searches, PDO::PARAM_STR);
     $stmt->bindParam(':addr', $addr, PDO::PARAM_STR);
@@ -136,14 +135,14 @@ class MySql {
     $rowsUpdated = $stmt->rowCount();
     
     if ( $ret_code == 23000 ) {
-      $stmt2 = $dbh2->prepare("UPDATE " . $answers_tbl . " SET answered=:answered, ansinfo=:ans_info, addr=:addr, geom_type=:geom_type, geom=" . $geom_str . ",searches=:searches WHERE id=:uid AND taskno=:taskno AND qno=:qno");
+      $stmt2 = $dbh2->prepare("UPDATE " . $answers_tbl . " SET answered=:answered, ansinfo=:ans_info, addr=:addr, num_coords=:num_coords, geom=" . $geom_str . ",searches=:searches WHERE id=:uid AND taskno=:taskno AND qno=:qno");
       $stmt2->bindParam(':uid', $uid, PDO::PARAM_INT);
       $stmt2->bindParam(':taskno', $taskno, PDO::PARAM_INT);
       $stmt2->bindParam(':qno', $qno, PDO::PARAM_INT);
       $stmt2->bindParam(':answered', $answered, PDO::PARAM_INT);
       $stmt2->bindParam(':ans_info', $ans_info, PDO::PARAM_INT);
       $stmt2->bindParam(':addr', $addr, PDO::PARAM_STR);
-      $stmt2->bindParam(':geom_type', $geom_type, PDO::PARAM_STR);
+      $stmt2->bindParam(':num_coords', $num_coords, PDO::PARAM_INT);
       if ( $answered ) { $stmt2->bindParam(':geom_txt', $geom_txt, PDO::PARAM_STR); }
       $stmt2->bindParam(':searches', $searches, PDO::PARAM_STR);
       $ret_code = $this->execute($stmt2);
@@ -258,14 +257,15 @@ class MySql {
     $dbh = $this->initNewPDO();
     $tbl_ans = $this->C['TBL_ANSWERS'];
     
-    $stmt = $dbh->prepare("SELECT x(geom) AS x, y(geom) as y, addr FROM " . $tbl_ans . " WHERE id=:uid AND taskno=:taskno AND qno=:qno AND answered=1");
+    $stmt = $dbh->prepare("SELECT AsText(geom) AS geom_txt, addr FROM " . $tbl_ans . " WHERE id=:uid AND taskno=:taskno AND qno=:qno AND answered=1");
     $stmt->bindParam(':uid', $uid, PDO::PARAM_INT);
     $stmt->bindParam(':taskno', $taskno, PDO::PARAM_INT);
     $stmt->bindParam(':qno', $qno, PDO::PARAM_INT);
 
     $this->execute($stmt);
     $row = $stmt->fetch();
-    return ($row !== false ? implode("|", array($row['x'], $row['y'], $row['addr'])) : false);
+    return ($row !== false ? implode("|", array($row['geom_txt'], $row['addr'])) : false);
+    //select x(p1), y(p1), x(p2), y(p2) from (select pointn(points,1) as p1, pointn(points,2) as p2 from (select ExteriorRing(geom) as points from answers where geom_type = 'polygon' and geom is not null) s) s2
   }
 }
 
