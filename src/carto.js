@@ -14,9 +14,7 @@ function initMap()
   }	  
   _map = new google.maps.Map(document.getElementById('map'), mapOptions);	  
   $('#map').css('border', '2px solid lightblue');
-  
-  addMarkerToMap();
-		
+  	
   _geocoder = new google.maps.Geocoder();
   _placesServ = new google.maps.places.PlacesService(_map);
   
@@ -26,6 +24,7 @@ function initMap()
   _infoBubble = new google.maps.InfoWindow(infoWinOptions);
 
   _placesIBOffset = new google.maps.Size(-10, 0);
+  _markerIBOffset = new google.maps.Size(0, -38);
   
   /********* Map listeners *************/
   google.maps.event.addListener(_map, 'maptypeid_changed', logMapTypeChange );
@@ -53,21 +52,21 @@ function initMap()
     _map.setOptions({draggableCursor:null});
   }
   else {
+    _mapmarker = createNewMarker();
+    _mapmarker.setOptions({draggable:true});
     google.maps.event.addListener(_map, 'click', handleMapClick);
     google.maps.event.addListener(_mapmarker, 'dragend', handleMarkerDrag);
-    google.maps.event.addListener(_mapmarker, 'click', showMarkerInfoBubble);
   }
   
   var dbCoords = $('#ansCoords').val();
-  log("DB geom string", dbCoords);
   if ( dbCoords.length > 0 ) {
+    log("DB geom string", dbCoords);
     var mapCenter;
     var latLngs = convertGeomTextToLatLng(dbCoords);
     if ( latLngs.length == 1 ) {
-      setMarkerAddr($('#ansAddr').val());
-      _markerCoords = latLngs[0];
-      pinMapMarker(_markerCoords);
-      mapCenter = _markerCoords;
+      _mapmarker.address = $('#ansAddr').val();
+      pinMapMarker(latLngs[0]);
+      mapCenter = latLngs[0];
     }
     else {
       _drawnPolygon = new google.maps.Polygon({ paths:latLngs});
@@ -134,29 +133,28 @@ function geocoderResponse(results, status)
   if (status == google.maps.GeocoderStatus.OK) {
     ok = true;
     var res_index = 0;
-    setMarkerAddr(results[res_index].formatted_address);
-		_markerCoords = results[res_index].geometry.location;
-    log(results.length + " match" + (results.length == 1 ? "" : "es") + " found - choosing "  + quote(_markerAddr,"'"));
-    pinMapMarker(_markerCoords);
+    _mapmarker.address = results[res_index].formatted_address;
+    log(results.length + " match" + (results.length == 1 ? "" : "es") + " found - choosing "  + quote(_mapmarker.address,"'"));
+    pinMapMarker(results[res_index].geometry.location);
   }
   else if (status == google.maps.GeocoderStatus.ZERO_RESULTS) {
     showPopupMsg(5, "Location not found.");
   }
   
-  return { 'ok' : ok, 'addr' : _markerAddr, 'coords' : _markerCoords };
+  return { 'ok' : ok };
 }
 
 function geocoderResponseCenterMap(results, status)
 {
   var res = geocoderResponse(results, status);
   if ( res.ok ) {
-    _map.panTo(_markerCoords);
+    _map.panTo(_mapmarker.getPosition());
   }
 }
 
 function pinMapMarker(coords)
 {
-  var firstTimeHere = !_mapmarker.visible;
+  var firstTimeHere = !_mapmarker.getVisible();
   _mapmarker.setPosition(coords);
   _mapmarker.setVisible(true);
   if ( firstTimeHere ) {
@@ -169,7 +167,8 @@ function pinMapMarker(coords)
     }
   }
   var contentHTML = "<div id='infoBubbleContent'><span>" +
-                      escapeSpecialChars(_markerAddr) +
+                    escapeSpecialChars(_mapmarker.address) +
+                    //"&nbsp;(<a href='javascript:removeMarker(" + _mapmarker.idx + ");'>Remove</a>)
                     "</span></div>";
   _infoBubble.setContent(contentHTML);
   showMarkerInfoBubble();
@@ -181,10 +180,13 @@ function handleMarkerDrag(e)
   showMarkerInfoBubble();
 }
 
-function showMarkerInfoBubble()
+function showMarkerInfoBubble(e)
 {
-  _infoBubble.set('pixelOffset', null );
-  _infoBubble.open(_map, _mapmarker);
+  _infoBubble.setOptions({
+    pixelOffset: _markerIBOffset,
+    position: isUndef(e) ? _mapmarker.getPosition() : e.latLng
+  });
+  _infoBubble.open(_map);
   window.clearTimeout(_timer);
   _timer = setTimeout( function() {_infoBubble.close()}, 5000);
 }
@@ -344,8 +346,7 @@ function pinMapMarkerAtPlace()
 	var addr = this.address ? this.address : ( this.vicinity ? this.vicinity : "" );
   var coords = this.getPosition();
 	pinMapMarker(coords);
-  setMarkerAddr(this.name + ", " + addr);
-  _markerCoords = coords;
+  _mapmarker.address = this.name + ", " + addr;
 }
 
 function selectPlaceMarker(id)
@@ -353,12 +354,6 @@ function selectPlaceMarker(id)
 	var markerPos = _placeMarkers[id].getPosition();
 	_map.panTo(markerPos);
 	google.maps.event.trigger(_placeMarkers[id], 'mouseover');
-}
-
-function setMarkerAddr(addr)
-{
-  _markerAddr = addr;
-  $('.marker-addr').text(addr);
 }
 
 function processDrawnPolygon(e)
@@ -463,19 +458,31 @@ function polygonCentroid(pts)
 
 function addMarkerToMap()
 {
-  if ( _mapmarker != null) {
-    _mapmarker.setIcon('http://maps.google.com/mapfiles/ms/icons/green-dot.png');
+  _mapmarker.setVisible(false);
+  var newMarker = createNewMarker(_mapmarker);
+  newMarker.setOptions({icon:'http://maps.google.com/mapfiles/ms/icons/green-dot.png'});
+  $('#addDest').prop('disabled', true);
+}
+
+function removeMarker(idx)
+{
+  var mark = _markers[idx];
+  mark.setMap(null);
+  _markers.splice(idx,1);
+  if ( idx == _markers.length ) {
+    _mapmarker.setVisible(false);
   }
-  
+}
+
+function createNewMarker(marker2)
+{
   var markerOptions = { 
     map: _map, 
-    position: _latLngLondon, 
-    draggable:true,
-    animation: google.maps.Animation.DROP,
-    title:"I'm your pushpin! Drag me to a new location, or click somewhere on the map to move me there."
+    position: ( isUndef(marker2) ? _latLngLondon : marker2.getPosition() ),
+    visible: !isUndef(marker2)
   }
-  _mapmarker = new google.maps.Marker(markerOptions);
-  _mapmarker.setMap(_map);
-  _mapmarker.setVisible(false);
-  $('#addDest').prop('disabled', true);
+	
+  var marker = new google.maps.Marker(markerOptions);
+  google.maps.event.addListener(marker, 'click', showMarkerInfoBubble);
+  return marker;
 }

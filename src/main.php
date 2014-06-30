@@ -202,7 +202,7 @@ function noteAnyDBIssues()
 <script type="text/javascript">
   var _latLngLondon;
   var _map;
-  var _mapmarker, _markerCoords, _markerAddr, _markers = [];
+  var _mapmarker, _markers = [];
   var _maxNumMarkers = 3;
   var _geocoder;
 	var _placesServ;
@@ -216,7 +216,7 @@ function noteAnyDBIssues()
   var _placeMarkers = [];
   var _zoomSnapTo = false;
   var _closeUpZoomLevel = 15;
-  var _placesIBOffset;
+  var _placesIBOffset, _markerIBOffset;
   var _drawing = false;
   var _drawingManager;
   var _drawnPolygon = null;
@@ -276,7 +276,8 @@ function noteAnyDBIssues()
       
       $('.answer-btn').attr('type','button').addClass('confirm-btn');
       $('.confirm-btn').click( function() { 
-        if ( $(this).hasClass('confirm-btn') ) { 
+        if ( $(this).hasClass('confirm-btn') ) {
+          $('.marker-addr').text(_mapmarker.address);
           $('#confirmModal').modal(); 
           var radioBtns = $('input[name=ansConfirm]');
           radioBtns.change(function() { 
@@ -326,7 +327,7 @@ function noteAnyDBIssues()
         <input class='dbLog' type='hidden' value='<?php echo $db_log; ?>' />
         <div class='submit-div'>
           <input id='back' type='submit' value='&larr; Go back' class='back-btn submit-btn' />
-          <?php if ($taskno == 4) { echo "<input id='addDest' type='button' value='Add destination' class='center-btn' onclick='addMarkerToMap();' disabled />"; } ?>
+          <?php if ($taskno == 4 && $qno >= 1) { echo "<input id='addDest' type='button' value='Add destination' class='center-btn' onclick='addMarkerToMap();' disabled />"; } ?>
           <input id='submit' type='submit' value='Submit answer &rarr;' class='answer-btn submit-btn'/>
         </div>
         <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModal" aria-hidden="true">
@@ -486,8 +487,8 @@ function noteAnyDBIssues()
             $('#ansCoords').val(coordsStr);
           }
           else {
-            $('#ansCoords').val(answered ? _markerCoords.lat() + " " + _markerCoords.lng() : "0 0");
-            $('#ansAddr').val(_markerAddr);
+            $('#ansCoords').val(answered ? _mapmarker.getPosition().lat() + " " + _mapmarker.getPosition().lng() : "0 0");
+            $('#ansAddr').val(_mapmarker.address);
           }
         }
       }
