@@ -18,6 +18,7 @@ $questInfo = array();
 $db_err = "";
 $db_log = "";
 $draw_mode = false;
+$freq_quest = false;
 
 if ($U->authorised()) {
   $curr_pos = $_SESSION[$curr_pos_key];
@@ -76,6 +77,11 @@ if ($U->authorised()) {
     if ( isset($info->draw) && $info->draw) {
       $draw_mode = true;
       array_push($questInfo, $C['DRAW_KEY']);
+    }
+    
+    if ( isset($info->freq) && $info->freq) {
+      $freq_quest = true;
+      array_push($questInfo, $C['FREQ_QUEST_KEY']);
     }
   }
   else {
@@ -221,7 +227,7 @@ function noteAnyDBIssues()
   var _drawingManager;
   var _drawnPolygon = null;
   var _drawnPolyJustAdded = false;
-  
+  var _freqQuestType = false;
 </script>
 
 <script type="text/javascript">
@@ -238,6 +244,7 @@ function noteAnyDBIssues()
     var firstScreen = ($('.questInfo').val().indexOf(Consts.get('QUEST_TEXT_BEGIN')) >= 0);
     _endOfQuestionnaire = ($('.questInfo').val().indexOf(Consts.get('QUEST_TEXT_END')) >= 0);
     _drawing = ($('.questInfo').val().indexOf(Consts.get('DRAW_KEY')) >= 0);
+    _freqQuestType = ($('.questInfo').val().indexOf(Consts.get('FREQ_QUEST_KEY')) >= 0);
     
     if ( _isExplanation ) {
       $('.quest-block').removeClass('quest-block').addClass('explanation-block');
@@ -278,13 +285,40 @@ function noteAnyDBIssues()
       $('.confirm-btn').click( function() { 
         if ( $(this).hasClass('confirm-btn') ) {
           showMarkerAddrInModal();
+          if ( _freqQuestType ) {
+            var clone = $('.freqQuestions').clone().removeClass('example');
+            $('li').after(clone[0].outerHTML);
+            
+            $('.nested').hide();
+            $('.nested-option').change( function() {
+              var idxThisSelect = $('.nested-option').index($(this));
+              var idxNextSelect = parseInt($('option:checked', this).val());
+              if ( idxNextSelect != "0" ) {
+                var scope = $(this).closest('.freqQuestions');
+                scope.find('.nested:gt(' + idxThisSelect + ')').hide();
+                scope.find('.nested-option').eq(idxNextSelect).val(0);
+                scope.find('.nested').eq(idxNextSelect).show('blind', 200);
+              }
+            });
+          }
+          
           $('#confirmModal').modal(); 
           var radioBtns = $('input[name=ansConfirm]');
-          radioBtns.change(function() { 
+          radioBtns.change(function() {
             var idxSelected = radioBtns.index($('input[name=ansConfirm]:checked'));
-            radioBtns.eq(1-idxSelected).parent().next().find('select').hide('blind', 300);
-            radioBtns.eq(idxSelected).parent().next().find('select').show('blind', 300);
-            setSubmitBtnEnabledStatus();
+            if ( !_freqQuestType ) {
+              radioBtns.eq(1-idxSelected).parent().next().find('select').hide('blind', 300);
+              radioBtns.eq(idxSelected).parent().next().find('select').show('blind', 300);
+              setSubmitBtnEnabledStatus();
+            }
+            else {
+              if ( idxSelected == 0 ) {
+                $('.freqQuestions:not(.example)').each(function() { $(this).children().eq(0).show(); });
+              }
+              else {
+                $('.freqQuestions:not(.example)').removeClass('show-init-freq-quest').find('.nested').hide();
+              }
+            }
           });
           $('.ans-option').change( setSubmitBtnEnabledStatus );
         } });
@@ -327,7 +361,7 @@ function noteAnyDBIssues()
         <input class='dbLog' type='hidden' value='<?php echo $db_log; ?>' />
         <div class='submit-div'>
           <input id='back' type='submit' value='&larr; Go back' class='back-btn submit-btn' />
-          <?php if ($taskno == 4 && $qno >= 1) { echo "<input id='addDest' type='button' value='Add destination' class='center-btn' onclick='addMarkerToMap();' disabled />"; } ?>
+          <?php if ($freq_quest) { echo "<input id='addDest' type='button' value='Add destination' class='center-btn' onclick='addMarkerToMap();' disabled />"; } ?>
           <input id='submit' type='submit' value='Submit answer &rarr;' class='answer-btn submit-btn'/>
         </div>
         <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModal" aria-hidden="true">
@@ -353,10 +387,10 @@ function noteAnyDBIssues()
                       <option>Quite unsure</option>
                       <option>Very unsure</option>
                     </select>
-                    <div class='freqQuestions'>
+                    <div class='freqQuestions example'>
                       <div class='nested'>
                         <label>How often do you visit this place?</label>
-                        <select class='nested-option freq-option'>
+                        <select class='nested-option'>
                           <option value='0'>-- Please choose --</option>
                           <option value='1'>Every day</option>
                           <option value='1'>Several times a week</option>
@@ -404,7 +438,7 @@ function noteAnyDBIssues()
                       <?php if ($taskno == 3 && $qno == 2 && $U->question_answered(3,1)) { 
                               echo "<option value='3'>School neighbourhood and home neighbourhood are identical</option>";
                             }
-                            else if ($taskno == 4) {
+                            else if ($freq_quest == 4) {
                               echo "<option value='4'>Do not have regularly visited destination</option>" .
                                    "<option value='5'>Do not perform this activity</option>";
                             }
@@ -634,20 +668,7 @@ function noteAnyDBIssues()
       $('.marker-addr').html("");
       for ( var v = 0; v < _markers.length; v++ ) {
         $('.marker-addr').append("<li>" + _markers[v].address + "</li>");
-      }
-      
-      $('li').after($('.freqQuestions')[0].outerHTML);
-      $('li').next().show();
-      $('.nested').eq(0).css('display', 'block');
-      $('.nested-option').change( function() {
-        var idxThisSelect = $('.nested-option').index($(this));
-        var idxNextSelect = parseInt($('option:checked', this).val());
-        if ( idxNextSelect != "0" ) {
-          $('.nested:gt(' + idxThisSelect + ')').hide();
-          $('.nested-option').eq(idxNextSelect).val(0);
-          $('.nested').eq(idxNextSelect).show('blind', 200);
-        }
-      });
+      }      
     }
   </script>
   <div id="draggable" class="ui-widget-content draggable places-control">

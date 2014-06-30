@@ -34,5 +34,6 @@
   "CREATED_USERS_KEY"   : "justcreated",
   "GENDER_KEY"          : "gender",
   "DOB_KEY"             : "dob",
-  "DRAW_KEY"            : "draw"
+  "DRAW_KEY"            : "draw",
+  "FREQ_QUEST_KEY"      : "freq"
 }

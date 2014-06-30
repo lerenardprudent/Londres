@@ -433,8 +433,11 @@ ul {
   margin-top: 5px;
 }
 
+.example {
+  display: none;
+}
+
 .nested {
-  display:none;
   margin-bottom: 5px;
 }
 
