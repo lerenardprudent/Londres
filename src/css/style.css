@@ -427,3 +427,34 @@ ul {
   margin-left: auto;
   margin-right: auto;
 }
+
+.freqQuestions {
+  display: inline-block;
+  margin-top: 5px;
+}
+
+.nested {
+  display:none;
+  margin-bottom: 5px;
+}
+
+.nested > label {
+  display: block
+}
+
+/*
+.freqQuestions select {
+  float: right;
+}
+
+.freqQuestions > select:nth-child(1) {
+  width: 100%;
+}
+
+.freqQuestions > select:nth-child(2) {
+  width: 95%;
+}
+
+.freqQuestions > select:nth-child(3) {
+  width: 90%;
+}*/

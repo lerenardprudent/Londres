@@ -353,15 +353,46 @@ function noteAnyDBIssues()
                       <option>Quite unsure</option>
                       <option>Very unsure</option>
                     </select>
-                    <select class='freq-option ans-option'>
-                      <option>-- How often do you visit this place? --</option>
-                      <option>Every day</option>
-                      <option>Several times a week</option>
-                      <option>Once a week</option>
-                      <option>Once a fortnight</option>
-                      <option>Once a month</option>
-                      <option>Less often</option>
-                    </select>
+                    <div class='freqQuestions'>
+                      <div class='nested'>
+                        <label>How often do you visit this place?</label>
+                        <select class='nested-option freq-option'>
+                          <option value='0'>-- Please choose --</option>
+                          <option value='1'>Every day</option>
+                          <option value='1'>Several times a week</option>
+                          <option value='1'>Once a week</option>
+                          <option value='1'>Once a fortnight</option>
+                          <option value='1'>Once a month</option>
+                          <option value='1'>Less often</option>
+                        </select>
+                      </div>
+                      <div class='nested'>
+                        <label>Are you usually supervised?</label>
+                        <select class='nested-option'>
+                          <option value='0'>-- Please choose --</option>
+                          <option value='2'>Yes</option>
+                          <option value='3'>No</option>
+                        </select>
+                      </div>
+                      <div class='nested'>
+                        <label>Who <b>usually</b> supervises you?</label>
+                        <select class='nested-option'>
+                          <option value='0'>-- Please choose --</option>
+                          <option>Parent / Carer</option>
+                          <option>Another responsable adult</option>
+                          <option>An older brother/sister</option>
+                        </select>
+                      </div>
+                      <div class='nested'>
+                        <label>Who do you <b>usually</b> go with?</label>
+                        <select class='nested-option'>
+                          <option value='0'>-- Please choose --</option>
+                          <option>Friends</option>
+                          <option>Younger brother(s)/sister(s)</option>
+                          <option>No-one</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
                   <div class='radio-div' style='margin-top: 20px'>
                     <input type="radio" name="ansConfirm" id="r2" class='pointer' value="2" />
@@ -604,6 +635,19 @@ function noteAnyDBIssues()
       for ( var v = 0; v < _markers.length; v++ ) {
         $('.marker-addr').append("<li>" + _markers[v].address + "</li>");
       }
+      
+      $('li').after($('.freqQuestions')[0].outerHTML);
+      $('li').next().show();
+      $('.nested').eq(0).css('display', 'block');
+      $('.nested-option').change( function() {
+        var idxThisSelect = $('.nested-option').index($(this));
+        var idxNextSelect = parseInt($('option:checked', this).val());
+        if ( idxNextSelect != "0" ) {
+          $('.nested:gt(' + idxThisSelect + ')').hide();
+          $('.nested-option').eq(idxNextSelect).val(0);
+          $('.nested').eq(idxNextSelect).show('blind', 200);
+        }
+      });
     }
   </script>
   <div id="draggable" class="ui-widget-content draggable places-control">
