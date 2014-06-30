@@ -299,7 +299,11 @@ a { text-decoration: none; }
 }
 
 .marker-addr {
-  font-style: italic;
+  padding-left: 15px;
+}
+
+.marker-addr  > li {
+  font-style: italic
 }
 
 .pointer {

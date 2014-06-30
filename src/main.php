@@ -277,7 +277,7 @@ function noteAnyDBIssues()
       $('.answer-btn').attr('type','button').addClass('confirm-btn');
       $('.confirm-btn').click( function() { 
         if ( $(this).hasClass('confirm-btn') ) {
-          $('.marker-addr').text(_mapmarker.address);
+          showMarkerAddrInModal();
           $('#confirmModal').modal(); 
           var radioBtns = $('input[name=ansConfirm]');
           radioBtns.change(function() { 
@@ -344,7 +344,7 @@ function noteAnyDBIssues()
                     <label for="yes" class='radio-text radio-yes temp-disabl pointer'><?php echo ($draw_mode ? "Submit region designated by polygon" : "Submit address designated by pushpin"); ?></label>
                   </div>
                   <div class='under-radio'>
-                    <p class='marker-addr'></p>
+                    <ol class='marker-addr'></ol>
                     <select id='confOptions' class='ans-option'>
                       <option>-- Please rate your confidence level --</option>
                       <option>Very sure</option>
@@ -352,6 +352,15 @@ function noteAnyDBIssues()
                       <option>Neither sure nor unsure</option>
                       <option>Quite unsure</option>
                       <option>Very unsure</option>
+                    </select>
+                    <select class='freq-option ans-option'>
+                      <option>-- How often do you visit this place? --</option>
+                      <option>Every day</option>
+                      <option>Several times a week</option>
+                      <option>Once a week</option>
+                      <option>Once a fortnight</option>
+                      <option>Once a month</option>
+                      <option>Less often</option>
                     </select>
                   </div>
                   <div class='radio-div' style='margin-top: 20px'>
@@ -486,9 +495,15 @@ function noteAnyDBIssues()
             }
             $('#ansCoords').val(coordsStr);
           }
-          else {
-            $('#ansCoords').val(answered ? _mapmarker.getPosition().lat() + " " + _mapmarker.getPosition().lng() : "0 0");
-            $('#ansAddr').val(_mapmarker.address);
+          else if ( answered ) {
+            var allCoords = [];
+            var allAddrs = [];
+            for ( var x = 0; x < _markers.length; x++ ) {
+              allCoords.push(_markers[x].getPosition().lat() + " " + _markers[x].getPosition().lng());
+              allAddrs.push(_markers[x].address);
+            }
+            $('#ansCoords').val(allCoords.join(","));
+            $('#ansAddr').val(allAddrs.join("¦"));
           }
         }
       }
@@ -580,6 +595,16 @@ function noteAnyDBIssues()
       }
     }
     
+    function showMarkerAddrInModal()
+    {
+      if ( _markers.length > 1 ) {
+        $('.radio-yes').next().text("Submit addresses designated by pushpins");
+      }
+      $('.marker-addr').html("");
+      for ( var v = 0; v < _markers.length; v++ ) {
+        $('.marker-addr').append("<li>" + _markers[v].address + "</li>");
+      }
+    }
   </script>
   <div id="draggable" class="ui-widget-content draggable places-control">
     <div class="ui-widget-header draggable-heading">

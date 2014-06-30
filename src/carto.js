@@ -62,18 +62,31 @@ function initMap()
   if ( dbCoords.length > 0 ) {
     log("DB geom string", dbCoords);
     var mapCenter;
-    var latLngs = convertGeomTextToLatLng(dbCoords);
+    var lls = convertGeomTextToLatLng(dbCoords);
+    var latLngs = lls.coords;
     if ( latLngs.length == 1 ) {
       _mapmarker.address = $('#ansAddr').val();
-      pinMapMarker(latLngs[0]);
-      mapCenter = latLngs[0];
+      pinMapMarker(latLngs[0], false);
+      _map.setCenter(latLngs[0]);
+    }
+    else if ( lls.isPoly ) {
+      _drawnPolygon = new google.maps.Polygon({ paths:latLngs });
+      _drawnPolygon.setMap(_map);  
+      _map.setCenter(calcPolyCenter());
     }
     else {
-      _drawnPolygon = new google.maps.Polygon({ paths:latLngs});
-      _drawnPolygon.setMap(_map);
-      mapCenter = calcPolyCenter();
+      var bnds = new google.maps.LatLngBounds();
+      var addrs = $('#ansAddr').val().split("¦");
+      for ( var y = 0; y < latLngs.length; y++ ) {
+        _mapmarker.address = addrs[y];
+        pinMapMarker(latLngs[y], false);
+        if ( y != latLngs.length-1 ) {
+          addMarkerToMap();
+        }
+        bnds.extend(latLngs[y]);
+      }
+      _map.fitBounds(bnds);
     }
-    _map.setCenter(mapCenter);
   }
 }
     
@@ -152,8 +165,11 @@ function geocoderResponseCenterMap(results, status)
   }
 }
 
-function pinMapMarker(coords)
+function pinMapMarker(coords, doPopup)
 {
+  if ( isUndef(doPopup) ) {
+    doPopup = true;
+  }
   var firstTimeHere = !_mapmarker.getVisible();
   _mapmarker.setPosition(coords);
   _mapmarker.setVisible(true);
@@ -166,12 +182,9 @@ function pinMapMarker(coords)
       $('#addDest').prop('disabled', false);
     }
   }
-  var contentHTML = "<div id='infoBubbleContent'><span>" +
-                    escapeSpecialChars(_mapmarker.address) +
-                    //"&nbsp;(<a href='javascript:removeMarker(" + _mapmarker.idx + ");'>Remove</a>)
-                    "</span></div>";
-  _infoBubble.setContent(contentHTML);
-  showMarkerInfoBubble();
+  if (doPopup) {
+    showMarkerInfoBubble();
+  }
 }
 
 function handleMarkerDrag(e)
@@ -180,13 +193,17 @@ function handleMarkerDrag(e)
   showMarkerInfoBubble();
 }
 
-function showMarkerInfoBubble(e)
+function showMarkerInfoBubble(marker)
 {
+  if ( isUndef(marker) ) {
+    marker = _mapmarker;
+  }
   _infoBubble.setOptions({
     pixelOffset: _markerIBOffset,
-    position: isUndef(e) ? _mapmarker.getPosition() : e.latLng
+    content: "<div id='infoBubbleContent'><span>" + escapeSpecialChars(marker.address) + "</span></div>"
+             //"&nbsp;(<a href='javascript:removeMarker(" + _mapmarker.idx + ");'>Remove</a>)
   });
-  _infoBubble.open(_map);
+  _infoBubble.open(_map, marker);
   window.clearTimeout(_timer);
   _timer = setTimeout( function() {_infoBubble.close()}, 5000);
 }
@@ -404,9 +421,11 @@ function convertGeomTextToLatLng(geom_text)
 {
   var re = /([-\.0123456789]+)/g
   var matches = geom_text.match(re);
+  var isPolygon = false;
   
   /* Drop the last lat-lng from list, since it is a repeat of the first point (in order to comply with geom string polygon rules) */
-  if ( matches.length > 2 ) {
+  if ( geom_text.toLowerCase().startsWith("polygon") ) {
+    isPolygon = true;
     matches.pop();
     matches.pop();
   }
@@ -415,7 +434,7 @@ function convertGeomTextToLatLng(geom_text)
     var latLng = new google.maps.LatLng(matches[x],matches[x+1])
     latLngs.push(latLng);
   }
-  return latLngs;
+  return { coords: latLngs, isPoly: isPolygon };
 }
 
 function calcPolyCenter()
@@ -461,6 +480,7 @@ function addMarkerToMap()
   _mapmarker.setVisible(false);
   var newMarker = createNewMarker(_mapmarker);
   newMarker.setOptions({icon:'http://maps.google.com/mapfiles/ms/icons/green-dot.png'});
+  _markers[_markers.length-1] = newMarker;
   $('#addDest').prop('disabled', true);
 }
 
@@ -483,6 +503,9 @@ function createNewMarker(marker2)
   }
 	
   var marker = new google.maps.Marker(markerOptions);
-  google.maps.event.addListener(marker, 'click', showMarkerInfoBubble);
+  if (!isUndef(marker2)) {
+    marker.address = marker2.address;
+  }
+  google.maps.event.addListener(marker, 'click', function() { showMarkerInfoBubble(this); } );
   return marker;
 }

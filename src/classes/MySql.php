@@ -111,7 +111,12 @@ class MySql {
     $answers_tbl = $this->C['TBL_ANSWERS'];
     $num_coords = count(explode(",", $coords));
     if ( $num_coords > 1 ) {
-      $geom_txt = "POLYGON((" . $coords . "))";
+      if ( strlen($addr) > 0 ) {
+        $geom_txt = "LINESTRING(" . $coords . ")";
+      }
+      else {
+        $geom_txt = "POLYGON((" . $coords . "))";
+      }
     }
     else {
       $geom_txt = "POINT(" . $coords . ")";
