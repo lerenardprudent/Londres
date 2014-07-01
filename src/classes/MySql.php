@@ -130,7 +130,7 @@ class MySql {
     $stmt->bindParam(':taskno', $taskno, PDO::PARAM_INT);
     $stmt->bindParam(':qno', $qno, PDO::PARAM_INT);
     $stmt->bindParam(':answered', $answered, PDO::PARAM_INT);
-    $stmt->bindParam(':ans_info', $ans_info, PDO::PARAM_INT);
+    $stmt->bindParam(':ans_info', $ans_info, PDO::PARAM_STR);
     $stmt->bindParam(':num_coords', $num_coords, PDO::PARAM_INT);
     $stmt->bindParam(':uid', $uid, PDO::PARAM_INT);
     $stmt->bindParam(':searches', $searches, PDO::PARAM_STR);
@@ -145,7 +145,7 @@ class MySql {
       $stmt2->bindParam(':taskno', $taskno, PDO::PARAM_INT);
       $stmt2->bindParam(':qno', $qno, PDO::PARAM_INT);
       $stmt2->bindParam(':answered', $answered, PDO::PARAM_INT);
-      $stmt2->bindParam(':ans_info', $ans_info, PDO::PARAM_INT);
+      $stmt2->bindParam(':ans_info', $ans_info, PDO::PARAM_STR);
       $stmt2->bindParam(':addr', $addr, PDO::PARAM_STR);
       $stmt2->bindParam(':num_coords', $num_coords, PDO::PARAM_INT);
       if ( $answered ) { $stmt2->bindParam(':geom_txt', $geom_txt, PDO::PARAM_STR); }

@@ -295,10 +295,10 @@ function noteAnyDBIssues()
             
           $('.follow-up-pair').hide();
           $('.nested-option').change( function() {
-            var idxThisSelect = $('.nested-option').index($(this));
+            var scope = $(this).closest(_followUpBlockClassTag);
+            var idxThisSelect = scope.find('.nested-option').index($(this));
             var idxNextSelect = parseInt($('option:checked', this).val());
             if ( idxNextSelect != "0" ) {
-              var scope = $(this).closest(_followUpBlockClassTag);
               scope.find('.follow-up-pair:gt(' + idxThisSelect + ')').hide();
               scope.find('.nested-option').eq(idxNextSelect).val(0);
               scope.find('.follow-up-pair').eq(idxNextSelect).show('blind', 200);
@@ -386,11 +386,11 @@ function noteAnyDBIssues()
                         <label>How often do you visit this place?</label>
                         <select id='confOptions' class=''>
                           <option>-- Please rate your confidence level --</option>
-                          <option>Very sure</option>
-                          <option>Quite sure</option>
-                          <option>Neither sure nor unsure</option>
-                          <option>Quite unsure</option>
-                          <option>Very unsure</option>
+                          <option class='ANS_CONF_VS'>Very sure</option>
+                          <option class='ANS_CONF_QS'>Quite sure</option>
+                          <option class='ANS_CONF_NSU'>Neither sure nor unsure</option>
+                          <option class='ANS_CONF_QU'>Quite unsure</option>
+                          <option class='ANS_CONF_VU'>Very unsure</option>
                         </select>
                       </div>
                     </div>
@@ -399,38 +399,38 @@ function noteAnyDBIssues()
                         <label>How often do you visit this place?</label>
                         <select class='nested-option'>
                           <option value='0'>-- Please choose --</option>
-                          <option value='1'>Every day</option>
-                          <option value='1'>Several times a week</option>
-                          <option value='1'>Once a week</option>
-                          <option value='1'>Once a fortnight</option>
-                          <option value='1'>Once a month</option>
-                          <option value='1'>Less often</option>
+                          <option class='ANS_FREQ_ED' value='1'>Every day</option>
+                          <option class='ANS_FREQ_SPW' value='1'>Several times a week</option>
+                          <option class='ANS_FREQ_OAW' value='1'>Once a week</option>
+                          <option class='ANS_FREQ_OAF' value='1'>Once a fortnight</option>
+                          <option class='ANS_FREQ_OAM' value='1'>Once a month</option>
+                          <option class='ANS_FREQ_LO' value='1'>Less often</option>
                         </select>
                       </div>
                       <div class='follow-up-pair'>
                         <label>Are you usually supervised?</label>
                         <select class='nested-option'>
                           <option value='0'>-- Please choose --</option>
-                          <option value='2'>Yes</option>
-                          <option value='3'>No</option>
+                          <option class='ANS_SPRVS_YES' value='2'>Yes</option>
+                          <option class='ANS_SPRVS_NO' value='3'>No</option>
                         </select>
                       </div>
                       <div class='follow-up-pair'>
                         <label>Who <b>usually</b> supervises you?</label>
                         <select class='nested-option'>
                           <option value='0'>-- Please choose --</option>
-                          <option>Parent / Carer</option>
-                          <option>Another responsable adult</option>
-                          <option>An older brother/sister</option>
+                          <option class='ANS_SPRVR_POC'>Parent / Carer</option>
+                          <option class='ANS_SPRVR_ARA'>Another responsable adult</option>
+                          <option class='ANS_SPRVR_OBS'>An older brother/sister</option>
                         </select>
                       </div>
                       <div class='follow-up-pair'>
                         <label>Who do you <b>usually</b> go with?</label>
                         <select class='nested-option'>
                           <option value='0'>-- Please choose --</option>
-                          <option>Friends</option>
-                          <option>Younger brother(s)/sister(s)</option>
-                          <option>No-one</option>
+                          <option class='ANS_CMPNY_FR'>Friends</option>
+                          <option class='ANS_CMPNY_YBS'>Younger brother(s)/sister(s)</option>
+                          <option class='ANS_CMPNY_NO'>No-one</option>
                         </select>
                       </div>
                     </div>
@@ -446,15 +446,15 @@ function noteAnyDBIssues()
                         <select id='reasonOptions' class='nested-option'>
                           <option>-- Please indicate your reason --</option>
                           <?php if ($taskno == 3 && $qno == 2 && $U->question_answered(3,1)) { 
-                                  echo "<option value='3'>School neighbourhood and home neighbourhood are identical</option>";
+                                  echo "<option class='NOANS_SNHN' value='3'>School neighbourhood and home neighbourhood are identical</option>";
                                 }
                                 else if ($freq_quest == 4) {
-                                  echo "<option value='4'>Do not have regularly visited destination</option>" .
-                                       "<option value='5'>Do not perform this activity</option>";
+                                  echo "<option class='NOANS_NRD' value='4'>Do not have regularly visited destination</option>" .
+                                       "<option class='NOANS_DPA' value='5'>Do not perform this activity</option>";
                                 }
                           ?>
-                          <option value="1">Cannot locate place on map</option>
-                          <option value="2">Do not wish to answer</option>
+                          <option class='NOANS_CLP' value="1">Cannot locate place on map</option>
+                          <option class='NOANS_DWA' value="2">Do not wish to answer</option>
                         </select>
                       </div>
                     </div>
@@ -559,7 +559,8 @@ function noteAnyDBIssues()
           $('#ansSubmitted').val(1);
           var answered = $('input[name=ansConfirm]:checked').prop('id') == 'yes';
           $('#ansAnswered').val(answered ? 1 : 0);
-          $('#ansInfo').val(answered ? $('#confOptions')[0].selectedIndex : ($('#confOptions option').length-1) + parseInt($('#reasonOptions')[0].selectedOptions[0].value) );
+          var ansInfoStr = buildAnsInfoStr();
+          $('#ansInfo').val(ansInfoStr);
           $('#ansSearchActivity').val(_searchActivity.join(","));
           if (_drawnPolygon != null) {
             var path = _drawnPolygon.getPath().getArray();
@@ -668,6 +669,23 @@ function noteAnyDBIssues()
         count += ( $(this)[0].selectedIndex > 0 );
       });
       return count;
+    }
+    
+    function buildAnsInfoStr()
+    {
+      var radioBtns = $('input[name=ansConfirm]');
+      var idxRadioBtnChecked = radioBtns.index($('input[name=ansConfirm]:checked'));
+      var underRadioDiv = $('input[name=ansConfirm]:checked').parent('.radio-div').next();
+      var info = [];
+      underRadioDiv.find('.follow-up-block:visible').each( function() {
+        var blockInfo = [];
+        $(this).find('.nested-option:visible option:selected').each( function() {
+          blockInfo.push($(this)[0].classList[0]);
+        });
+        info.push(blockInfo.join(","));
+      });
+      var infoStr = info.join("|");
+      return infoStr;
     }
     
     function setSubmitAnswerOptionEnabled(enabled)
