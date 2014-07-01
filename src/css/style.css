@@ -300,10 +300,12 @@ a { text-decoration: none; }
 
 .marker-addr {
   padding-left: 15px;
+  list-style-type: square;
 }
 
 .marker-addr  > li {
-  font-style: italic
+  background: linear-gradient(to right, lightgreen, white);
+  padding: 2px;
 }
 
 .pointer {
@@ -345,7 +347,7 @@ a { text-decoration: none; }
   line-height: 1.5;
 }
 
-li {
+.places-list li {
     background-color: #f4f4f4;
     padding: 0px 3px 1px 1px;
     text-overflow: ellipsis;
@@ -428,36 +430,22 @@ ul {
   margin-right: auto;
 }
 
-.freqQuestions {
+.follow-up-block {
   display: inline-block;
   margin-top: 5px;
+  margin-bottom: 5px;
+  background-color: #F0F0F0;
+  padding: 5px;
 }
 
 .example {
   display: none;
 }
 
-.nested {
+.follow-up-pair {
   margin-bottom: 5px;
 }
 
-.nested > label {
+.follow-up-pair > label {
   display: block
 }
-
-/*
-.freqQuestions select {
-  float: right;
-}
-
-.freqQuestions > select:nth-child(1) {
-  width: 100%;
-}
-
-.freqQuestions > select:nth-child(2) {
-  width: 95%;
-}
-
-.freqQuestions > select:nth-child(3) {
-  width: 90%;
-}*/

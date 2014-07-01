@@ -228,6 +228,7 @@ function noteAnyDBIssues()
   var _drawnPolygon = null;
   var _drawnPolyJustAdded = false;
   var _freqQuestType = false;
+  var _followUpBlockClassTag;
 </script>
 
 <script type="text/javascript">
@@ -285,42 +286,41 @@ function noteAnyDBIssues()
       $('.confirm-btn').click( function() { 
         if ( $(this).hasClass('confirm-btn') ) {
           showMarkerAddrInModal();
-          if ( _freqQuestType ) {
-            var clone = $('.freqQuestions').clone().removeClass('example');
-            $('li').after(clone[0].outerHTML);
+          
+          var questClass = 'fub-model';
+          _followUpBlockClassTag = '.' + questClass;
+          var clone = $(_freqQuestType ? '#freqQuestModel' : '#confQuestModel').clone().prop('id', '').removeClass('example').addClass(questClass);
+          $('li').after(clone[0].outerHTML);
+          $('.follow-up-block').hide();
             
-            $('.nested').hide();
-            $('.nested-option').change( function() {
-              var idxThisSelect = $('.nested-option').index($(this));
-              var idxNextSelect = parseInt($('option:checked', this).val());
-              if ( idxNextSelect != "0" ) {
-                var scope = $(this).closest('.freqQuestions');
-                scope.find('.nested:gt(' + idxThisSelect + ')').hide();
-                scope.find('.nested-option').eq(idxNextSelect).val(0);
-                scope.find('.nested').eq(idxNextSelect).show('blind', 200);
-              }
-            });
-          }
+          $('.follow-up-pair').hide();
+          $('.nested-option').change( function() {
+            var idxThisSelect = $('.nested-option').index($(this));
+            var idxNextSelect = parseInt($('option:checked', this).val());
+            if ( idxNextSelect != "0" ) {
+              var scope = $(this).closest(_followUpBlockClassTag);
+              scope.find('.follow-up-pair:gt(' + idxThisSelect + ')').hide();
+              scope.find('.nested-option').eq(idxNextSelect).val(0);
+              scope.find('.follow-up-pair').eq(idxNextSelect).show('blind', 200);
+            }
+          });
           
           $('#confirmModal').modal(); 
           var radioBtns = $('input[name=ansConfirm]');
           radioBtns.change(function() {
             var idxSelected = radioBtns.index($('input[name=ansConfirm]:checked'));
-            if ( !_freqQuestType ) {
-              radioBtns.eq(1-idxSelected).parent().next().find('select').hide('blind', 300);
-              radioBtns.eq(idxSelected).parent().next().find('select').show('blind', 300);
-              setSubmitBtnEnabledStatus();
+            if ( idxSelected == 0 ) {
+              $(_followUpBlockClassTag).each(function() {
+                $(this).show('blind', 300).children().eq(0).show('blind', 300); 
+              });
+              $('#noAnswerFUB').hide('blind', 300);
             }
             else {
-              if ( idxSelected == 0 ) {
-                $('.freqQuestions:not(.example)').each(function() { $(this).children().eq(0).show(); });
-              }
-              else {
-                $('.freqQuestions:not(.example)').removeClass('show-init-freq-quest').find('.nested').hide();
-              }
+              $(_followUpBlockClassTag).hide('blind', 300);
+              $('#noAnswerFUB').show('blind', 300).children().eq(0).show('blind', 300); 
             }
           });
-          $('.ans-option').change( setSubmitBtnEnabledStatus );
+          //$('.ans-option').change( setSubmitBtnEnabledStatus );
         } });
       $('.btn-primary').click(function() { $('.close').click(); $('.answer-btn').toggleClass('confirm-btn').attr('type', 'submit').click(); });
       
@@ -379,16 +379,21 @@ function noteAnyDBIssues()
                   </div>
                   <div class='under-radio'>
                     <ol class='marker-addr'></ol>
-                    <select id='confOptions' class='ans-option'>
-                      <option>-- Please rate your confidence level --</option>
-                      <option>Very sure</option>
-                      <option>Quite sure</option>
-                      <option>Neither sure nor unsure</option>
-                      <option>Quite unsure</option>
-                      <option>Very unsure</option>
-                    </select>
-                    <div class='freqQuestions example'>
-                      <div class='nested'>
+                    <div id='confQuestModel' class='follow-up-block example'>
+                      <div class='follow-up-pair'>
+                        <label>How often do you visit this place?</label>
+                        <select id='confOptions' class=''>
+                          <option>-- Please rate your confidence level --</option>
+                          <option>Very sure</option>
+                          <option>Quite sure</option>
+                          <option>Neither sure nor unsure</option>
+                          <option>Quite unsure</option>
+                          <option>Very unsure</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div id='freqQuestModel' class='follow-up-block example'>
+                      <div class='follow-up-pair'>
                         <label>How often do you visit this place?</label>
                         <select class='nested-option'>
                           <option value='0'>-- Please choose --</option>
@@ -400,7 +405,7 @@ function noteAnyDBIssues()
                           <option value='1'>Less often</option>
                         </select>
                       </div>
-                      <div class='nested'>
+                      <div class='follow-up-pair'>
                         <label>Are you usually supervised?</label>
                         <select class='nested-option'>
                           <option value='0'>-- Please choose --</option>
@@ -408,7 +413,7 @@ function noteAnyDBIssues()
                           <option value='3'>No</option>
                         </select>
                       </div>
-                      <div class='nested'>
+                      <div class='follow-up-pair'>
                         <label>Who <b>usually</b> supervises you?</label>
                         <select class='nested-option'>
                           <option value='0'>-- Please choose --</option>
@@ -417,7 +422,7 @@ function noteAnyDBIssues()
                           <option>An older brother/sister</option>
                         </select>
                       </div>
-                      <div class='nested'>
+                      <div class='follow-up-pair'>
                         <label>Who do you <b>usually</b> go with?</label>
                         <select class='nested-option'>
                           <option value='0'>-- Please choose --</option>
@@ -433,19 +438,24 @@ function noteAnyDBIssues()
                     <label for="r2" class='radio-text pointer'>Submit no answer</label>
                   </div>
                   <div class='under-radio'>
-                    <select id='reasonOptions' class='ans-option'>
-                      <option>-- Please indicate your reason --</option>
-                      <?php if ($taskno == 3 && $qno == 2 && $U->question_answered(3,1)) { 
-                              echo "<option value='3'>School neighbourhood and home neighbourhood are identical</option>";
-                            }
-                            else if ($freq_quest == 4) {
-                              echo "<option value='4'>Do not have regularly visited destination</option>" .
-                                   "<option value='5'>Do not perform this activity</option>";
-                            }
-                      ?>
-                      <option value="1">Cannot locate place on map</option>
-                      <option value="2">Do not wish to answer</option>
-                    </select>
+                    <div id='noAnswerFUB' class='follow-up-block'>
+                      <div class='follow-up-pair'>
+                        <label>Why did you not answer the question?</label>
+                        <select id='reasonOptions' class='nested-option'>
+                          <option>-- Please indicate your reason --</option>
+                          <?php if ($taskno == 3 && $qno == 2 && $U->question_answered(3,1)) { 
+                                  echo "<option value='3'>School neighbourhood and home neighbourhood are identical</option>";
+                                }
+                                else if ($freq_quest == 4) {
+                                  echo "<option value='4'>Do not have regularly visited destination</option>" .
+                                       "<option value='5'>Do not perform this activity</option>";
+                                }
+                          ?>
+                          <option value="1">Cannot locate place on map</option>
+                          <option value="2">Do not wish to answer</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -643,6 +653,15 @@ function noteAnyDBIssues()
       var ansSelect = radioBtns.eq(idxSelected).parent().next().find('select');
       var idx = ansSelect[0].selectedIndex;
       $('.btn-primary').prop('disabled', idx == 0);
+      
+      /*
+      
+      foreach li
+        foreach visible select that is a child of div after li
+          if selectedindex > 0 inc counter by 1
+      
+      counter must equal x*number of li, where x = 3 for freq type question or 1 otherwise
+      */
     }
     
     function setSubmitAnswerOptionEnabled(enabled)
