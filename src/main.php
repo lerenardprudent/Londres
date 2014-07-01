@@ -304,6 +304,7 @@ function noteAnyDBIssues()
               scope.find('.follow-up-pair').eq(idxNextSelect).show('blind', 200);
             }
           });
+          $('input[name="ansConfirm"]' ).prop('checked' , false);
           
           $('#confirmModal').modal(); 
           var radioBtns = $('input[name=ansConfirm]');
@@ -311,16 +312,17 @@ function noteAnyDBIssues()
             var idxSelected = radioBtns.index($('input[name=ansConfirm]:checked'));
             if ( idxSelected == 0 ) {
               $(_followUpBlockClassTag).each(function() {
-                $(this).show('blind', 300).children().eq(0).show('blind', 300); 
+                $(this).show('blind', 300).find('.follow-up-pair').first().show('blind', 300); 
               });
               $('#noAnswerFUB').hide('blind', 300);
             }
             else {
               $(_followUpBlockClassTag).hide('blind', 300);
-              $('#noAnswerFUB').show('blind', 300).children().eq(0).show('blind', 300); 
+              $('#noAnswerFUB').show('blind', 300).find('.follow-up-pair').first().show('blind', 300); 
             }
+            setSubmitBtnEnabledStatus();
           });
-          //$('.ans-option').change( setSubmitBtnEnabledStatus );
+          $('.nested-option').change( setSubmitBtnEnabledStatus );
         } });
       $('.btn-primary').click(function() { $('.close').click(); $('.answer-btn').toggleClass('confirm-btn').attr('type', 'submit').click(); });
       
@@ -649,19 +651,23 @@ function noteAnyDBIssues()
     function setSubmitBtnEnabledStatus()
     {
       var radioBtns = $('input[name=ansConfirm]');
-      var idxSelected = radioBtns.index($('input[name=ansConfirm]:checked'));
-      var ansSelect = radioBtns.eq(idxSelected).parent().next().find('select');
-      var idx = ansSelect[0].selectedIndex;
-      $('.btn-primary').prop('disabled', idx == 0);
-      
-      /*
-      
-      foreach li
-        foreach visible select that is a child of div after li
-          if selectedindex > 0 inc counter by 1
-      
-      counter must equal x*number of li, where x = 3 for freq type question or 1 otherwise
-      */
+      var idxRadioBtnChecked = radioBtns.index($('input[name=ansConfirm]:checked'));
+      var underRadioDiv = $('input[name=ansConfirm]:checked').parent('.radio-div').next();
+      var allFUBsValid = true;
+      var numVisibleValidSelectsExpected = ( _freqQuestType && idxRadioBtnChecked == 0 ? 3 : 1 );
+      underRadioDiv.find('.follow-up-block:visible').each( function() {
+        allFUBsValid &= ( getVisibleValidSelectCount($(this)) == numVisibleValidSelectsExpected );
+      });
+      $('.btn-primary').prop('disabled', !allFUBsValid);
+    }
+    
+    function getVisibleValidSelectCount(fubDiv)
+    {
+      var count = 0;
+      fubDiv.find('select:visible').each( function() {
+        count += ( $(this)[0].selectedIndex > 0 );
+      });
+      return count;
     }
     
     function setSubmitAnswerOptionEnabled(enabled)
