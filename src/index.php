@@ -16,7 +16,7 @@ $first_time = false;
 
 if ($U->authorised()) {
   $sess_curr_pos = $_SESSION[$curr_pos_key];
-  $instr_html = $U->instructor_ahead();
+  $instr_err_html = $U->instructor_ahead();
   $btn_text = validate_pos();
   
   $is_instructor = $U->is_instructor();
@@ -187,6 +187,8 @@ function validate_pos()
       var dob = $(this).val();
       $('#submit').prop('disabled', dob.length == 0 || $('input[name="gender"]:checked').length == 0);
     });
+    
+    $('#dob').datepicker({ maxDate: "-10y" });
   });
 </script>
 </head>
@@ -198,8 +200,8 @@ function validate_pos()
   </p>
   <form method="post" action="">
     <?php
-    if (strlen($instr_html) > 0) {
-      echo $instr_html;
+    if (strlen($instr_err_html) > 0) {
+      echo $instr_err_html;
     }
     else if ( isset($curr_pos) ) {
       $gender = "";
@@ -221,7 +223,7 @@ function validate_pos()
       header("location: " . $C['SRC_PHP_QUEST'] );
     }
     ?>
-    <div style='display: <?php echo ( $first_time ? 'block' : 'none' ); ?>'>
+    <div style='display: <?php echo ( $first_time && strlen($instr_err_html) == 0 ? 'block' : 'none' ); ?>'>
       <span class='radio-div'>
         <label>You are:</label>
         <input id='m' type="radio" name="<?php echo $C['GENDER_KEY']; ?>" value='M' onclick="maybeEnableSubmitBtn();" />
@@ -232,11 +234,11 @@ function validate_pos()
       </span>
       <span>
         <label>Your date of birth:</label>
-        <input name='<?php echo $C['DOB_KEY']; ?>' type='date' />
+        <input id='dob' onchange="maybeEnableSubmitBtn();" name='<?php echo $C['DOB_KEY']; ?>' type='date' />
       </span>
       <p/>
     </div>
-    <input type="submit" id="submit" value="<?php echo $btn_text; ?>" name="submit" <?php echo ($first_time ? "disabled" : ""); ?>" />
+    <input type="submit" id="submit" value="<?php echo $btn_text; ?>" name="submit" <?php echo ($first_time && strlen($instr_err_html) == 0 ? "disabled" : ""); ?> />
     <?php if ($is_instructor) { echo "<input type='button' onclick=\"$('.new-users').show();\" value='Generate user codes' />"; } ?>
     <div class='new-users'>
       <span>How many new users?</span>
@@ -252,7 +254,7 @@ function validate_pos()
       </div>
       <div class='draggable-contents'>
         <ul class='codes-list'><?php if ( isset($generated_codes) ) { create_li_elems($generated_codes); } ; ?></ul>
-        <input type='button' value='Print access codes' onclick="printCodes();" />
+        <button onclick="printCodes();">Print access codes<button/>
         <input name='undo_create' type='submit' value='Undo user creation' />
       </div>
     </div>
@@ -293,6 +295,7 @@ function validate_pos()
     var printContent = "<h3>New user(s) access codes</h3><ul>" + $('.codes-list')[0].outerHTML + "</ul>";
     document.body.innerHTML = printContent;
     $('li').addClass('li-print');
+    alert("WTF");
     window.print();
     document.body.innerHTML = restorePage;
   }

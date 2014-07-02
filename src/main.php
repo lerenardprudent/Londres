@@ -383,7 +383,7 @@ function noteAnyDBIssues()
                     <ol class='marker-addr'></ol>
                     <div id='confQuestModel' class='follow-up-block example'>
                       <div class='follow-up-pair'>
-                        <label>How often do you visit this place?</label>
+                        <label>How <b>sure</b> are you that the location you have chosen/area you have drawn is correct?</label>
                         <select id='confOptions' class=''>
                           <option>-- Please rate your confidence level --</option>
                           <option class='ANS_CONF_VS'>Very sure</option>
@@ -430,7 +430,7 @@ function noteAnyDBIssues()
                           <option value='0'>-- Please choose --</option>
                           <option class='ANS_CMPNY_FR'>Friends</option>
                           <option class='ANS_CMPNY_YBS'>Younger brother(s)/sister(s)</option>
-                          <option class='ANS_CMPNY_NO'>No-one</option>
+                          <option class='ANS_CMPNY_NO'>By myself</option>
                         </select>
                       </div>
                     </div>
