@@ -36,25 +36,23 @@ function initMap()
 		}
 	});
   
-  if ( _drawing ) {
-    _drawingManager = new google.maps.drawing.DrawingManager({
-      drawingControl: true,
-      drawingControlOptions: {
-        position: google.maps.ControlPosition.TOP_CENTER,
-        drawingModes: [google.maps.drawing.OverlayType.POLYGON]
-      }
-    });
-    google.maps.event.addListener(_drawingManager, 'overlaycomplete', processDrawnPolygon);
-    _drawingManager.setDrawingMode(google.maps.drawing.OverlayType.POLYGON);
+  _drawingManager = new google.maps.drawing.DrawingManager({
+    drawingControl: true,
+    drawingControlOptions: {
+      position: google.maps.ControlPosition.TOP_CENTER,
+      drawingModes: [_drawingPoly ? google.maps.drawing.OverlayType.POLYGON : google.maps.drawing.OverlayType.MARKER]
+    }
+  });
+  google.maps.event.addListener(_drawingManager, 'overlaycomplete', processNewMapObject);
     
-    applyGoogleMapHacks();
-    _drawingManager.setMap(_map);
-    _map.setOptions({draggableCursor:null});
-  }
-  else {
+  applyGoogleMapHacks();
+  _drawingManager.setMap(_map);
+  _map.setOptions({draggableCursor:null});
+  
+  if ( !_drawingPoly ) {
     _mapmarker = createNewMarker();
     _mapmarker.setOptions({draggable:true});
-    google.maps.event.addListener(_map, 'click', handleMapClick);
+    //google.maps.event.addListener(_map, 'click', handleMapClick);
     google.maps.event.addListener(_mapmarker, 'dragend', handleMarkerDrag);
   }
   
@@ -89,6 +87,15 @@ function initMap()
       _map.fitBounds(bnds);
     }
   }
+  
+  MyOverlay.prototype = new google.maps.OverlayView();
+  MyOverlay.prototype.onRemove = function() {}
+  MyOverlay.prototype.onAdd = function(){
+    div = document.createElement('DIV');
+    var panes = this.getPanes();
+    panes.overlayImage.appendChild(div);
+  }
+  MyOverlay.prototype.draw = function() {}
 }
     
 function doGoogleSearch(searchStr)
@@ -104,9 +111,11 @@ function doGoogleSearch(searchStr)
   }
 }
 
-function handleMapClick(e)
+function handleMapClick(clickLatLng)
 {
-  var pix = e.pixel;
+  var overlay = new MyOverlay(clickLatLng);
+  overlay.setMap(_map);
+  var pix = overlay.getProjection().fromLatLngToContainerPixel(clickLatLng);
   var mapW = $('#map').width();
   var mapH = $('#map').height();
   var minEdgeDist = Math.min(pix.x,mapW-pix.x,pix.y,mapH-pix.y);
@@ -115,7 +124,7 @@ function handleMapClick(e)
   if ( needToRecenter ) {
     log("Map canvas click at distance of only ", minEdgeDist, "; recentering map.");
   }
-  geocodeMarker(e.latLng, needToRecenter);
+  geocodeMarker(clickLatLng, needToRecenter);
 }
 
 function geocodeMarker(lat_lng, centerOnMarker)
@@ -374,16 +383,22 @@ function selectPlaceMarker(id)
 	google.maps.event.trigger(_placeMarkers[id], 'mouseover');
 }
 
-function processDrawnPolygon(e)
+function processNewMapObject(e)
 {
-	var tempPoly = e.overlay;
-	var tempPath = tempPoly.getPath().getArray();
-	
-  /* Validate what has been drawn to make sure it's not bogative */
-  if ( tempPath.length > 2 ) {
-    _drawnPolygon = tempPoly;
-    _drawnPolyJustAdded = true;
-    setSubmitAnswerOptionEnabled();
+  var newMapObj = e.overlay;
+  if ( e.type == google.maps.drawing.OverlayType.POLYGON ) {
+    var tempPath = newMapObj.getPath().getArray();
+    
+    /* Validate what has been drawn to make sure it's not bogative */
+    if ( tempPath.length > 2 ) {
+      _drawnPolygon = newMapObj;
+      _drawnPolyJustAdded = true;
+      setSubmitAnswerOptionEnabled();
+    }
+  }
+  else if ( e.type == google.maps.drawing.OverlayType.MARKER ) {
+    handleMapClick(newMapObj.getPosition());
+    _markers.push(newMapObj);
   }
 }
 
@@ -522,4 +537,9 @@ function createNewMarker(marker2)
   }
   google.maps.event.addListener(marker, 'click', function() { showMarkerInfoBubble(this); } );
   return marker;
+}
+
+function MyOverlay(ll)
+{
+  this.pos = new google.maps.LatLng(ll.lat(), ll.lng());
 }

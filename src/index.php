@@ -249,13 +249,13 @@ function validate_pos()
     
     <div class="ui-widget-content new-codes draggable">
       <div class="draggable-heading ui-widget-header">
-        <span>New user codes</span>
+        <span>New user(s) created</span>
         <button class='close-draggable close' onclick='wipeCodes();' title='Closes panel and removes search result icons from map'>x</button>
       </div>
       <div class='draggable-contents'>
         <ul class='codes-list'><?php if ( isset($generated_codes) ) { create_li_elems($generated_codes); } ; ?></ul>
-        <button onclick="printCodes();">Print access codes<button/>
-        <input name='undo_create' type='submit' value='Undo user creation' />
+        <button onclick="printCodes();">Print codes<button/>
+        <input name='undo_create' type='submit' value='Erase users' />
       </div>
     </div>
   </form>

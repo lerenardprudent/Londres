@@ -223,7 +223,7 @@ function noteAnyDBIssues()
   var _zoomSnapTo = false;
   var _closeUpZoomLevel = 15;
   var _placesIBOffset, _markerIBOffset;
-  var _drawing = false;
+  var _drawingPoly = false;
   var _drawingManager;
   var _drawnPolygon = null;
   var _drawnPolyJustAdded = false;
@@ -244,7 +244,7 @@ function noteAnyDBIssues()
     _isExplanation = ($('.questInfo').val().indexOf(Consts.get('QUEST_TEXT_EXPL')) >= 0);
     var firstScreen = ($('.questInfo').val().indexOf(Consts.get('QUEST_TEXT_BEGIN')) >= 0);
     _endOfQuestionnaire = ($('.questInfo').val().indexOf(Consts.get('QUEST_TEXT_END')) >= 0);
-    _drawing = ($('.questInfo').val().indexOf(Consts.get('DRAW_KEY')) >= 0);
+    _drawingPoly = ($('.questInfo').val().indexOf(Consts.get('DRAW_KEY')) >= 0);
     _freqQuestType = ($('.questInfo').val().indexOf(Consts.get('FREQ_QUEST_KEY')) >= 0);
     
     if ( _isExplanation ) {
