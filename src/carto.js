@@ -26,6 +26,17 @@ function initMap()
   _placesIBOffset = new google.maps.Size(-10, 0);
   _markerIBOffset = new google.maps.Size(0, -38);
   
+  MyOverlay.prototype = new google.maps.OverlayView();
+  MyOverlay.prototype.onRemove = function() {}
+  MyOverlay.prototype.onAdd = function(){}
+  MyOverlay.prototype.draw = function() {}
+  
+  function MyOverlay(map)
+  {
+    this.setMap(map);
+  }
+  
+  _overlay = new MyOverlay(_map);
   /********* Map listeners *************/
   google.maps.event.addListener(_map, 'maptypeid_changed', logMapTypeChange );
   google.maps.event.addListener(_map, 'bounds_changed', function(event) {
@@ -35,6 +46,7 @@ function initMap()
 			_map.setZoom(_closeUpZoomLevel);
 		}
 	});
+  google.maps.event.addListenerOnce(_map, 'idle', function() { _overlayProjection = _overlay.getProjection() });
   
   _drawingManager = new google.maps.drawing.DrawingManager({
     drawingControl: true,
@@ -87,15 +99,6 @@ function initMap()
       _map.fitBounds(bnds);
     }
   }
-  
-  MyOverlay.prototype = new google.maps.OverlayView();
-  MyOverlay.prototype.onRemove = function() {}
-  MyOverlay.prototype.onAdd = function(){
-    div = document.createElement('DIV');
-    var panes = this.getPanes();
-    panes.overlayImage.appendChild(div);
-  }
-  MyOverlay.prototype.draw = function() {}
 }
     
 function doGoogleSearch(searchStr)
@@ -113,9 +116,7 @@ function doGoogleSearch(searchStr)
 
 function handleMapClick(clickLatLng)
 {
-  var overlay = new MyOverlay(clickLatLng);
-  overlay.setMap(_map);
-  var pix = overlay.getProjection().fromLatLngToContainerPixel(clickLatLng);
+  var pix = _overlayProjection.fromLatLngToContainerPixel(clickLatLng);
   var mapW = $('#map').width();
   var mapH = $('#map').height();
   var minEdgeDist = Math.min(pix.x,mapW-pix.x,pix.y,mapH-pix.y);
@@ -398,7 +399,8 @@ function processNewMapObject(e)
   }
   else if ( e.type == google.maps.drawing.OverlayType.MARKER ) {
     handleMapClick(newMapObj.getPosition());
-    _markers.push(newMapObj);
+    newMapObj.setMap(null);
+    newMapObj = null;
   }
 }
 
@@ -537,9 +539,4 @@ function createNewMarker(marker2)
   }
   google.maps.event.addListener(marker, 'click', function() { showMarkerInfoBubble(this); } );
   return marker;
-}
-
-function MyOverlay(ll)
-{
-  this.pos = new google.maps.LatLng(ll.lat(), ll.lng());
 }

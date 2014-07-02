@@ -229,6 +229,7 @@ function noteAnyDBIssues()
   var _drawnPolyJustAdded = false;
   var _freqQuestType = false;
   var _followUpBlockClassTag;
+  var _overlay, _overlayProjection;
 </script>
 
 <script type="text/javascript">

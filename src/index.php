@@ -24,6 +24,10 @@ if ($U->authorised()) {
     $curr_pos = $sess_curr_pos; // $curr_pos variable gets set only once user clicks on Start/Resume/Repeat Questionnaire
   }
   else {
+    if ( isset($_POST['downl_codes']) && isset($_POST[$C['CREATED_USERS_KEY']]) ) {
+      download_access_codes(explode(",", $_POST[$C['CREATED_USERS_KEY']]));
+    }
+    
     if ( isset($_POST['undo_create']) && isset($_POST[$C['CREATED_USERS_KEY']]) ) {
       delete_users_by_pwd(explode(",", $_POST[$C['CREATED_USERS_KEY']]));
     }
@@ -92,6 +96,19 @@ function delete_users_by_pwd($pwds)
   global $U;
   $ok = $U->delete_users($pwds);
   echo ( $ok ? "Done" : "Error" );
+}
+
+function download_access_codes($codes)
+{
+  $content = 
+    "VERITAS\n" .
+    "=======\n".
+    "Access codes of newly created users:\n" . implode("\n", $codes);
+    
+  header('Content-Type: text/plain');
+  header('Content-Disposition: attachement; filename="access_codes.txt');
+  echo $content;
+  exit();
 }
 
 function validate_pos()
@@ -255,6 +272,7 @@ function validate_pos()
       <div class='draggable-contents'>
         <ul class='codes-list'><?php if ( isset($generated_codes) ) { create_li_elems($generated_codes); } ; ?></ul>
         <button onclick="printCodes();">Print codes<button/>
+        <input name='downl_codes' type='submit' value='Download codes' />
         <input name='undo_create' type='submit' value='Erase users' />
       </div>
     </div>
