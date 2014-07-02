@@ -47,7 +47,7 @@ function initMap()
     google.maps.event.addListener(_drawingManager, 'overlaycomplete', processDrawnPolygon);
     _drawingManager.setDrawingMode(google.maps.drawing.OverlayType.POLYGON);
     
-    setTimeout(googleMapHacks, 3000);
+    applyGoogleMapHacks();
     _drawingManager.setMap(_map);
     _map.setOptions({draggableCursor:null});
   }
@@ -73,6 +73,7 @@ function initMap()
       _drawnPolygon = new google.maps.Polygon({ paths:latLngs });
       _drawnPolygon.setMap(_map);  
       _map.setCenter(calcPolyCenter());
+      setSubmitAnswerOptionEnabled();
     }
     else {
       var bnds = new google.maps.LatLngBounds();
@@ -396,25 +397,38 @@ function deletePolyAlreadyOnMap()
   _drawnPolyJustAdded = false;
 }
 
-function googleMapHacks()
+function applyGoogleMapHacks()
 {
-  /* Hack to listen for map clicks in drawing mode (since Google Maps disable click events in this type of situation */
-  var gmDomHackSelect = $('.gm-style').children().eq(0);
-  var hackApplied = "NOT ";
-  if ( gmDomHackSelect.length == 1 ) {
-    gmDomHackSelect.click(deletePolyAlreadyOnMap);
-    hackApplied = "";
-  }
-  log("GM hack 1 " + hackApplied + "applied");
+  /* Hack 1 to listen for map clicks in drawing mode (since Google Maps disable click events in this type of situation */
+  var hackSelectors = { '1' : { 'elem' : $('.gm-style').children().eq(0), 'applied' : false }, '2' : { 'elem' : $('.gmnoprint').eq(2).children(), 'applied' : false } };
   
-  /* Hack to swap order of drawing control buttons */
-  var gmDomHackSelect2 = $('.gmnoprint').eq(2).children();
-  hackApplied = "NOT ";
-  if ( gmDomHackSelect2.length == 2 ) {
-    gmDomHackSelect2.eq(0).insertAfter(gmDomHackSelect2.eq(1));
-    hackApplied = "";
+  var allHacksApplied = true;
+  for ( var i in hackSelectors ) {
+    var rec = hackSelectors[i];
+    if ( !rec.applied ) {
+      if ( rec.elem.length >= 1 ) {
+        applyHack(rec.elem, i);
+        rec.applied = true;
+      }
+      else {
+        allHacksApplied = false;
+      }
+    }
   }
-  log("GM hack 2 " + hackApplied + "applied");
+  
+  if ( !allHacksApplied) {
+    setTimeout(applyGoogleMapHacks, 1000);
+  }
+  
+  function applyHack(gmElem, i) {
+    if ( i == 1 ) {
+      gmElem.click(deletePolyAlreadyOnMap);
+    }
+    else if ( i == 2 ) {
+      gmElem.eq(0).insertAfter(gmElem.eq(1));
+    }
+    log("GM hack " + i + " applied");
+  }
 }
 
 function convertGeomTextToLatLng(geom_text)

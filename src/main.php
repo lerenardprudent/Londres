@@ -513,7 +513,8 @@ function noteAnyDBIssues()
     }
     
     // Escape a string for HTML interpolation.
-    function escapeSpecialChars(str) {
+    function escapeSpecialChars(str)
+    {
       var htmlEscapes = {
         '&': '&amp;',
         '<': '&lt;',
@@ -524,8 +525,9 @@ function noteAnyDBIssues()
         ',': '&#44;',
         ' ': '&#32;'
       };
-      return str.replace(/[&<>"'\/, ]/g, function(match) {
-        return htmlEscapes[match]; });
+      
+      if ( isUndef(str) || str == null ) { str = ""; }
+      return str.replace(/[&<>"'\/, ]/g, function(match) { return htmlEscapes[match]; });
     }
   
     function isUndef(x)
