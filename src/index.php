@@ -142,7 +142,7 @@ function validate_pos()
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
-<title>VERITAS Londres</title>
+<title>VERITAS London</title>
 <!--<link rel="stylesheet" href="css/login.css">-->
 <link rel="stylesheet" href="css/style.css" />
 <script type="text/javascript" src="js/jquery/jquery-1.10.2.min.js"></script>

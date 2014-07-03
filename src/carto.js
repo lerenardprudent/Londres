@@ -46,7 +46,7 @@ function initMap()
 			_map.setZoom(_closeUpZoomLevel);
 		}
 	});
-  google.maps.event.addListenerOnce(_map, 'idle', function() { _overlayProjection = _overlay.getProjection() });
+  google.maps.event.addListenerOnce(_map, 'idle', function() { _overlayProjection = _overlay.getProjection(); log("Map ready"); });
   
   _drawingManager = new google.maps.drawing.DrawingManager({
     drawingControl: true,
@@ -398,9 +398,11 @@ function processNewMapObject(e)
     }
   }
   else if ( e.type == google.maps.drawing.OverlayType.MARKER ) {
-    handleMapClick(newMapObj.getPosition());
-    newMapObj.setMap(null);
-    newMapObj = null;
+    if ( _markers.length == _maxNumMarkers ) {
+      handleMapClick(newMapObj.getPosition());
+      newMapObj.setMap(null);
+      newMapObj = null;
+    }
   }
 }
 
@@ -425,7 +427,7 @@ function applyGoogleMapHacks()
     if ( !rec.applied ) {
       if ( rec.elem.length >= 1 ) {
         applyHack(rec.elem, i);
-        rec.applied = true;
+        hackSelectors[i].applied = true;
       }
       else {
         allHacksApplied = false;
