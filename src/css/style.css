@@ -449,3 +449,10 @@ ul {
 .follow-up-pair > label {
   display: block
 }
+
+.info-bubble {
+  display: block;
+  text-align: center;
+  font-size: 12px;
+  margin: 2px;
+}

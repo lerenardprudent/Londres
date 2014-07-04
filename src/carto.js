@@ -24,7 +24,7 @@ function initMap()
   _infoBubble = new google.maps.InfoWindow(infoWinOptions);
 
   _placesIBOffset = new google.maps.Size(-10, 0);
-  _markerIBOffset = new google.maps.Size(0, -38);
+  _markerIBOffset = new google.maps.Size(0, -5);
   
   MyOverlay.prototype = new google.maps.OverlayView();
   MyOverlay.prototype.onRemove = function() {}
@@ -46,7 +46,10 @@ function initMap()
 			_map.setZoom(_closeUpZoomLevel);
 		}
 	});
-  google.maps.event.addListenerOnce(_map, 'idle', function() { _overlayProjection = _overlay.getProjection(); log("Map ready"); });
+  google.maps.event.addListenerOnce(_map, 'idle', function() {
+    _overlayProjection = _overlay.getProjection();
+    applyGoogleMapHacks();
+    log("Map ready"); });
   
   _drawingManager = new google.maps.drawing.DrawingManager({
     drawingControl: true,
@@ -55,17 +58,19 @@ function initMap()
       drawingModes: [_drawingPoly ? google.maps.drawing.OverlayType.POLYGON : google.maps.drawing.OverlayType.MARKER]
     }
   });
-  google.maps.event.addListener(_drawingManager, 'overlaycomplete', processNewMapObject);
-    
-  applyGoogleMapHacks();
-  _drawingManager.setMap(_map);
-  _map.setOptions({draggableCursor:null});
   
-  if ( !_drawingPoly ) {
-    _mapmarker = createNewMarker();
-    _mapmarker.setOptions({draggable:true});
-    //google.maps.event.addListener(_map, 'click', handleMapClick);
-    google.maps.event.addListener(_mapmarker, 'dragend', handleMarkerDrag);
+  google.maps.event.addListener(_drawingManager, 'overlaycomplete', processNewMapObject);
+  _drawingManager.setMap(_map);
+  
+  
+  if ( _drawingPoly ) {
+    _drawingManager.setDrawingMode(google.maps.drawing.OverlayType.POLYGON);
+  }
+  else {
+    //_mapmarker = createNewMarker();
+    //_mapmarker.setOptions({draggable:true});
+    google.maps.event.addListener(_map, 'click', handleMapClick);
+    //google.maps.event.addListener(_mapmarker, 'dragend', handleMarkerDrag);
   }
   
   var dbCoords = $('#ansCoords').val();
@@ -92,13 +97,24 @@ function initMap()
         _mapmarker.address = addrs[y];
         pinMapMarker(latLngs[y], false);
         if ( y != latLngs.length-1 ) {
-          addMarkerToMap();
+          alert("Need to add code here :(");
         }
         bnds.extend(latLngs[y]);
       }
       _map.fitBounds(bnds);
     }
   }
+  
+  _greenMarker = {
+    url: 'img/marker-icon-green-22x38.png',
+    // This marker is 20 pixels wide by 32 pixels tall.
+    size: new google.maps.Size(22, 39),
+    // The origin for this image is 0,0.
+    origin: new google.maps.Point(0,0),
+    // The anchor for this image is the base of the flagpole at 0,32.
+    anchor: new google.maps.Point(11, 39)
+  };
+
 }
     
 function doGoogleSearch(searchStr)
@@ -114,9 +130,10 @@ function doGoogleSearch(searchStr)
   }
 }
 
-function handleMapClick(clickLatLng)
+function handleMapClick(clickEvent)
 {
-  var pix = _overlayProjection.fromLatLngToContainerPixel(clickLatLng);
+  var pix = clickEvent.pixel; //_overlayProjection.fromLatLngToContainerPixel(clickLatLng);
+  log ( "Map clicked at ", pix);
   var mapW = $('#map').width();
   var mapH = $('#map').height();
   var minEdgeDist = Math.min(pix.x,mapW-pix.x,pix.y,mapH-pix.y);
@@ -125,7 +142,7 @@ function handleMapClick(clickLatLng)
   if ( needToRecenter ) {
     log("Map canvas click at distance of only ", minEdgeDist, "; recentering map.");
   }
-  geocodeMarker(clickLatLng, needToRecenter);
+  geocodeMarker(clickEvent.latLng, needToRecenter);
 }
 
 function geocodeMarker(lat_lng, centerOnMarker)
@@ -157,9 +174,9 @@ function geocoderResponse(results, status)
   if (status == google.maps.GeocoderStatus.OK) {
     ok = true;
     var res_index = 0;
-    _mapmarker.address = results[res_index].formatted_address;
-    log(results.length + " match" + (results.length == 1 ? "" : "es") + " found - choosing "  + quote(_mapmarker.address,"'"));
-    pinMapMarker(results[res_index].geometry.location);
+    var addr = results[res_index].formatted_address;
+    log(results.length + " match" + (results.length == 1 ? "" : "es") + " found - choosing "  + quote(addr, "'"));
+    pinMapMarker(results[res_index].geometry.location, true, addr);
   }
   else if (status == google.maps.GeocoderStatus.ZERO_RESULTS) {
     showPopupMsg(5, "Location not found.");
@@ -176,25 +193,22 @@ function geocoderResponseCenterMap(results, status)
   }
 }
 
-function pinMapMarker(coords, doPopup)
+function pinMapMarker(coords, doPopup, address)
 {
   if ( isUndef(doPopup) ) {
     doPopup = true;
   }
-  var firstTimeHere = !_mapmarker.getVisible();
-  _mapmarker.setPosition(coords);
-  _mapmarker.setVisible(true);
-  if ( firstTimeHere ) {
-    _mapmarker.setAnimation(null);
-    setSubmitAnswerOptionEnabled();
-    var idx = _markers.push(_mapmarker);
-    _mapmarker.idx = idx-1;
-    if ( _markers.length < _maxNumMarkers ) {
-      $('#addDest').prop('disabled', false);
-    }
+  var mustAddMarker = (_mapmarker == null);
+  if ( mustAddMarker ) {
+    _mapmarker = addMarkerToMap(coords, address);
   }
+  else {
+    _mapmarker.setPosition(coords);
+    setMarkerAddress(_mapmarker, address);
+  }
+  
   if (doPopup) {
-    showMarkerInfoBubble();
+    showMarkerInfoBubble(_mapmarker, true);
   }
 }
 
@@ -204,19 +218,29 @@ function handleMarkerDrag(e)
   showMarkerInfoBubble();
 }
 
-function showMarkerInfoBubble(marker)
+function showMarkerInfoBubble(marker, timeOut)
 {
   if ( isUndef(marker) ) {
     marker = _mapmarker;
   }
+  if ( isUndef(timeOut) ) {
+    timeOut = false;
+  }
+  
   _infoBubble.setOptions({
     pixelOffset: _markerIBOffset,
-    content: "<div id='infoBubbleContent'><span>" + escapeSpecialChars(marker.address) + "</span></div>"
-             //"&nbsp;(<a href='javascript:removeMarker(" + _mapmarker.idx + ");'>Remove</a>)
+    content:  "<div class='info-bubble'>" +
+                "<span>Approximate location: <i>" + escapeSpecialChars(marker.address) + "</i></span><br>" +
+                "(<a href='javascript:confirmMarker(" + _mapmarker.idx + ");'>Confirm</a> or <a href='javascript:removeMarker(" + _mapmarker.idx + ");'>Remove</a>)" +
+              "</div>"
   });
   _infoBubble.open(_map, marker);
-  window.clearTimeout(_timer);
-  _timer = setTimeout( function() {_infoBubble.close()}, 5000);
+  $('.info-bubble').parent().parent().width($('.info-bubble').width()*1.2);
+  $('.info-bubble').parent().parent().height($('.info-bubble').height()*1.2);
+  if ( timeOut ) {
+    window.clearTimeout(_timer);
+    _timer = setTimeout( function() {_infoBubble.close()}, 8000);
+  }
 }
 
 function radialPlaceSearch(searchString)
@@ -387,6 +411,7 @@ function selectPlaceMarker(id)
 function processNewMapObject(e)
 {
   var newMapObj = e.overlay;
+  _drawingManager.setDrawingMode(null);
   if ( e.type == google.maps.drawing.OverlayType.POLYGON ) {
     var tempPath = newMapObj.getPath().getArray();
     
@@ -397,13 +422,13 @@ function processNewMapObject(e)
       setSubmitAnswerOptionEnabled();
     }
   }
-  else if ( e.type == google.maps.drawing.OverlayType.MARKER ) {
-    if ( _markers.length == _maxNumMarkers ) {
+  /*else if ( e.type == google.maps.drawing.OverlayType.MARKER ) {
+    if ( _markers.length < _maxNumMarkers ) {
       handleMapClick(newMapObj.getPosition());
       newMapObj.setMap(null);
       newMapObj = null;
     }
-  }
+  }*/
 }
 
 function deletePolyAlreadyOnMap()
@@ -419,7 +444,7 @@ function deletePolyAlreadyOnMap()
 function applyGoogleMapHacks()
 {
   /* Hack 1 to listen for map clicks in drawing mode (since Google Maps disable click events in this type of situation */
-  var hackSelectors = { '1' : { 'elem' : $('.gm-style').children().eq(0), 'applied' : false }, '2' : { 'elem' : $('.gmnoprint').eq(2).children(), 'applied' : false } };
+  var hackSelectors = { '1' : { 'elem' : $('.gm-style').children().eq(0), 'applied' : false }, '2' : { 'elem' : $('.gmnoprint').eq(2).children(), 'applied' : false }, '3' : { 'elem' : $('.gmnoprint').find("[title='Add a marker']"), applied: false }, '4' : { 'elem' : $('.gmnoprint').find("[title='Stop drawing']"), applied: false } };
   
   var allHacksApplied = true;
   for ( var i in hackSelectors ) {
@@ -445,6 +470,15 @@ function applyGoogleMapHacks()
     }
     else if ( i == 2 ) {
       gmElem.eq(0).insertAfter(gmElem.eq(1));
+    }
+    else if ( i == 3 ) {
+      gmElem.prop('id', _addMarkerBtnId );
+      $('#' + _addMarkerBtnId).css('cursor', 'pointer').click( function() {
+        geocodeMarker(_map.getCenter());
+      });
+    }
+    else if ( i == 4 ) {
+      gmElem.remove();
     }
     log("GM hack " + i + " applied");
   }
@@ -508,6 +542,7 @@ function polygonCentroid(pts)
    return [x / f, y / f]; 
 }
 
+/*
 function addMarkerToMap()
 {
   _mapmarker.setVisible(false);
@@ -516,6 +551,7 @@ function addMarkerToMap()
   _markers[_markers.length-1] = newMarker;
   $('#addDest').prop('disabled', true);
 }
+*/
 
 function removeMarker(idx)
 {
@@ -527,18 +563,45 @@ function removeMarker(idx)
   }
 }
 
-function createNewMarker(marker2)
+function addMarkerToMap(coords, addr)
 {
   var markerOptions = { 
     map: _map, 
-    position: ( isUndef(marker2) ? _latLngLondon : marker2.getPosition() ),
-    visible: !isUndef(marker2)
+    position: ( isUndef(coords) ? _map.getCenter() : coords ),
+    animation: google.maps.Animation.DROP
   }
 	
   var marker = new google.maps.Marker(markerOptions);
-  if (!isUndef(marker2)) {
-    marker.address = marker2.address;
+  if (!isUndef(addr)) {
+    setMarkerAddress(marker, addr);
   }
-  google.maps.event.addListener(marker, 'click', function() { showMarkerInfoBubble(this); } );
+  addMarkerToList(marker);
+  google.maps.event.addListener(marker, 'click', function() { showMarkerInfoBubble(this, false); } );
+  
+  setSubmitAnswerOptionEnabled();
+    
+  /* Hide the add marker button, since another marker cannot be added yet */
+  setTimeout( function() { $('#' + _addMarkerBtnId).hide('blind', 500) }, 500 );;
+  
+  /* In case the Add Marker button was clicked, let's undo the switch into Drawing mode */
+  _drawingManager.setDrawingMode(null);
+  
   return marker;
+}
+
+function setMarkerAddress(marker, addr)
+{
+  if ( marker != null ) {
+    marker.address = addr;
+  }
+}
+
+function addMarkerToList(marker)
+{
+  var idx = _markers.push(marker);
+  marker.idx = idx-1;
+}
+
+function confirmMarker(idx)
+{
 }

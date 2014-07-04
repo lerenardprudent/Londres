@@ -230,6 +230,8 @@ function noteAnyDBIssues()
   var _freqQuestType = false;
   var _followUpBlockClassTag;
   var _overlay, _overlayProjection;
+  var _addMarkerBtnId = 'addMarkerBtn';
+  var _greenMarker;
 </script>
 
 <script type="text/javascript">
@@ -326,6 +328,10 @@ function noteAnyDBIssues()
           $('.nested-option').change( setSubmitBtnEnabledStatus );
         } });
       $('.btn-primary').click(function() { $('.close').click(); $('.answer-btn').toggleClass('confirm-btn').attr('type', 'submit').click(); });
+      
+      if ( _freqQuestType ) {
+        _maxNumMarkers = 3;
+      }
       
       initMap();
     }
