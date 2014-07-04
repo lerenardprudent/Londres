@@ -367,7 +367,7 @@ function noteAnyDBIssues()
         <div class='submit-div'>
           <input id='back' type='submit' value='&larr; Go back' class='back-btn submit-btn' />
           <?php if ($freq_quest) { echo "<input id='addDest' type='button' value='Add destination' class='center-btn' onclick='addMarkerToMap();' disabled />"; } ?>
-          <input id='submit' type='submit' value='Submit answer &rarr;' class='answer-btn submit-btn'/>
+          <input id='submit' type='submit' value='Next question &rarr;' class='answer-btn submit-btn'/>
         </div>
         <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModal" aria-hidden="true">
           <div class="modal-dialog">
