@@ -432,10 +432,12 @@ ul {
 
 .follow-up-block {
   display: inline-block;
-  margin-top: 5px;
-  margin-bottom: 5px;
-  background-color: #F0F0F0;
+  /* background-color: #F0F0F0; */
   padding: 5px;
+}
+
+.follow-up-block  > .follow-up-pair:nth-child(1) {
+  display: block !important
 }
 
 .example {
@@ -455,4 +457,8 @@ ul {
   text-align: center;
   font-size: 12px;
   margin: 2px;
+}
+
+.modal-header,.modal-body,.modal-footer {
+  padding: 10px !important
 }

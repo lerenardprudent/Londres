@@ -230,7 +230,7 @@ function showMarkerInfoBubble(marker, timeOut)
     pixelOffset: _markerIBOffset,
     content:  "<div class='info-bubble'>" +
                 "<span>Approximate location: <i>" + escapeSpecialChars(marker.address) + "</i></span><br>(" +
-                ( !marker.confirmed ? "<a href='javascript:confirmMarker(" + marker.idx + ");'>Confirm</a> or " : "" ) +
+                ( !marker.confirmed ? "<a href='javascript:showConfirmMarkerDialog(" + marker.idx + ");'>Confirm</a> or " : "" ) +
                 "<a href='javascript:removeMarker(" + marker.idx + ");'>Remove</a>)" +
               "</div>"
   });
@@ -588,7 +588,11 @@ function addMarkerToMap(coords, addr)
   google.maps.event.addListener(marker, 'dragstart', function() { _infoBubble.close(); } );
   google.maps.event.addListener(marker, 'dragend', handleMarkerDrag );
   setMarkerConfirmationFlag(marker, false);
-  setSubmitAnswerOptionEnabled();
+  
+  /* Create modal for marker (if there isn't already one */
+  cloneModal(marker.idx);
+  
+  //setSubmitAnswerOptionEnabled();
     
   /* Hide the add marker button, since another marker cannot be added yet */
   setTimeout( function() { toggleAddMarkerButton(); }, 500 );;
@@ -610,6 +614,14 @@ function addMarkerToList(marker)
 {
   var idx = _markers.push(marker);
   marker.idx = idx-1;
+}
+
+function showConfirmMarkerDialog(idx)
+{
+  _infoBubble.close();
+  _map.panTo(_markers[idx].getPosition());
+  $('#modalMarker' + idx).modal();
+  //saveModalState('#modalMarker' + idx);
 }
 
 function confirmMarker(idx)

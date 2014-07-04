@@ -232,6 +232,8 @@ function noteAnyDBIssues()
   var _overlay, _overlayProjection;
   var _addMarkerBtnId = 'addMarkerBtn';
   var _greenMarker;
+  var _noAnswerModalId = 'noAnsModal';
+  var _modalState;
 </script>
 
 <script type="text/javascript">
@@ -288,13 +290,13 @@ function noteAnyDBIssues()
       $('.answer-btn').attr('type','button').addClass('confirm-btn');
       $('.confirm-btn').click( function() { 
         if ( $(this).hasClass('confirm-btn') ) {
-          showMarkerAddrInModal();
+          //showMarkerAddrInModal();
           
-          var questClass = 'fub-model';
-          _followUpBlockClassTag = '.' + questClass;
-          var clone = $(_freqQuestType ? '#freqQuestModel' : '#confQuestModel').clone().prop('id', '').removeClass('example').addClass(questClass);
-          $('li').after(clone[0].outerHTML);
-          $('.follow-up-block').hide();
+          //var questClass = 'fub-model';
+          //_followUpBlockClassTag = '.' + questClass;
+          //var clone = $(_freqQuestType ? '#freqQuestModel' : '#confQuestModel').clone().prop('id', '').removeClass('example').addClass(questClass);
+          //$('li').after(clone[0].outerHTML);
+          //$('.follow-up-block').hide();
             
           $('.follow-up-pair').hide();
           $('.nested-option').change( function() {
@@ -307,10 +309,26 @@ function noteAnyDBIssues()
               scope.find('.follow-up-pair').eq(idxNextSelect).show('blind', 200);
             }
           });
-          $('input[name="ansConfirm"]' ).prop('checked' , false);
+          //$('input[name="ansConfirm"]' ).prop('checked' , false);
           
-          $('#confirmModal').modal(); 
-          var radioBtns = $('input[name=ansConfirm]');
+          if ( _markers.length == 0 ) {
+            $('#' + _noAnswerModalId).modal(); 
+          }
+          else {
+            var allMarkersConfirmed = true;
+            for ( var i = 0; i < _markers.length; i++ ) {
+              allMarkersConfirmed &= _markers[i].confirmed;
+            }
+            if ( allMarkersConfirmed ) {
+              $(this).toggleClass('confirm-btn').attr('type', 'submit').click(); 
+            }
+            else {
+              _infoBubble.close();
+              generateIt(5, "Please confirm or remove the marker in red.");
+            }
+          }
+          
+          /*var radioBtns = $('input[name=ansConfirm]');
           radioBtns.change(function() {
             var idxSelected = radioBtns.index($('input[name=ansConfirm]:checked'));
             if ( idxSelected == 0 ) {
@@ -325,9 +343,10 @@ function noteAnyDBIssues()
             }
             setSubmitBtnEnabledStatus();
           });
-          $('.nested-option').change( setSubmitBtnEnabledStatus );
+            */
         } });
-      $('.btn-primary').click(function() { $('.close').click(); $('.answer-btn').toggleClass('confirm-btn').attr('type', 'submit').click(); });
+      
+      cloneModal(); // Creates modal for case where no answer is given
       
       initMap();
     }
@@ -376,18 +395,23 @@ function noteAnyDBIssues()
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                 <h4 class="modal-title" id="myModalLabel">Confirm answer</h4>
               </div>
-              <div class="modal-body">
-                <div>
-                  <div class='radio-div'>
-                    <input type="radio" name="ansConfirm" id="yes" class='radio-yes temp-disabl pointer' value="1" disabled />
-                    <label for="yes" class='radio-text radio-yes temp-disabl pointer'><?php echo ($draw_mode ? "Submit region designated by polygon" : "Submit address designated by pushpin"); ?></label>
-                  </div>
-                  <div class='under-radio'>
-                    <ol class='marker-addr'></ol>
-                    <div id='confQuestModel' class='follow-up-block example'>
-                      <div class='follow-up-pair'>
+              <div class="modal-body"></div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" disabled>Submit</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div id='main'>
+      <div id='map' class='adjust-height'></div>
+    </div>
+    <div id='confQuestModel' class='follow-up-block yes-fub example'>
+      <div class='follow-up-pair'>
                         <label>How <b>sure</b> are you that the location you have chosen/area you have drawn is correct?</label>
-                        <select id='confOptions' class=''>
+                        <select id='confOptions' class='nested-option'>
                           <option>-- Please rate your confidence level --</option>
                           <option class='ANS_CONF_VS'>Very sure</option>
                           <option class='ANS_CONF_QS'>Quite sure</option>
@@ -396,8 +420,8 @@ function noteAnyDBIssues()
                           <option class='ANS_CONF_VU'>Very unsure</option>
                         </select>
                       </div>
-                    </div>
-                    <div id='freqQuestModel' class='follow-up-block example'>
+    </div>
+    <div id='freqQuestModel' class='follow-up-block yes-fub example'>
                       <div class='follow-up-pair'>
                         <label>How often do you visit this place?</label>
                         <select class='nested-option'>
@@ -437,13 +461,7 @@ function noteAnyDBIssues()
                         </select>
                       </div>
                     </div>
-                  </div>
-                  <div class='radio-div' style='margin-top: 20px'>
-                    <input type="radio" name="ansConfirm" id="r2" class='pointer' value="2" />
-                    <label for="r2" class='radio-text pointer'>Submit no answer</label>
-                  </div>
-                  <div class='under-radio'>
-                    <div id='noAnswerFUB' class='follow-up-block'>
+    <div id='noAnswerModel' class='follow-up-block no-fub example'>
                       <div class='follow-up-pair'>
                         <label>Why did you not answer the question?</label>
                         <select id='reasonOptions' class='nested-option'>
@@ -461,21 +479,6 @@ function noteAnyDBIssues()
                         </select>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" disabled>Submit</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </form>
-    </div>
-    <div id='main'>
-      <div id='map' class='adjust-height'></div>
-    </div>
   </div>
   
   <script type="text/javascript">	
@@ -561,6 +564,7 @@ function noteAnyDBIssues()
         }
         /* This function gets triggered whether the button is of type submit or not, so we need to make sure that we are ready to submit by looking for absence of class confirm-btn */
         else if ( !button.hasClass('confirm-btn') ) { 
+          log("Processing form for submission...");
           $('#ansSubmitted').val(1);
           var answered = $('input[name=ansConfirm]:checked').prop('id') == 'yes';
           $('#ansAnswered').val(answered ? 1 : 0);
@@ -642,6 +646,45 @@ function noteAnyDBIssues()
       }, 4000);
     }
     
+    function generateIt(d, f, e) {
+  var minDelay = 5 /*secs*/ * 1000;
+  if ( typeof e === "undefined" ) {
+    e = minDelay;
+  }
+  else if ( e < 0 ) {
+    e *= -1; 
+  }
+  else {
+    e = Math.max(minDelay, e);
+  }
+    if (d == 1) {
+        generate("success", f)
+    } else {
+        if (d == 2) {
+            generate("error", f)
+        } else {
+            if (d == 3) {
+                generate("alert", f)
+            } else {
+                if (d == 4) {
+                    generate("information", f)
+                } else {
+                    if (d == 5) {
+                        generate("warning", f)
+                    } else {
+                        if (d == 6) {
+                            generate("notification", f)
+                        }
+                    }
+                }
+            }
+        }
+    }
+    setTimeout(function () {
+        $.noty.closeAll()
+    }, e)
+    }
+
     function generate(e, d)
     {
       var f = noty({
@@ -656,15 +699,14 @@ function noteAnyDBIssues()
     
     function setSubmitBtnEnabledStatus()
     {
-      var radioBtns = $('input[name=ansConfirm]');
-      var idxRadioBtnChecked = radioBtns.index($('input[name=ansConfirm]:checked'));
-      var underRadioDiv = $('input[name=ansConfirm]:checked').parent('.radio-div').next();
-      var allFUBsValid = true;
-      var numVisibleValidSelectsExpected = ( _freqQuestType && idxRadioBtnChecked == 0 ? 3 : 1 );
-      underRadioDiv.find('.follow-up-block:visible').each( function() {
-        allFUBsValid &= ( getVisibleValidSelectCount($(this)) == numVisibleValidSelectsExpected );
-      });
-      $('.btn-primary').prop('disabled', !allFUBsValid);
+      //var radioBtns = $('input[name=ansConfirm]');
+      //var idxRadioBtnChecked = radioBtns.index($('input[name=ansConfirm]:checked'));
+      //var underRadioDiv = $('input[name=ansConfirm]:checked').parent('.radio-div').next();
+      var thisModal = $(this).closest('.modal');
+      var fub = thisModal.find('.follow-up-block');
+      var numVisibleValidSelectsExpected = ( _freqQuestType && fub.hasClass('yes-fub') ? 3 : 1 );
+      var allFUBQuestionsAnswered = ( getVisibleValidSelectCount(fub) == numVisibleValidSelectsExpected );
+      thisModal.find('.btn-primary').prop('disabled', !allFUBQuestionsAnswered);
     }
     
     function getVisibleValidSelectCount(fubDiv)
@@ -718,6 +760,68 @@ function noteAnyDBIssues()
         $('.marker-addr').append("<li>" + _markers[v].address + "</li>");
       }      
     }
+    
+    function cloneModal(idx)
+    {
+      var isNoAnswerModal = isUndef(idx);
+      var newModalId = (isNoAnswerModal ? _noAnswerModalId : 'modalMarker' + idx );
+      var clonedModal = $('#confirmModal').clone().prop('id', newModalId);
+      var cloneDiv = $('#' + newModalId);
+      if ( cloneDiv.length == 0 ) {
+        $('#confirmModal').after(clonedModal[0].outerHTML);
+        cloneDiv = $('#' + newModalId);
+      }
+      else {
+        cloneDiv.html(clonedModal[0].innerHTML);
+      }
+      
+      fubModelId = (isUndef(idx) ? 'noAnswerModel' : ( _freqQuestType ? 'freqQuestModel' : 'confQuestModel' ) );
+      cloneDiv.find('.modal-body').append($('#' + fubModelId).clone().prop('id', '').removeClass('example')[0].outerHTML);
+      
+      cloneDiv.find('.btn-default').remove();
+      cloneDiv.find('.close').remove();
+      if ( isNoAnswerModal ) {
+        cloneDiv.find('.modal-title').text("Confirm non-answer");
+      }
+      else {  
+        cloneDiv.find('.btn-primary').text("Save destination");
+      }
+      
+      cloneDiv.find('.nested-option').change( setSubmitBtnEnabledStatus );
+      
+      cloneDiv.find('.btn-primary').click( function() {
+        cloneDiv.modal('hide');
+        if ( isNoAnswerModal ) {
+          $('.answer-btn').toggleClass('confirm-btn').attr('type', 'submit').click(); 
+        }
+        else {
+          confirmMarker(idx);
+        }
+      });
+      
+      /*cloneDiv.find('.btn-default,.close').click( function() {
+        loadPreviousModalState(newModalId);
+      });*/
+      return newModalId;
+    }
+    
+    function saveModalState(modalId)
+    {
+      _modalState = [];
+      $(modalId + ' select').each( function() {
+        _modalState.push({'sel_idx' : $(this)[0].selectedIndex, 'vis' : $(this).is(':visible')});
+      });
+    }
+    
+    function loadPreviousModalState(modalId)
+    {
+      var idx = 0;
+      $('#' + modalId + ' select').each( function() {
+        ( _modalState[idx].vis ? $(this).show() : $(this).hide() );
+        $(this)[0].selectedIndex = _modalState[idx].sel_idx;
+      });
+    }
+    
   </script>
   <div id="draggable" class="ui-widget-content draggable places-control">
     <div class="ui-widget-header draggable-heading">
