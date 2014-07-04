@@ -34,9 +34,10 @@ function initMap()
   function MyOverlay(map)
   {
     this.setMap(map);
-  }
-  
+  }  
   _overlay = new MyOverlay(_map);
+  
+  
   /********* Map listeners *************/
   google.maps.event.addListener(_map, 'maptypeid_changed', logMapTypeChange );
   google.maps.event.addListener(_map, 'bounds_changed', function(event) {
@@ -62,15 +63,13 @@ function initMap()
   google.maps.event.addListener(_drawingManager, 'overlaycomplete', processNewMapObject);
   _drawingManager.setMap(_map);
   
-  
   if ( _drawingPoly ) {
     _drawingManager.setDrawingMode(google.maps.drawing.OverlayType.POLYGON);
   }
   else {
-    //_mapmarker = createNewMarker();
-    //_mapmarker.setOptions({draggable:true});
     google.maps.event.addListener(_map, 'click', handleMapClick);
     //google.maps.event.addListener(_mapmarker, 'dragend', handleMarkerDrag);
+    _maxNumMarkers = ( _freqQuestType ? 3 : 2 );
   }
   
   var dbCoords = $('#ansCoords').val();
@@ -106,7 +105,7 @@ function initMap()
   }
   
   _greenMarker = {
-    url: 'img/marker-icon-green-22x38.png',
+    url: 'img/marker-icon-green-22x39.png',
     // This marker is 20 pixels wide by 32 pixels tall.
     size: new google.maps.Size(22, 39),
     // The origin for this image is 0,0.
@@ -230,8 +229,9 @@ function showMarkerInfoBubble(marker, timeOut)
   _infoBubble.setOptions({
     pixelOffset: _markerIBOffset,
     content:  "<div class='info-bubble'>" +
-                "<span>Approximate location: <i>" + escapeSpecialChars(marker.address) + "</i></span><br>" +
-                "(<a href='javascript:confirmMarker(" + _mapmarker.idx + ");'>Confirm</a> or <a href='javascript:removeMarker(" + _mapmarker.idx + ");'>Remove</a>)" +
+                "<span>Approximate location: <i>" + escapeSpecialChars(marker.address) + "</i></span><br>(" +
+                ( !marker.confirmed ? "<a href='javascript:confirmMarker(" + marker.idx + ");'>Confirm</a> or " : "" ) +
+                "<a href='javascript:removeMarker(" + marker.idx + ");'>Remove</a>)" +
               "</div>"
   });
   _infoBubble.open(_map, marker);
@@ -422,13 +422,6 @@ function processNewMapObject(e)
       setSubmitAnswerOptionEnabled();
     }
   }
-  /*else if ( e.type == google.maps.drawing.OverlayType.MARKER ) {
-    if ( _markers.length < _maxNumMarkers ) {
-      handleMapClick(newMapObj.getPosition());
-      newMapObj.setMap(null);
-      newMapObj = null;
-    }
-  }*/
 }
 
 function deletePolyAlreadyOnMap()
@@ -473,6 +466,9 @@ function applyGoogleMapHacks()
     }
     else if ( i == 3 ) {
       gmElem.prop('id', _addMarkerBtnId );
+      if ( _freqQuestType ) {
+        gmElem.prop('title', gmElem.prop('title') + " (maximum of " + _maxNumMarkers + ")");
+      }
       $('#' + _addMarkerBtnId).css('cursor', 'pointer').click( function() {
         geocodeMarker(_map.getCenter());
       });
@@ -555,12 +551,23 @@ function addMarkerToMap()
 
 function removeMarker(idx)
 {
-  var mark = _markers[idx];
-  mark.setMap(null);
-  _markers.splice(idx,1);
-  if ( idx == _markers.length ) {
-    _mapmarker.setVisible(false);
+  _markers[idx].setMap(null);
+  
+  /* Two cases to watch out for:
+   * - Removal of current (red) active marker
+   * - Removal of confirmed marker when all the other markers are also confirmed
+   */
+  if ( _markers[idx] == _mapmarker || _mapmarker == null ) {
+    toggleAddMarkerButton();
+    _mapmarker = null;
   }
+  _markers[idx] = null;
+  _markers.splice(idx,1);
+  /* Decrement the index since all the markers after the one removed are moving down one in position */
+  for ( ; idx < _markers.length; idx++ ) {
+    _markers[idx].idx--;
+  }
+  _infoBubble.close();
 }
 
 function addMarkerToMap(coords, addr)
@@ -568,6 +575,7 @@ function addMarkerToMap(coords, addr)
   var markerOptions = { 
     map: _map, 
     position: ( isUndef(coords) ? _map.getCenter() : coords ),
+    draggable: true,
     animation: google.maps.Animation.DROP
   }
 	
@@ -577,11 +585,13 @@ function addMarkerToMap(coords, addr)
   }
   addMarkerToList(marker);
   google.maps.event.addListener(marker, 'click', function() { showMarkerInfoBubble(this, false); } );
-  
+  google.maps.event.addListener(marker, 'dragstart', function() { _infoBubble.close(); } );
+  google.maps.event.addListener(marker, 'dragend', handleMarkerDrag );
+  setMarkerConfirmationFlag(marker, false);
   setSubmitAnswerOptionEnabled();
     
   /* Hide the add marker button, since another marker cannot be added yet */
-  setTimeout( function() { $('#' + _addMarkerBtnId).hide('blind', 500) }, 500 );;
+  setTimeout( function() { toggleAddMarkerButton(); }, 500 );;
   
   /* In case the Add Marker button was clicked, let's undo the switch into Drawing mode */
   _drawingManager.setDrawingMode(null);
@@ -604,4 +614,27 @@ function addMarkerToList(marker)
 
 function confirmMarker(idx)
 {
+  _markers[idx].setIcon(_greenMarker);
+  setMarkerConfirmationFlag(_markers[idx]);
+  _markers[idx].setOptions({draggable:false});
+  if ( _markers[idx] === _mapmarker ) {
+    _mapmarker = null;
+  }
+  if ( _markers.length < _maxNumMarkers ) {
+    toggleAddMarkerButton();
+  }
+  _infoBubble.close();
+}
+
+function setMarkerConfirmationFlag(marker, confirmed)
+{
+  if ( isUndef(confirmed) ) {
+    confirmed = true;
+  }
+  marker.confirmed = confirmed;
+}
+
+function toggleAddMarkerButton()
+{
+  $('#' + _addMarkerBtnId).toggle('blind', 500 );
 }

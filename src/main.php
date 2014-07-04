@@ -329,10 +329,6 @@ function noteAnyDBIssues()
         } });
       $('.btn-primary').click(function() { $('.close').click(); $('.answer-btn').toggleClass('confirm-btn').attr('type', 'submit').click(); });
       
-      if ( _freqQuestType ) {
-        _maxNumMarkers = 3;
-      }
-      
       initMap();
     }
   });
