@@ -50,7 +50,9 @@ function initMap()
   google.maps.event.addListenerOnce(_map, 'idle', function() {
     _overlayProjection = _overlay.getProjection();
     applyGoogleMapHacks();
-    log("Map ready"); });
+    loadDBAnswer();
+    log("Map ready"); 
+  });
   
   _drawingManager = new google.maps.drawing.DrawingManager({
     drawingControl: true,
@@ -72,38 +74,6 @@ function initMap()
     _maxNumMarkers = ( _freqQuestType ? 3 : 2 );
   }
   
-  var dbCoords = $('#ansCoords').val();
-  if ( dbCoords.length > 0 ) {
-    log("DB geom string", dbCoords);
-    var mapCenter;
-    var lls = convertGeomTextToLatLng(dbCoords);
-    var latLngs = lls.coords;
-    if ( latLngs.length == 1 ) {
-      _mapmarker.address = $('#ansAddr').val();
-      pinMapMarker(latLngs[0], false);
-      _map.setCenter(latLngs[0]);
-    }
-    else if ( lls.isPoly ) {
-      _drawnPolygon = new google.maps.Polygon({ paths:latLngs });
-      _drawnPolygon.setMap(_map);  
-      _map.setCenter(calcPolyCenter());
-      setSubmitAnswerOptionEnabled();
-    }
-    else {
-      var bnds = new google.maps.LatLngBounds();
-      var addrs = $('#ansAddr').val().split("¦");
-      for ( var y = 0; y < latLngs.length; y++ ) {
-        _mapmarker.address = addrs[y];
-        pinMapMarker(latLngs[y], false);
-        if ( y != latLngs.length-1 ) {
-          alert("Need to add code here :(");
-        }
-        bnds.extend(latLngs[y]);
-      }
-      _map.fitBounds(bnds);
-    }
-  }
-  
   _greenMarker = {
     url: 'img/marker-icon-green-22x39.png',
     // This marker is 20 pixels wide by 32 pixels tall.
@@ -113,7 +83,6 @@ function initMap()
     // The anchor for this image is the base of the flagpole at 0,32.
     anchor: new google.maps.Point(11, 39)
   };
-
 }
     
 function doGoogleSearch(searchStr)
@@ -466,7 +435,7 @@ function applyGoogleMapHacks()
     }
     else if ( i == 3 ) {
       gmElem.prop('id', _addMarkerBtnId );
-      if ( _freqQuestType ) {
+      if ( _maxNumMarkers > 1 ) {
         gmElem.prop('title', gmElem.prop('title') + " (maximum of " + _maxNumMarkers + ")");
       }
       $('#' + _addMarkerBtnId).css('cursor', 'pointer').click( function() {
@@ -570,13 +539,13 @@ function removeMarker(idx)
   _infoBubble.close();
 }
 
-function addMarkerToMap(coords, addr)
+function addMarkerToMap(coords, addr, anima)
 {
   var markerOptions = { 
     map: _map, 
     position: ( isUndef(coords) ? _map.getCenter() : coords ),
     draggable: true,
-    animation: google.maps.Animation.DROP
+    animation: (isUndef(anima) ? google.maps.Animation.DROP : anima)
   }
 	
   var marker = new google.maps.Marker(markerOptions);
@@ -620,7 +589,7 @@ function showConfirmMarkerDialog(idx)
 {
   _infoBubble.close();
   _map.panTo(_markers[idx].getPosition());
-  $('#modalMarker' + idx).modal();
+  $('#' + _modalMarkerPfx + idx).modal();
   //saveModalState('#modalMarker' + idx);
 }
 
@@ -649,4 +618,36 @@ function setMarkerConfirmationFlag(marker, confirmed)
 function toggleAddMarkerButton()
 {
   $('#' + _addMarkerBtnId).toggle('blind', 500 );
+}
+
+function loadDBAnswer()
+{
+  var dbCoords = $('#ansCoords').val();
+  if ( dbCoords.length > 0 ) {
+    log("DB geom string", dbCoords);
+    var mapCenter;
+    var lls = convertGeomTextToLatLng(dbCoords);
+    var latLngs = lls.coords;
+    if ( lls.isPoly ) {
+      _drawnPolygon = new google.maps.Polygon({ paths:latLngs });
+      _drawnPolygon.setMap(_map);  
+      _map.setCenter(calcPolyCenter());
+      setSubmitAnswerOptionEnabled();
+    }
+    else {
+      var bnds = new google.maps.LatLngBounds();
+      var addrs = $('#ansAddr').val().split("¦");
+      for ( var y = 0; y < latLngs.length; y++ ) {
+        addMarkerToMap(latLngs[y], addrs[y], null);
+        confirmMarker(y);
+        bnds.extend(latLngs[y]);
+      }
+      if ( y > 1 ) {
+        _map.fitBounds(bnds);
+      }
+      else {
+        _map.panTo(_markers[0].getPosition());
+      }
+    }
+  }
 }

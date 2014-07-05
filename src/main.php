@@ -234,6 +234,8 @@ function noteAnyDBIssues()
   var _greenMarker;
   var _noAnswerModalId = 'noAnsModal';
   var _modalState;
+  var _noAnsFlag = 'no-ans';
+  var _modalMarkerPfx = 'modalMarker';
 </script>
 
 <script type="text/javascript">
@@ -324,7 +326,7 @@ function noteAnyDBIssues()
             }
             else {
               _infoBubble.close();
-              generateIt(5, "Please confirm or remove the marker in red.");
+              generateIt(5, "Please confirm or remove active marker.");
             }
           }
           
@@ -566,7 +568,7 @@ function noteAnyDBIssues()
         else if ( !button.hasClass('confirm-btn') ) { 
           log("Processing form for submission...");
           $('#ansSubmitted').val(1);
-          var answered = $('input[name=ansConfirm]:checked').prop('id') == 'yes';
+          var answered = !button.hasClass(_noAnsFlag);
           $('#ansAnswered').val(answered ? 1 : 0);
           var ansInfoStr = buildAnsInfoStr();
           $('#ansInfo').val(ansInfoStr);
@@ -720,19 +722,16 @@ function noteAnyDBIssues()
     
     function buildAnsInfoStr()
     {
-      var radioBtns = $('input[name=ansConfirm]');
-      var idxRadioBtnChecked = radioBtns.index($('input[name=ansConfirm]:checked'));
-      var underRadioDiv = $('input[name=ansConfirm]:checked').parent('.radio-div').next();
       var info = [];
-      underRadioDiv.find('.follow-up-block:visible').each( function() {
-        var blockInfo = [];
-        $(this).find('.nested-option:visible option:selected').each( function() {
-          blockInfo.push($(this)[0].classList[0]);
+      for ( var v = 0; v < _markers.length; v++ ) {
+        var modalId = _modalMarkerPfx + v;
+        var markerInfo = [];
+        $('#' + modalId + ' option:selected').each(function() {
+          markerInfo.push($(this)[0].className);
         });
-        info.push(blockInfo.join(","));
-      });
-      var infoStr = info.join("|");
-      return infoStr;
+        info.push(markerInfo.join(","));
+      }
+      return info.join("|");
     }
     
     function setSubmitAnswerOptionEnabled(enabled)
@@ -764,7 +763,7 @@ function noteAnyDBIssues()
     function cloneModal(idx)
     {
       var isNoAnswerModal = isUndef(idx);
-      var newModalId = (isNoAnswerModal ? _noAnswerModalId : 'modalMarker' + idx );
+      var newModalId = (isNoAnswerModal ? _noAnswerModalId : _modalMarkerPfx + idx );
       var clonedModal = $('#confirmModal').clone().prop('id', newModalId);
       var cloneDiv = $('#' + newModalId);
       if ( cloneDiv.length == 0 ) {
@@ -792,7 +791,7 @@ function noteAnyDBIssues()
       cloneDiv.find('.btn-primary').click( function() {
         cloneDiv.modal('hide');
         if ( isNoAnswerModal ) {
-          $('.answer-btn').toggleClass('confirm-btn').attr('type', 'submit').click(); 
+          $('.answer-btn').addClass(_noAnsFlag).toggleClass('confirm-btn').attr('type', 'submit').click(); 
         }
         else {
           confirmMarker(idx);
