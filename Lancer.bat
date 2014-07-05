@@ -1,1 +1,0 @@
-start /min "VERITAS Hors-Ligne" "%~dp0utils\so.bat"

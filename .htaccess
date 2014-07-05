@@ -2,4 +2,4 @@ Options +FollowSymlinks
 
 RewriteEngine On
 
-RewriteRule ^$ /londres/src/login.php [R,L]
+RewriteRule ^$ /londres/login.php [R,L]
