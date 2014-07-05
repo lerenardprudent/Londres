@@ -62,6 +62,17 @@ class User {
   }
   
   function save_answer($taskno, $qno, $answered, $ans_info, $coords, $addr, $searches) {
+    if ( $taskno == 3 && $qno == 2 && $ans_info == "NOANS_SNHN" ) {
+      $related_ans = $this->question_answered(3,1);
+      if ( $related_ans ) {
+        $answered = 1;
+        $geom_txt = explode('|', $related_ans)[0];
+        $start_pos = strpos($geom_txt, "((")+2;
+        $end_pos = strpos($geom_txt, "))");
+        $coo = substr($geom_txt, $start_pos, $end_pos - $start_pos);
+        $coords = $coo;
+      }
+    }
     $this->mysql->save_answer($this->uid, $taskno, $qno, $answered, $ans_info, $coords, $addr, $searches);
   }
   

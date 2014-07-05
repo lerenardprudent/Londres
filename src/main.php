@@ -312,22 +312,24 @@ function noteAnyDBIssues()
             }
           });
           //$('input[name="ansConfirm"]' ).prop('checked' , false);
-          
-          if ( _markers.length == 0 ) {
-            $('#' + _noAnswerModalId).modal(); 
+
+          var canSubmit = false;
+          if ( _drawingPoly ) {
+            canSubmit = (_drawnPolygon != null);
           }
-          else {
-            var allMarkersConfirmed = true;
-            for ( var i = 0; i < _markers.length; i++ ) {
-              allMarkersConfirmed &= _markers[i].confirmed;
-            }
-            if ( allMarkersConfirmed ) {
-              $(this).toggleClass('confirm-btn').attr('type', 'submit').click(); 
-            }
-            else {
+          else if ( _markers.length > 0 ) {
+            canSubmit = allMarkersConfirmed();
+            if ( !canSubmit ) {
               _infoBubble.close();
               generateIt(5, "Please confirm or remove active marker.");
             }
+          }    
+          
+          if ( canSubmit ) {
+            $(this).toggleClass('confirm-btn').attr('type', 'submit').click(); 
+          }
+          else {
+            $('#' + _noAnswerModalId).modal(); 
           }
           
           /*var radioBtns = $('input[name=ansConfirm]');
@@ -570,7 +572,7 @@ function noteAnyDBIssues()
           $('#ansSubmitted').val(1);
           var answered = !button.hasClass(_noAnsFlag);
           $('#ansAnswered').val(answered ? 1 : 0);
-          var ansInfoStr = buildAnsInfoStr();
+          var ansInfoStr = buildAnsInfoStr(answered);
           $('#ansInfo').val(ansInfoStr);
           $('#ansSearchActivity').val(_searchActivity.join(","));
           if (_drawnPolygon != null) {
@@ -720,18 +722,22 @@ function noteAnyDBIssues()
       return count;
     }
     
-    function buildAnsInfoStr()
+    function buildAnsInfoStr(answered)
     {
-      var info = [];
-      for ( var v = 0; v < _markers.length; v++ ) {
-        var modalId = _modalMarkerPfx + v;
-        var markerInfo = [];
-        $('#' + modalId + ' option:selected').each(function() {
-          markerInfo.push($(this)[0].className);
-        });
-        info.push(markerInfo.join(","));
+      if ( answered ) {
+        var info = [];
+        for ( var v = 0; v < _markers.length; v++ ) {
+          var modalId = _modalMarkerPfx + v;
+          var markerInfo = [];
+          $('#' + modalId + ' option:selected').each(function() {
+            markerInfo.push($(this)[0].className);
+          });
+          info.push(markerInfo.join(","));
+        }
+        return info.join("|");
       }
-      return info.join("|");
+      
+      return $('#' + _noAnswerModalId + ' option:selected')[0].className;
     }
     
     function setSubmitAnswerOptionEnabled(enabled)
@@ -819,6 +825,15 @@ function noteAnyDBIssues()
         ( _modalState[idx].vis ? $(this).show() : $(this).hide() );
         $(this)[0].selectedIndex = _modalState[idx].sel_idx;
       });
+    }
+    
+    function allMarkersConfirmed()
+    {
+      var allMarkersConfirmed = true;      
+      for ( var i = 0; i < _markers.length; i++ ) {
+        allMarkersConfirmed &= _markers[i].confirmed;
+      }
+      return allMarkersConfirmed;
     }
     
   </script>

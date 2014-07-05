@@ -9,7 +9,7 @@ function initMap()
     scaleControl: true,
     streetViewControl: false,
     mapTypeControl: true,
-    draggableCursor: 'crosshair',
+    draggableCursor: (_drawingPoly ? null : 'crosshair'),
     mapTypeId: google.maps.MapTypeId.ROADMAP		//HYBRID, SATELLITE, TERRAIN
   }	  
   _map = new google.maps.Map(document.getElementById('map'), mapOptions);	  
