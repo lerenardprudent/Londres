@@ -301,16 +301,7 @@ function noteAnyDBIssues()
           //$('.follow-up-block').hide();
             
           $('.follow-up-pair').hide();
-          $('.nested-option').change( function() {
-            var scope = $(this).closest(_followUpBlockClassTag);
-            var idxThisSelect = scope.find('.nested-option').index($(this));
-            var idxNextSelect = parseInt($('option:checked', this).val());
-            if ( idxNextSelect != "0" ) {
-              scope.find('.follow-up-pair:gt(' + idxThisSelect + ')').hide();
-              scope.find('.nested-option').eq(idxNextSelect).val(0);
-              scope.find('.follow-up-pair').eq(idxNextSelect).show('blind', 200);
-            }
-          });
+
           //$('input[name="ansConfirm"]' ).prop('checked' , false);
 
           var canSubmit = false;
@@ -326,7 +317,7 @@ function noteAnyDBIssues()
           }    
           
           if ( canSubmit ) {
-            $(this).toggleClass('confirm-btn').attr('type', 'submit').click(); 
+            submitAnswerToDB();
           }
           else {
             $('#' + _noAnswerModalId).modal(); 
@@ -701,12 +692,11 @@ function noteAnyDBIssues()
       return f;
     }
     
-    function setSubmitBtnEnabledStatus()
+    function setSubmitBtnEnabledStatus(thisModal)
     {
       //var radioBtns = $('input[name=ansConfirm]');
       //var idxRadioBtnChecked = radioBtns.index($('input[name=ansConfirm]:checked'));
       //var underRadioDiv = $('input[name=ansConfirm]:checked').parent('.radio-div').next();
-      var thisModal = $(this).closest('.modal');
       var fub = thisModal.find('.follow-up-block');
       var numVisibleValidSelectsExpected = ( _freqQuestType && fub.hasClass('yes-fub') ? 3 : 1 );
       var allFUBQuestionsAnswered = ( getVisibleValidSelectCount(fub) == numVisibleValidSelectsExpected );
@@ -792,7 +782,17 @@ function noteAnyDBIssues()
         cloneDiv.find('.btn-primary').text("Save destination");
       }
       
-      cloneDiv.find('.nested-option').change( setSubmitBtnEnabledStatus );
+      cloneDiv.find('.nested-option').change( function() {
+        var scope = $(this).closest('.modal');
+        var idxThisSelect = scope.find('.nested-option').index($(this));
+        var idxNextSelect = parseInt($('option:checked', this).val());
+        if ( idxNextSelect != "0" ) {
+          scope.find('.follow-up-pair:gt(' + idxThisSelect + ')').hide();
+          scope.find('.nested-option').eq(idxNextSelect).val(0);
+          scope.find('.follow-up-pair').eq(idxNextSelect).show('blind', 200);
+        }
+        setSubmitBtnEnabledStatus(scope);
+      });
       
       cloneDiv.find('.btn-primary').click( function() {
         cloneDiv.modal('hide');
@@ -834,6 +834,11 @@ function noteAnyDBIssues()
         allMarkersConfirmed &= _markers[i].confirmed;
       }
       return allMarkersConfirmed;
+    }
+    
+    function submitAnswerToDB()
+    {
+      $('.confirm-btn').toggleClass('confirm-btn').attr('type', 'submit').click(); 
     }
     
   </script>

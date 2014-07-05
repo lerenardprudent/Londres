@@ -445,7 +445,8 @@ ul {
 }
 
 .follow-up-pair {
-  margin-bottom: 5px;
+  display: none;
+  margin-bottom: 8px;
 }
 
 .follow-up-pair > label {

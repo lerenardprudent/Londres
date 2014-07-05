@@ -100,17 +100,21 @@ function doGoogleSearch(searchStr)
 
 function handleMapClick(clickEvent)
 {
-  var pix = clickEvent.pixel; //_overlayProjection.fromLatLngToContainerPixel(clickLatLng);
-  log ( "Map clicked at ", pix);
-  var mapW = $('#map').width();
-  var mapH = $('#map').height();
-  var minEdgeDist = Math.min(pix.x,mapW-pix.x,pix.y,mapH-pix.y);
-  var topEdgeDist = pix.y;
-  var needToRecenter = ( minEdgeDist < 10 || topEdgeDist < 50 );
-  if ( needToRecenter ) {
-    log("Map canvas click at distance of only ", minEdgeDist, "; recentering map.");
+  /* If cursor is not a crosshair then it is probably a hand and we can ignore the click event */
+  if ( _map.get('draggableCursor') == 'crosshair' ) {
+    var pix = clickEvent.pixel; //_overlayProjection.fromLatLngToContainerPixel(clickLatLng);
+    log ( "Map clicked at ", pix);
+    var mapW = $('#map').width();
+    var mapH = $('#map').height();
+    var mapH = $('#map').height();
+    var minEdgeDist = Math.min(pix.x,mapW-pix.x,pix.y,mapH-pix.y);
+    var topEdgeDist = pix.y;
+    var needToRecenter = ( minEdgeDist < 10 || topEdgeDist < 50 );
+    if ( needToRecenter ) {
+      log("Map canvas click at distance of only ", minEdgeDist, "; recentering map.");
+    }
+    geocodeMarker(clickEvent.latLng, needToRecenter);
   }
-  geocodeMarker(clickEvent.latLng, needToRecenter);
 }
 
 function geocodeMarker(lat_lng, centerOnMarker)
@@ -173,6 +177,7 @@ function pinMapMarker(coords, doPopup, address)
   else {
     _mapmarker.setPosition(coords);
     setMarkerAddress(_mapmarker, address);
+    resetActiveModal();
   }
   
   if (doPopup) {
@@ -604,6 +609,9 @@ function confirmMarker(idx)
   if ( _markers.length < _maxNumMarkers ) {
     toggleAddMarkerButton();
   }
+  else {
+    _map.set('draggableCursor', null);
+  }
   _infoBubble.close();
 }
 
@@ -650,4 +658,11 @@ function loadDBAnswer()
       }
     }
   }
+}
+
+function resetActiveModal()
+{
+  var activeIdx = _markers.length-1;
+  $('#modalMarker' + activeIdx + ' select').each(function() {$(this)[0].selectedIndex = 0; });
+  $('#modalMarker' + activeIdx + ' .follow-up-pair').not(':first').hide();
 }
