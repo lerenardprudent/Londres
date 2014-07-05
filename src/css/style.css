@@ -463,3 +463,8 @@ ul {
 .modal-header,.modal-body,.modal-footer {
   padding: 10px !important
 }
+
+/* Hides the hand drawing tool */
+div[title='Stop drawing'] {
+    display: none;
+}

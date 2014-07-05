@@ -202,6 +202,9 @@ function noteAnyDBIssues()
 <script type="text/javascript" src="js/impromptu/jquery-impromptu.js"></script>
 <link rel="stylesheet" href="css/jquery-impromptu.css" />-->
 
+<!-- BLOCKUI -->
+<script type="text/javascript" src="js/blockUI/jquery.blockUI.js"></script>
+
 <!-- ##################### END OF INCLUDES SECTION ######################### -->
 
 <!-- The variables -->
@@ -236,6 +239,7 @@ function noteAnyDBIssues()
   var _modalState;
   var _noAnsFlag = 'no-ans';
   var _modalMarkerPfx = 'modalMarker';
+  var _blockUIElems = ['.search-slider'];
 </script>
 
 <script type="text/javascript">
@@ -287,6 +291,10 @@ function noteAnyDBIssues()
       });
       searchBtn.on('mouseover', function(e) {
         searchField.focus();
+      });
+      
+      $('.blocked').mouseover(function() {
+        generateIt(5, "You cannot add any more destinations to the map. Please remove one of them before continuing.");
       });
       
       $('.answer-btn').attr('type','button').addClass('confirm-btn');
@@ -839,6 +847,14 @@ function noteAnyDBIssues()
     function submitAnswerToDB()
     {
       $('.confirm-btn').toggleClass('confirm-btn').attr('type', 'submit').click(); 
+    }
+    
+    function blockUI(unblockFlag)
+    {
+      for ( var v = 0; v < _blockUIElems.length; v++ ) {
+        $(_blockUIElems[v]).toggleClass('blocked');
+        ( isUndef(unblockFlag) ? $(_blockUIElems[v]).block({message:null}) : $(_blockUIElems[v]).unblock() );
+      }
     }
     
   </script>

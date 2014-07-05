@@ -55,7 +55,7 @@ function initMap()
   });
   
   _drawingManager = new google.maps.drawing.DrawingManager({
-    drawingControl: true,
+    drawingControl: (_markers.length != _maxNumMarkers),
     drawingControlOptions: {
       position: google.maps.ControlPosition.TOP_CENTER,
       drawingModes: [_drawingPoly ? google.maps.drawing.OverlayType.POLYGON : google.maps.drawing.OverlayType.MARKER]
@@ -411,7 +411,11 @@ function deletePolyAlreadyOnMap()
 function applyGoogleMapHacks()
 {
   /* Hack 1 to listen for map clicks in drawing mode (since Google Maps disable click events in this type of situation */
-  var hackSelectors = { '1' : { 'elem' : $('.gm-style').children().eq(0), 'applied' : false }, '2' : { 'elem' : $('.gmnoprint').eq(2).children(), 'applied' : false }, '3' : { 'elem' : $('.gmnoprint').find("[title='Add a marker']"), applied: false }, '4' : { 'elem' : $('.gmnoprint').find("[title='Stop drawing']"), applied: false } };
+  var hackSelectors = { 
+    '1' : { 'elem' : $('.gm-style').children().eq(0), 'applied' : false }, 
+    '2' : { 'elem' : $('.gmnoprint').eq(2).children(), 'applied' : false }, 
+    '3' : { 'elem' : $('.gmnoprint').find("[title='Add a marker']"), applied: false } 
+  };
   
   var allHacksApplied = true;
   for ( var i in hackSelectors ) {
@@ -441,14 +445,11 @@ function applyGoogleMapHacks()
     else if ( i == 3 ) {
       gmElem.prop('id', _addMarkerBtnId );
       if ( _maxNumMarkers > 1 ) {
-        gmElem.prop('title', gmElem.prop('title') + " (maximum of " + _maxNumMarkers + ")");
+        gmElem.prop('title', gmElem.prop('title'));
       }
       $('#' + _addMarkerBtnId).css('cursor', 'pointer').click( function() {
         geocodeMarker(_map.getCenter());
       });
-    }
-    else if ( i == 4 ) {
-      gmElem.remove();
     }
     log("GM hack " + i + " applied");
   }
@@ -532,7 +533,7 @@ function removeMarker(idx)
    * - Removal of confirmed marker when all the other markers are also confirmed
    */
   if ( _markers[idx] == _mapmarker || _mapmarker == null ) {
-    toggleAddMarkerButton();
+    toggleAddMarkerButton(true);
     _mapmarker = null;
   }
   _markers[idx] = null;
@@ -542,9 +543,14 @@ function removeMarker(idx)
     _markers[idx].idx--;
   }
   _infoBubble.close();
+  
+  /* Unblock the UI if it was blocked before */
+  if ( idx == _maxNumMarkers-1 ) {
+    blockUI(false);
+  }
 }
 
-function addMarkerToMap(coords, addr, anima)
+function addMarkerToMap(coords, addr, anima, dontToggleAddMarkerBtn)
 {
   var markerOptions = { 
     map: _map, 
@@ -557,6 +563,7 @@ function addMarkerToMap(coords, addr, anima)
   if (!isUndef(addr)) {
     setMarkerAddress(marker, addr);
   }
+  
   addMarkerToList(marker);
   google.maps.event.addListener(marker, 'click', function() { showMarkerInfoBubble(this, false); } );
   google.maps.event.addListener(marker, 'dragstart', function() { _infoBubble.close(); } );
@@ -569,7 +576,9 @@ function addMarkerToMap(coords, addr, anima)
   //setSubmitAnswerOptionEnabled();
     
   /* Hide the add marker button, since another marker cannot be added yet */
-  setTimeout( function() { toggleAddMarkerButton(); }, 500 );;
+  if (isUndef(dontToggleAddMarkerBtn) ) {
+    setTimeout( function() { toggleAddMarkerButton(); }, 500 );;
+  }
   
   /* In case the Add Marker button was clicked, let's undo the switch into Drawing mode */
   _drawingManager.setDrawingMode(null);
@@ -598,7 +607,7 @@ function showConfirmMarkerDialog(idx)
   //saveModalState('#modalMarker' + idx);
 }
 
-function confirmMarker(idx)
+function confirmMarker(idx, dontToggleAddMarkerBtn)
 {
   _markers[idx].setIcon(_greenMarker);
   setMarkerConfirmationFlag(_markers[idx]);
@@ -606,13 +615,23 @@ function confirmMarker(idx)
   if ( _markers[idx] === _mapmarker ) {
     _mapmarker = null;
   }
-  if ( _markers.length < _maxNumMarkers ) {
+  if ( isUndef(dontToggleAddMarkerBtn) && _markers.length < _maxNumMarkers ) {
     toggleAddMarkerButton();
   }
   else {
     _map.set('draggableCursor', null);
   }
   _infoBubble.close();
+  
+  var popupMessage = "You may add another destination (or simply proceed to the next question).";
+  if ( _maxNumMarkers == _markers.length ) {
+    popupMessage = "You have added the maximum number of destinations to the map. Thank you!";
+    blockUI();
+  }
+  else if ( _maxNumMarkers - 1 == _markers.length ) {
+    popupMessage = "You may add one more destination to the map.";
+  }
+  generateIt(5, popupMessage);
 }
 
 function setMarkerConfirmationFlag(marker, confirmed)
@@ -623,9 +642,14 @@ function setMarkerConfirmationFlag(marker, confirmed)
   marker.confirmed = confirmed;
 }
 
-function toggleAddMarkerButton()
+function toggleAddMarkerButton(show)
 {
-  $('#' + _addMarkerBtnId).toggle('blind', 500 );
+  if ( show ) {
+    $('#' + _addMarkerBtnId).show('blind', 500 );
+  }
+  else {
+    $('#' + _addMarkerBtnId).toggle('blind', 500 );
+  }
 }
 
 function loadDBAnswer()
@@ -645,9 +669,11 @@ function loadDBAnswer()
     else {
       var bnds = new google.maps.LatLngBounds();
       var addrs = $('#ansAddr').val().split("¦");
+      var toggleAddMarkerBtn = false;
       for ( var y = 0; y < latLngs.length; y++ ) {
-        addMarkerToMap(latLngs[y], addrs[y], null);
-        confirmMarker(y);
+      
+        addMarkerToMap(latLngs[y], addrs[y], null, toggleAddMarkerBtn);
+        confirmMarker(y, toggleAddMarkerBtn);
         bnds.extend(latLngs[y]);
       }
       if ( y > 1 ) {
