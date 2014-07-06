@@ -182,7 +182,7 @@ function noteAnyDBIssues()
 <link rel="stylesheet" href="css/search.css" media="screen" type="text/css" />
 
 <!-- GOOGLE MAPS -->
-<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD4qnbkOe5X7pll7qyIFtkeLzjzkbPnAGo&amp;libraries=places,drawing&region=uk&sensor=false"></script>
+<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD4qnbkOe5X7pll7qyIFtkeLzjzkbPnAGo&amp;libraries=places,drawing&region=GB&sensor=false"></script>
 
 <!-- FONTS -->
 <link rel="stylesheet" href="css/fonts.css" type="text/css" />
@@ -313,6 +313,7 @@ function noteAnyDBIssues()
           //$('input[name="ansConfirm"]' ).prop('checked' , false);
 
           var canSubmit = false;
+          var cantSubmitYetExpl = "";
           if ( _drawingPoly ) {
             canSubmit = (_drawnPolygon != null);
           }
@@ -320,12 +321,15 @@ function noteAnyDBIssues()
             canSubmit = allMarkersConfirmed();
             if ( !canSubmit ) {
               _infoBubble.close();
-              generateIt(5, "Please confirm or remove active marker.");
+              cantSubmitYetExpl = "Please confirm or remove active marker.";
             }
           }    
           
           if ( canSubmit ) {
             submitAnswerToDB();
+          }
+          else if ( cantSubmitYetExpl ) {
+            generateIt(5, cantSubmitYetExpl);
           }
           else {
             $('#' + _noAnswerModalId).modal(); 
@@ -388,7 +392,6 @@ function noteAnyDBIssues()
         <input class='dbLog' type='hidden' value='<?php echo $db_log; ?>' />
         <div class='submit-div'>
           <input id='back' type='submit' value='&larr; Go back' class='back-btn submit-btn' />
-          <?php if ($freq_quest) { echo "<input id='addDest' type='button' value='Add destination' class='center-btn' onclick='addMarkerToMap();' disabled />"; } ?>
           <input id='submit' type='submit' value='Next question &rarr;' class='answer-btn submit-btn'/>
         </div>
         <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModal" aria-hidden="true">

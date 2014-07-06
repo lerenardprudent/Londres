@@ -9,7 +9,6 @@ function initMap()
     scaleControl: true,
     streetViewControl: false,
     mapTypeControl: true,
-    draggableCursor: (_drawingPoly ? null : 'crosshair'),
     mapTypeId: google.maps.MapTypeId.ROADMAP		//HYBRID, SATELLITE, TERRAIN
   }	  
   _map = new google.maps.Map(document.getElementById('map'), mapOptions);	  
@@ -64,13 +63,10 @@ function initMap()
   
   google.maps.event.addListener(_drawingManager, 'overlaycomplete', processNewMapObject);
   _drawingManager.setMap(_map);
+  setCursor();
   
-  if ( _drawingPoly ) {
-    _drawingManager.setDrawingMode(google.maps.drawing.OverlayType.POLYGON);
-  }
-  else {
+  if ( !_drawingPoly ) {
     google.maps.event.addListener(_map, 'click', handleMapClick);
-    //google.maps.event.addListener(_mapmarker, 'dragend', handleMarkerDrag);
     _maxNumMarkers = ( _freqQuestType ? 3 : 2 );
   }
   
@@ -119,24 +115,13 @@ function handleMapClick(clickEvent)
 
 function geocodeMarker(lat_lng, centerOnMarker)
 {
-  var geocoderRespHandler = geocoderResponse;
-	if (centerOnMarker) {
-		geocoderRespHandler = geocoderResponseCenterMap;
-	}
-	_geocoder.geocode( { latLng:lat_lng}, geocoderRespHandler );
+	_geocoder.geocode( {latLng:lat_lng}, centerOnMarker ? geocoderResponseCenterMap : geocoderResponse );
 }
 
 function geocodeAddress(addr, centerOnMarker)
 {
-	var regionHint = "London, UK";
-	addr += regionHint;
-		
-	var geocoderRespHandler = geocoderResponse;
-	if (centerOnMarker) {
-		geocoderRespHandler = geocoderResponseCenterMap;
-	}
-	
-	_geocoder.geocode( { 'address': addr }, geocoderRespHandler );
+	/* Give hint to where we want to search */
+	_geocoder.geocode( { 'address': addr + ",London,UK" }, centerOnMarker ? geocoderResponseCenterMap : geocoderResponse );
 }
 
 function geocoderResponse(results, status)
@@ -148,7 +133,7 @@ function geocoderResponse(results, status)
     var res_index = 0;
     var addr = results[res_index].formatted_address;
     log(results.length + " match" + (results.length == 1 ? "" : "es") + " found - choosing "  + quote(addr, "'"));
-    pinMapMarker(results[res_index].geometry.location, true, addr);
+    highlightLocation(results[res_index].geometry.location, addr);
   }
   else if (status == google.maps.GeocoderStatus.ZERO_RESULTS) {
     showPopupMsg(5, "Location not found.");
@@ -165,11 +150,8 @@ function geocoderResponseCenterMap(results, status)
   }
 }
 
-function pinMapMarker(coords, doPopup, address)
+function pinMapMarker(coords, address)
 {
-  if ( isUndef(doPopup) ) {
-    doPopup = true;
-  }
   var mustAddMarker = (_mapmarker == null);
   if ( mustAddMarker ) {
     _mapmarker = addMarkerToMap(coords, address);
@@ -180,7 +162,7 @@ function pinMapMarker(coords, doPopup, address)
     resetActiveModal();
   }
   
-  if (doPopup) {
+  if ( !isUndef(address) ) {
     showMarkerInfoBubble(_mapmarker, true);
   }
 }
@@ -266,7 +248,6 @@ function removePlaceMarkers()
 	}
 	_placeMarkers = [];
 	banishPlacesControl();
-	_map.setOptions({ draggableCursor: 'crosshair'});
 }
 
 function removePlaceMarker(id) 
@@ -305,7 +286,7 @@ function pinPlaceMarkers(places) 			//search results
 		marker.name = place.name;
 		google.maps.event.addListener(marker, 'mouseover', showPlaceMarkerAddr);
 		google.maps.event.addListener(marker, 'mouseout', function() { _infoBubble.close(); });
-		google.maps.event.addListener(marker, 'click', pinMapMarkerAtPlace );
+		google.maps.event.addListener(marker, 'click', handlePlaceMarkerClick );
 		_bnds.extend(place.geometry.location);
 		_zoomSnapTo = true;
 		addAddress(marker, place.reference);
@@ -366,13 +347,13 @@ function getPlaceInfoBubbleHtml(place)
   return html;
 }
 
-function pinMapMarkerAtPlace()
+function handlePlaceMarkerClick()
 {
   _infoBubble.close();
 	var addr = this.address ? this.address : ( this.vicinity ? this.vicinity : "" );
   var coords = this.getPosition();
-	pinMapMarker(coords);
-  _mapmarker.address = this.name + ", " + addr;
+	highlightLocation(coords);
+  setMarkerAddress(_mapmarker, this.name + ", " + addr);
 }
 
 function selectPlaceMarker(id)
@@ -520,7 +501,6 @@ function addMarkerToMap()
   var newMarker = createNewMarker(_mapmarker);
   newMarker.setOptions({icon:'http://maps.google.com/mapfiles/ms/icons/green-dot.png'});
   _markers[_markers.length-1] = newMarker;
-  $('#addDest').prop('disabled', true);
 }
 */
 
@@ -548,6 +528,7 @@ function removeMarker(idx)
   if ( idx == _maxNumMarkers-1 ) {
     blockUI(false);
   }
+  setCursor();
 }
 
 function addMarkerToMap(coords, addr, anima, dontToggleAddMarkerBtn)
@@ -618,9 +599,8 @@ function confirmMarker(idx, dontToggleAddMarkerBtn)
   if ( isUndef(dontToggleAddMarkerBtn) && _markers.length < _maxNumMarkers ) {
     toggleAddMarkerButton();
   }
-  else {
-    _map.set('draggableCursor', null);
-  }
+  
+  setCursor();
   _infoBubble.close();
   
   var popupMessage = "You may add another destination (or simply proceed to the next question).";
@@ -631,7 +611,13 @@ function confirmMarker(idx, dontToggleAddMarkerBtn)
   else if ( _maxNumMarkers - 1 == _markers.length ) {
     popupMessage = "You may add one more destination to the map.";
   }
-  generateIt(5, popupMessage);
+  
+  /* If this variable is undefined then chances are we are in the middle of adding location(s) 
+   * to map loaded from DB and so we don't want to show any popups here
+   */
+  if ( isUndef(dontToggleAddMarkerBtn) ) {
+    generateIt(5, popupMessage);
+  }
 }
 
 function setMarkerConfirmationFlag(marker, confirmed)
@@ -691,4 +677,14 @@ function resetActiveModal()
   var activeIdx = _markers.length-1;
   $('#modalMarker' + activeIdx + ' select').each(function() {$(this)[0].selectedIndex = 0; });
   $('#modalMarker' + activeIdx + ' .follow-up-pair').not(':first').hide();
+}
+
+function highlightLocation(coords, address)
+{
+  _drawingPoly ? _map.setCenter(coords) : pinMapMarker(coords, address);
+}
+
+function setCursor()
+{
+  _map.set('draggableCursor', !_drawingPoly && _markers.length < _maxNumMarkers ? 'crosshair' : null );
 }
