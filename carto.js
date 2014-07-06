@@ -630,11 +630,11 @@ function setMarkerConfirmationFlag(marker, confirmed)
 
 function toggleAddMarkerButton(show)
 {
-  if ( show ) {
-    $('#' + _addMarkerBtnId).show('blind', 500 );
+  if ( isUndef(show) ) {
+    $('#' + _addMarkerBtnId).toggle('blind', 500 );
   }
   else {
-    $('#' + _addMarkerBtnId).toggle('blind', 500 );
+    ( show ? $('#' + _addMarkerBtnId).show('blind', 500 ) : $('#' + _addMarkerBtnId).hide('blind', 500 ) );
   }
 }
 
@@ -686,5 +686,8 @@ function highlightLocation(coords, address)
 
 function setCursor()
 {
-  _map.set('draggableCursor', !_drawingPoly && _markers.length < _maxNumMarkers ? 'crosshair' : null );
+  var canAddMarker = !_drawingPoly && _markers.length < _maxNumMarkers;
+  var cursorVal = ( canAddMarker ? 'crosshair' : null );
+  toggleAddMarkerButton(canAddMarker);
+  _map.set('draggableCursor', cursorVal );
 }
