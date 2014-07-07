@@ -460,6 +460,12 @@ ul {
   margin: 2px;
 }
 
+.info-bubble > .desc-label {
+  background: linear-gradient(to right, white, lightblue, white);
+  display: block;
+  margin-bottom: 2px;
+}
+
 .modal-header,.modal-body,.modal-footer {
   padding: 10px !important
 }
@@ -467,4 +473,23 @@ ul {
 /* Hides the hand drawing tool */
 div[title='Stop drawing'] {
     display: none;
+}
+
+.dest-desc {
+  float: left;
+  background-color: #F0F0F0;
+  font-size: 13px;
+  padding: 3px;
+}
+
+.dest-desc label {
+  font-weight: 400 !important;
+  font-style: italic;
+}
+
+.dest-desc input {
+  margin-left: 10px;
+  width: 180px;
+  border-style: inset;
+  height: 25px;
 }

@@ -185,11 +185,13 @@ function showMarkerInfoBubble(marker, timeOut)
   _infoBubble.setOptions({
     pixelOffset: _markerIBOffset,
     content:  "<div class='info-bubble'>" +
+                ( isUndef(marker.label) ? "" : "<span class='desc-label'>" + marker.label + "</span>" ) +
                 "<span>Approximate location: <i>" + escapeSpecialChars(marker.address) + "</i></span><br>(" +
                 ( !marker.confirmed ? "<a href='javascript:showConfirmMarkerDialog(" + marker.idx + ");'>Confirm</a> or " : "" ) +
                 "<a href='javascript:removeMarker(" + marker.idx + ");'>Remove</a>)" +
               "</div>"
   });
+  $.noty.closeAll();
   _infoBubble.open(_map, marker);
   $('.info-bubble').parent().parent().width($('.info-bubble').width()*1.2);
   $('.info-bubble').parent().parent().height($('.info-bubble').height()*1.2);
@@ -217,8 +219,7 @@ function radialSearchResponse(results, status, pagination)
 	if (status != google.maps.places.PlacesServiceStatus.OK) {
 		alert("Places search prob");
 		return;
-	}
-	
+	}	
   /*
 	document.getElementById('findspanel').style.visibility = "visible";
   */
@@ -603,20 +604,15 @@ function confirmMarker(idx, dontToggleAddMarkerBtn)
   setCursor();
   _infoBubble.close();
   
-  var popupMessage = "You may add another destination (or simply proceed to the next question).";
   if ( _maxNumMarkers == _markers.length ) {
-    popupMessage = "You have added the maximum number of destinations to the map. Thank you!";
     blockUI();
-  }
-  else if ( _maxNumMarkers - 1 == _markers.length ) {
-    popupMessage = "You may add one more destination to the map.";
   }
   
   /* If this variable is undefined then chances are we are in the middle of adding location(s) 
    * to map loaded from DB and so we don't want to show any popups here
    */
   if ( isUndef(dontToggleAddMarkerBtn) ) {
-    generateIt(5, popupMessage);
+    showMarkerNotification();
   }
 }
 
@@ -655,12 +651,13 @@ function loadDBAnswer()
     else {
       var bnds = new google.maps.LatLngBounds();
       var addrs = $('#ansAddr').val().split("¦");
+      var labels = $('#ansDestLabel').val().split("¦");
       var toggleAddMarkerBtn = false;
       for ( var y = 0; y < latLngs.length; y++ ) {
-      
         addMarkerToMap(latLngs[y], addrs[y], null, toggleAddMarkerBtn);
         confirmMarker(y, toggleAddMarkerBtn);
         bnds.extend(latLngs[y]);
+        setMarkerLabel(y, labels[y]);
       }
       if ( y > 1 ) {
         _map.fitBounds(bnds);
@@ -690,4 +687,23 @@ function setCursor()
   var cursorVal = ( canAddMarker ? 'crosshair' : null );
   toggleAddMarkerButton(canAddMarker);
   _map.set('draggableCursor', cursorVal );
+}
+
+function showMarkerNotification()
+{
+  var popupMessage = "You may add another destination (or simply proceed to the next question).";
+  if ( _maxNumMarkers == _markers.length ) {
+    popupMessage = "You have added the maximum number of destinations to the map. Thank you!";
+  }
+  else if ( _maxNumMarkers - 1 == _markers.length ) {
+    popupMessage = "You may add one more destination to the map.";
+  } 
+  generateIt(5, popupMessage);
+}
+
+function setMarkerLabel(idx, label)
+{
+  if ( _markers.length > idx && !isUndef(label) && label.length > 0 ) {
+    _markers[idx].label = label;
+  }
 }

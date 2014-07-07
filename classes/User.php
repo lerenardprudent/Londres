@@ -61,7 +61,7 @@ class User {
     $this->mysql->set_connected($this->uid, false);
   }
   
-  function save_answer($taskno, $qno, $answered, $ans_info, $coords, $addr, $searches) {
+  function save_answer($taskno, $qno, $answered, $ans_info, $coords, $addr, $labl, $searches) {
     if ( $taskno == 3 && $qno == 2 && $ans_info == "NOANS_SNHN" ) {
       $related_ans = $this->question_answered(3,1);
       if ( $related_ans ) {
@@ -73,7 +73,7 @@ class User {
         $coords = $coo;
       }
     }
-    $this->mysql->save_answer($this->uid, $taskno, $qno, $answered, $ans_info, $coords, $addr, $searches);
+    $this->mysql->save_answer($this->uid, $taskno, $qno, $answered, $ans_info, $coords, $addr, $labl, $searches);
   }
   
   function reset_curr_pos()
@@ -85,7 +85,6 @@ class User {
   
   function set_attributes($gender, $pos)
   {
-    echo "HERE";
     $this->mysql->update_attrs($this->uid, $gender, $pos);
   }
   

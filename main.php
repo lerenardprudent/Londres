@@ -29,7 +29,7 @@ if ($U->authorised()) {
   if (isset($_POST['ansSubmitted']) ) {
     $goBack = ( $_POST['ansSubmitted'] < 0 );
     if ( $_POST['ansSubmitted'] > 0 ) {
-      $U->save_answer( $taskno, $qno, $_POST['ansAnswered'], $_POST['ansInfo'], $_POST['ansCoords'], $_POST['ansAddr'], $_POST['ansSearchActivity'] );
+      $U->save_answer( $taskno, $qno, $_POST['ansAnswered'], $_POST['ansInfo'], $_POST['ansCoords'], $_POST['ansAddr'], $_POST['ansDestLabel'], $_POST['ansSearchActivity'] );
       noteAnyDBIssues();
     }
     $next_pos = find_next_quest($goBack);
@@ -47,6 +47,7 @@ if ($U->authorised()) {
         $ans_tokens = explode("|", $existing_ans);
         $db_ans_geom_txt = $ans_tokens[0];
         $db_ans_addr = $ans_tokens[1];
+        $db_ans_destlabel = $ans_tokens[2];
       }
     }
   }
@@ -385,6 +386,7 @@ function noteAnyDBIssues()
         <input id='ansInfo' name='ansInfo' type='hidden' />
         <input id='ansCoords' name='ansCoords' value='<?php if (isset($db_ans_geom_txt)) { echo $db_ans_geom_txt; } ?>' type='hidden' />
         <input id='ansAddr' name='ansAddr' value='<?php if (isset($db_ans_addr)) { echo $db_ans_addr; } ?>' type='hidden' />
+        <input id='ansDestLabel' name='ansDestLabel' value='<?php if (isset($db_ans_destlabel)) { echo $db_ans_destlabel; } ?>' type='hidden' />
         <input id='ansSearchActivity' name='ansSearchActivity' type='hidden' />
         <input id='ansSubmitted' name='ansSubmitted' type='hidden' />
         <input class='questInfo' type='hidden' value='<?php echo $questInfo; ?>' />
@@ -591,12 +593,15 @@ function noteAnyDBIssues()
           else if ( answered ) {
             var allCoords = [];
             var allAddrs = [];
+            var allDescLabels = [];
             for ( var x = 0; x < _markers.length; x++ ) {
               allCoords.push(_markers[x].getPosition().lat() + " " + _markers[x].getPosition().lng());
               allAddrs.push(_markers[x].address);
+              allDescLabels.push(_markers[x].label);
             }
             $('#ansCoords').val(allCoords.join(","));
             $('#ansAddr').val(allAddrs.join("¦"));
+            $('#ansDestLabel').val(allDescLabels.join("¦"));
           }
         }
       }
@@ -653,42 +658,42 @@ function noteAnyDBIssues()
     }
     
     function generateIt(d, f, e) {
-  var minDelay = 5 /*secs*/ * 1000;
-  if ( typeof e === "undefined" ) {
-    e = minDelay;
-  }
-  else if ( e < 0 ) {
-    e *= -1; 
-  }
-  else {
-    e = Math.max(minDelay, e);
-  }
-    if (d == 1) {
-        generate("success", f)
-    } else {
-        if (d == 2) {
-            generate("error", f)
-        } else {
-            if (d == 3) {
-                generate("alert", f)
-            } else {
-                if (d == 4) {
-                    generate("information", f)
-                } else {
-                    if (d == 5) {
-                        generate("warning", f)
-                    } else {
-                        if (d == 6) {
-                            generate("notification", f)
-                        }
-                    }
-                }
-            }
-        }
+    var minDelay = 5 /*secs*/ * 1000;
+    if ( typeof e === "undefined" ) {
+      e = minDelay;
     }
-    setTimeout(function () {
-        $.noty.closeAll()
-    }, e)
+    else if ( e < 0 ) {
+      e *= -1; 
+    }
+    else {
+      e = Math.max(minDelay, e);
+    }
+      if (d == 1) {
+          generate("success", f)
+      } else {
+          if (d == 2) {
+              generate("error", f)
+          } else {
+              if (d == 3) {
+                  generate("alert", f)
+              } else {
+                  if (d == 4) {
+                      generate("information", f)
+                  } else {
+                      if (d == 5) {
+                          generate("warning", f)
+                      } else {
+                          if (d == 6) {
+                              generate("notification", f)
+                          }
+                      }
+                  }
+              }
+          }
+      }
+      setTimeout(function () {
+          $.noty.closeAll()
+      }, e)
     }
 
     function generate(e, d)
@@ -781,9 +786,14 @@ function noteAnyDBIssues()
         cloneDiv.html(clonedModal[0].innerHTML);
       }
       
-      fubModelId = (isUndef(idx) ? 'noAnswerModel' : ( _freqQuestType ? 'freqQuestModel' : 'confQuestModel' ) );
+      var noAnsModel = 'noAnswerModel', freqQuestModel = 'freqQuestModel';
+      fubModelId = (isUndef(idx) ? noAnsModel : ( _freqQuestType ? freqQuestModel : 'confQuestModel' ) );
       cloneDiv.find('.modal-body').append($('#' + fubModelId).clone().prop('id', '').removeClass('example')[0].outerHTML);
       
+      if ( fubModelId == freqQuestModel ) {
+        cloneDiv.find('.modal-footer').prepend("<div><span class='dest-desc'><label>Add a descriptive label for this place (optional):</label><input type='text' class='desc-input' /></span></div>");
+        cloneDiv.find('.desc-input').focusout(function() { setMarkerLabel(idx, $(this).val()); });
+      }
       cloneDiv.find('.btn-default').remove();
       cloneDiv.find('.close').remove();
       if ( isNoAnswerModal ) {
@@ -859,7 +869,6 @@ function noteAnyDBIssues()
         ( isUndef(unblockFlag) ? $(_blockUIElems[v]).block({message:null}) : $(_blockUIElems[v]).unblock() );
       }
     }
-    
   </script>
   <div id="draggable" class="ui-widget-content draggable places-control">
     <div class="ui-widget-header draggable-heading">
