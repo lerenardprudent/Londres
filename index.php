@@ -205,7 +205,7 @@ function validate_pos()
       $('#submit').prop('disabled', dob.length == 0 || $('input[name="gender"]:checked').length == 0);
     });
     
-    $('#dob').datepicker({ maxDate: "-10y" });
+    $('#dob').datepicker({ maxDate: "-10y", dateFormat: "yy-mm-dd" });
   });
 </script>
 </head>
@@ -320,9 +320,21 @@ function validate_pos()
   
   function maybeEnableSubmitBtn()
   {
-    $('#submit').prop('disabled', $("input[name='" + Consts.get('DOB_KEY') + "']").val().length == 0);
+    $('#submit').prop('disabled', $("input[name='" + Consts.get('DOB_KEY') + "']").val().length == 0 || $("input[name='" + Consts.get('GENDER_KEY') + "']:checked").length == 0);
   }
   
+  function pad(n)
+  {
+    return ( n < 10 ? "0" + n : n);
+  }
+  
+  function getDateStr()
+  {
+    var date = $('#dob').datepicker("getDate");
+    var datestr = date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate()) + " " +  pad(date.getHours()) + ":" + pad(date.getMinutes()) + ":" + pad(date.getSeconds());
+    return datestr;
+  }
+
 </script>
 </body>
 </html>

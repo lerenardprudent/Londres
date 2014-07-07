@@ -67,7 +67,7 @@ function initMap()
   
   if ( !_drawingPoly ) {
     google.maps.event.addListener(_map, 'click', handleMapClick);
-    _maxNumMarkers = ( _freqQuestType ? 3 : 2 );
+    _maxNumMarkers = ( _freqQuestType ? 3 : 1 );
   }
   
   _greenMarker = {
@@ -693,12 +693,15 @@ function showMarkerNotification()
 {
   var popupMessage = "You may add another destination (or simply proceed to the next question).";
   if ( _maxNumMarkers == _markers.length ) {
-    popupMessage = "You have added the maximum number of destinations to the map. Thank you!";
+    popupMessage = ( _maxNumMarkers == 1 ? "" : "You have added the maximum number of destinations to the map. Thank you!" );
   }
   else if ( _maxNumMarkers - 1 == _markers.length ) {
     popupMessage = "You may add one more destination to the map.";
   } 
-  generateIt(5, popupMessage);
+  
+  if ( popupMessage.length > 0 ) {
+    generateIt(5, popupMessage);
+  }
 }
 
 function setMarkerLabel(idx, label)
