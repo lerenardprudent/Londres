@@ -272,6 +272,7 @@ function pinPlaceMarkers(places) 			//search results
 {
 	_bnds = new google.maps.LatLngBounds();
 	var placesList = $('.places-list');
+  placesList.html("");
 
 	for (var i = 0, place; place = places[i]; i++)
 	{
@@ -301,7 +302,7 @@ function pinPlaceMarkers(places) 			//search results
   var w = $('.places-list').outerWidth();
   var h = $('.places-list').height()+20;
   log("Setting places control dimensions to " + w + "x" + h);
-  $('.places-control').width(w).height(h);
+  //$('.places-control').width(w).height(h);
 }
 
 function addAddress(mark, ref)

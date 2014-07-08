@@ -333,8 +333,8 @@ a { text-decoration: none; }
 
 .places-control {
   position: absolute;
-  bottom: 0;
-  right: 100px;
+  top: 200px;
+  right: 140px;
   font-size: 10px;
 }
 

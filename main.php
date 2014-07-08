@@ -222,7 +222,7 @@ function noteAnyDBIssues()
   var _endOfQuestionnaire = false;
   var _isExplanation = false;
   var _searchModePlaces = false;
-  var _placesSearchRadius = 5; // km
+  var _placesSearchRadius = 15; // km
   var _placeMarkers = [];
   var _zoomSnapTo = false;
   var _closeUpZoomLevel = 15;
