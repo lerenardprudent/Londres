@@ -874,6 +874,8 @@ function noteAnyDBIssues()
     
     function startTour()
     {
+      boxWidth = 400;
+    
       var tourSubmitFunc = function(e,v,m,f){
         if(v === -1){
           $.prompt.prevState();
@@ -887,10 +889,10 @@ function noteAnyDBIssues()
       tourStates = [
         {
           title: 'Welcome',
-          html: 'Ready to take a quick tour of jQuery Impromptu?',
-          buttons: { Next: 1 },
+          html: 'This quick tour will show you how to get around this site.',
+          buttons: { Continue: 1 },
           focus: 0,
-          position: { container: 'h1', x: 200, y: 60, width: 200, arrow: 'tc' },
+          position: { container: '.discover-icon', x: -(boxWidth/2) + 4, y: 40, arrow: 'tc' },
           submit: tourSubmitFunc
         },
         {
@@ -935,7 +937,15 @@ function noteAnyDBIssues()
         }
       ];
     
-    $.prompt(tourStates);
+      var myPrompt = $.prompt(tourStates);
+      /* Make some visual changes to impromptu dialog box */
+      myPrompt.on('impromptu:loaded', function(e) {
+        $('.jqi').width(boxWidth);
+        $('.jqi .jqiclose').css({'font-size':'25px','top': '-5px', 'right': '1px','cursor':'pointer'}).prop('title','Stop the tour');
+        $('.jqimessage').css({'margin-top':'-10px','padding-top':'0px'});
+        $('.jqititle').css('font-weight', 'bold');
+        $(".jqibuttons button").css('padding', '10px');
+      });
     }
 
   </script>
