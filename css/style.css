@@ -271,6 +271,26 @@ a { text-decoration: none; }
   background-position: -31px 0;
 }
 
+.discover-icon {
+  display: none;
+	width: 25px;
+	height: 25px;
+	background: url('../img/bulb.png');
+	text-indent: -99999px;
+  background-position: 0 0;
+  background-repeat:no-repeat;
+  position: absolute;
+  top: 0;
+  left:0;
+  right: 0;
+  margin: 5px auto;
+  cursor: pointer;
+}
+
+.discover-icon:hover {
+  background-position: -25px 0;
+}
+
 .retry 
 {
   font-style: italic
