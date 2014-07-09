@@ -271,7 +271,7 @@ function validate_pos()
       </div>
       <div class='draggable-contents'>
         <ul class='codes-list'><?php if ( isset($generated_codes) ) { create_li_elems($generated_codes); } ; ?></ul>
-        <button onclick="printCodes();">Print codes<button/>
+        <button onclick="printCodes();">Print codes</button>
         <input name='downl_codes' type='submit' value='Download codes' />
         <input name='undo_create' type='submit' value='Erase users' />
       </div>
@@ -313,7 +313,6 @@ function validate_pos()
     var printContent = "<h3>New user(s) access codes</h3><ul>" + $('.codes-list')[0].outerHTML + "</ul>";
     document.body.innerHTML = printContent;
     $('li').addClass('li-print');
-    alert("WTF");
     window.print();
     document.body.innerHTML = restorePage;
   }
