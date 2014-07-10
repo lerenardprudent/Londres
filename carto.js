@@ -727,4 +727,8 @@ function reloadMapState()
 {
   showMarkersOnMap();
   (_mapState.add_marker_btn ? $('#' + _addMarkerBtnId).show() : $('#' + _addMarkerBtnId).hide() );
+  if (_tutMarker != null ) {
+    _tutMarker.setMap(null);
+    _tutMarker = null;
+  }
 }

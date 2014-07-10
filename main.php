@@ -246,6 +246,8 @@ function noteAnyDBIssues()
   var _unknownStateId = 'UNKNOWN';
   var _currTourState = _unknownStateId;
   var _mapState = {};
+  var _tutMarker = null;
+  var _tutPoint = new google.maps.Point(100,100);
 </script>
 
 <script type="text/javascript">
@@ -880,8 +882,9 @@ function noteAnyDBIssues()
     function startTour()
     {
       boxWidth = 400;
+      var boxHeight = 138;
     
-      states = ["START", "QUESTION", "MAP", "LOC_PLACE_1"];
+      states = ["START", "QUESTION", "MAP", "LOC_PLACE_BTN", "LOC_PLACE_CLICK_MAP", "LOC_PLACE_SEARCH"];
       
       var tourSubmitFunc = function(e,v,m,f){
         if(v === -1){
@@ -920,18 +923,18 @@ function noteAnyDBIssues()
         },
         {
           title: 'Locating a place',
-          html: 'To locate a place, you may drop a pushpin onto the map by clicking this button.',
+          html: 'To locate a place, you may drop a pushpin onto the map by clicking this button...',
           buttons: { Back: -1, Next: 1 },
           focus: 1,
           position: { container: '#' + _addMarkerBtnId, x: -(boxWidth+($('#' + _addMarkerBtnId).outerWidth()/2)+5), y: 0, width: boxWidth, arrow: 'rt' },
           submit: tourSubmitFunc
         },
         {
-          title: 'The Tour Code',
-          html: 'Including this tour... See, creating a tour is easy!',
+          title: 'Locating a place (continued)',
+          html: '...or you may place the pushpin at a precise position by clicking directly on the map.',
           buttons: { Back: -1, Next: 1 },
           focus: 1,
-          position: { container: '#TourCode', x: 180, y: -130, width: 400, arrow: 'br' },
+          position: { container: '#map', x: _tutPoint.x+25, y: _tutPoint.y-boxHeight-10, width: boxWidth, arrow: 'lb' },
           submit: tourSubmitFunc
         },
         {
@@ -955,6 +958,14 @@ function noteAnyDBIssues()
         $(".jqibuttons button").css('padding', '10px');
         $('.jqi .jqidefaultbutton').focus();
       });
+
+      myPrompt.on('impromptu:statechanging', function(e) {
+        if ( $('.jqi').length == 1 ) {
+          boxHeight = $('.jqi').outerHeight();
+        }
+        window.clearTimeout(_timer);
+      });
+      
       myPrompt.on('impromptu:statechanged', function(e) {
         var currStateIdx = parseInt($.prompt.getCurrentStateName());
         _currTourState = ( currStateIdx < states.length ? states[currStateIdx] : _unknownStateId );
@@ -965,6 +976,18 @@ function noteAnyDBIssues()
           $.noty.closeAll();
           _infoBubble.close();
           showMarkersOnMap(false);
+          _tutMarker = new google.maps.Marker({position: _map.getCenter(), visible: false, map: _map});
+        }
+        else if ( _currTourState == 'LOC_PLACE_BTN' ) {
+          _timer = setTimeout( function() {
+          _tutMarker.setOptions({visible: true, animation: google.maps.Animation.DROP });
+          }, 2000 );
+        }
+        else if ( _currTourState == 'LOC_PLACE_CLICK_MAP' ) {
+          _timer = setTimeout( function() {
+            var latLng = _overlayProjection.fromContainerPixelToLatLng(_tutPoint);
+            _tutMarker.setOptions({position: latLng, visible: true});
+          }, 2000 );
         }
       });
     }
