@@ -426,7 +426,7 @@ function applyGoogleMapHacks()
       gmElem.eq(0).insertAfter(gmElem.eq(1));
     }
     else if ( i == 3 ) {
-      gmElem.prop('id', _addMarkerBtnId );
+      gmElem.prop('id', _addMarkerBtnId ).prop('title', 'Drop a new pushpin onto the map');
       if ( _maxNumMarkers > 1 ) {
         gmElem.prop('title', gmElem.prop('title'));
       }
@@ -710,4 +710,21 @@ function setMarkerLabel(idx, label)
   if ( _markers.length > idx && !isUndef(label) && label.length > 0 ) {
     _markers[idx].label = label;
   }
+}
+
+function showMarkersOnMap(show)
+{
+  if (isUndef(show)) {
+    show = true;
+  }
+  
+  for ( var v = 0; v < _markers.length; v++ ) {
+    _markers[v].setVisible(show);
+  }
+}
+
+function reloadMapState()
+{
+  showMarkersOnMap();
+  (_mapState.add_marker_btn ? $('#' + _addMarkerBtnId).show() : $('#' + _addMarkerBtnId).hide() );
 }

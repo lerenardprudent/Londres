@@ -241,6 +241,11 @@ function noteAnyDBIssues()
   var _noAnsFlag = 'no-ans';
   var _modalMarkerPfx = 'modalMarker';
   var _blockUIElems = ['.search-slider'];
+  
+  /* For use with tutorials */
+  var _unknownStateId = 'UNKNOWN';
+  var _currTourState = _unknownStateId;
+  var _mapState = {};
 </script>
 
 <script type="text/javascript">
@@ -630,7 +635,7 @@ function noteAnyDBIssues()
     {
       var searchBtn = $('.search-button');
       _searchModePlaces = searchBtn.hasClass('search-mode-places');
-      searchBtn.prop('title', "Toggle search mode (Currently: " + (_searchModePlaces ? "PLACES" : "LOCATION") + ")");
+      searchBtn.prop('title', "Click to toggle search mode (Currently: " + (_searchModePlaces ? "PLACES" : "LOCATION") + ")");
       $('.searchf').attr('placeholder', "For what " + (_searchModePlaces ? "place" : "location") + " are you searching?");
     }
     
@@ -876,6 +881,8 @@ function noteAnyDBIssues()
     {
       boxWidth = 400;
     
+      states = ["START", "QUESTION", "MAP", "LOC_PLACE_1"];
+      
       var tourSubmitFunc = function(e,v,m,f){
         if(v === -1){
           $.prompt.prevState();
@@ -889,40 +896,40 @@ function noteAnyDBIssues()
       tourStates = [
         {
           title: 'Welcome',
-          html: 'This quick tour will show you how to get around this site.',
-          buttons: { Continue: 1 },
+          html: 'This quick tour will show you how to use the features of the VERITAS site.',
+          buttons: { Begin: 1 },
           focus: 0,
-          position: { container: '.discover-icon', x: -(boxWidth/2) + 4, y: 40, arrow: 'tc' },
+          position: { container: '.discover-icon', x: -(boxWidth/2) + 4, y: $('.discover-icon').outerHeight(), width: boxWidth },
           submit: tourSubmitFunc
         },
         {
-          title: 'Download',
-          html: 'When you get ready to use Impromptu, you can get it here.',
-          buttons: { Prev: -1, Next: 1 },
+          title: 'The question',
+          html: 'A question is presented to you in this panel. Please read it carefully.',
+          buttons: { Back: -1, Next: 1 },
           focus: 1,
-          position: { container: '#Download', x: 170, y: 0, width: 300, arrow: 'lt' },
+          position: { container: '.quest-block', x: 0, y: $('.quest-block').outerHeight() + 10, arrow: 'tl', width: boxWidth },
           submit: tourSubmitFunc
         },
         {
-          title: "You've Got Options",
-          html: 'A description of the options are can be found here.',
-          buttons: { Prev: -1, Next: 1 },
+          title: "The map",
+          html: 'To answer the question, you are required to locate a place or a region on the map.',
+          buttons: { Back: -1, Next: 1 },
           focus: 1,
-          position: { container: '#Options', x: -10, y: -145, width: 200, arrow: 'bl' },
+          position: { container: '.quest-block', x: 0, y: $('.quest-block').outerHeight() + 10, arrow: 'br', width: boxWidth },
           submit: tourSubmitFunc
         },
         {
-          title: 'Examples..',
-          html: 'You will find plenty of examples to get you going..',
-          buttons: { Prev: -1, Next: 1 },
+          title: 'Locating a place',
+          html: 'To locate a place, you may drop a pushpin onto the map by clicking this button.',
+          buttons: { Back: -1, Next: 1 },
           focus: 1,
-          position: { container: '#Examples', x: 80, y: 10, width: 500, arrow: 'lt' },
+          position: { container: '#' + _addMarkerBtnId, x: -(boxWidth+($('#' + _addMarkerBtnId).outerWidth()/2)+5), y: 0, width: boxWidth, arrow: 'rt' },
           submit: tourSubmitFunc
         },
         {
           title: 'The Tour Code',
           html: 'Including this tour... See, creating a tour is easy!',
-          buttons: { Prev: -1, Next: 1 },
+          buttons: { Back: -1, Next: 1 },
           focus: 1,
           position: { container: '#TourCode', x: 180, y: -130, width: 400, arrow: 'br' },
           submit: tourSubmitFunc
@@ -937,17 +944,31 @@ function noteAnyDBIssues()
         }
       ];
     
+      _mapState = { 'add_marker_btn' : $('#' + _addMarkerBtnId).is(':visible') };
       var myPrompt = $.prompt(tourStates);
       /* Make some visual changes to impromptu dialog box */
       myPrompt.on('impromptu:loaded', function(e) {
         $('.jqi').width(boxWidth);
-        $('.jqi .jqiclose').css({'font-size':'25px','top': '-5px', 'right': '1px','cursor':'pointer'}).prop('title','Stop the tour');
+        $('.jqi .jqiclose').css({'font-size':'25px','top': '-5px', 'right': '1px','cursor':'pointer'}).prop('title','Stop the tour').click(reloadMapState);
         $('.jqimessage').css({'margin-top':'-10px','padding-top':'0px'});
         $('.jqititle').css('font-weight', 'bold');
         $(".jqibuttons button").css('padding', '10px');
+        $('.jqi .jqidefaultbutton').focus();
+      });
+      myPrompt.on('impromptu:statechanged', function(e) {
+        var currStateIdx = parseInt($.prompt.getCurrentStateName());
+        _currTourState = ( currStateIdx < states.length ? states[currStateIdx] : _unknownStateId );
+        if ( _currTourState == "START") {
+          if ( !_mapState.map_button && !_drawingPoly ) {
+            $('#' + _addMarkerBtnId).show();
+          }
+          $.noty.closeAll();
+          _infoBubble.close();
+          showMarkersOnMap(false);
+        }
       });
     }
-
+    
   </script>
   <div id="draggable" class="ui-widget-content draggable places-control">
     <div class="ui-widget-header draggable-heading">
