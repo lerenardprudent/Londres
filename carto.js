@@ -81,16 +81,20 @@ function initMap()
   };
 }
     
-function doGoogleSearch(searchStr)
+function runSearch()
 {
-  log("Searched for " + quote(searchStr,"'"));
-  _searchActivity.push((_searchModePlaces ? "PL_SEARCH:" : "LOC_SEARCH:") + quote(searchStr));
-  // Force search slider to close
-  if ( _searchModePlaces ) {
-    radialPlaceSearch(searchStr);
-  }
-  else {
-    geocodeAddress(searchStr);
+  var searchString = $('.searchfld').val();
+  if ( searchString.length > 0 ) {
+    log("Searched for " + quote(searchString,"'"));
+    $('.searchfld').val("");
+    _searchActivity.push((_searchModePlaces ? "PL_SEARCH:" : "LOC_SEARCH:") + quote(searchString));
+    // Force search slider to close
+    if ( _searchModePlaces ) {
+      radialPlaceSearch(searchString);
+    }
+    else {
+      geocodeAddress(searchString);
+    }
   }
 }
 
@@ -152,12 +156,13 @@ function geocoderResponseCenterMap(results, status)
 
 function pinMapMarker(coords, address)
 {
+  var marker = (!_tutMode ? _mapmarker : _tutMarker);
   var mustAddMarker = (_mapmarker == null);
   if ( mustAddMarker ) {
     _mapmarker = addMarkerToMap(coords, address);
   }
   else {
-    _mapmarker.setPosition(coords);
+    _mapmarker.setOptions({visible:true, position:coords});
     setMarkerAddress(_mapmarker, address);
     resetActiveModal();
   }
@@ -217,7 +222,7 @@ function radialPlaceSearch(searchString)
 function radialSearchResponse(results, status, pagination) 
 {
 	if (status != google.maps.places.PlacesServiceStatus.OK) {
-		alert("Places search prob");
+		showPopupMsg(2, "Unable to find any matching places!");
 		return;
 	}	
   /*
@@ -426,7 +431,7 @@ function applyGoogleMapHacks()
       gmElem.eq(0).insertAfter(gmElem.eq(1));
     }
     else if ( i == 3 ) {
-      gmElem.prop('id', _addMarkerBtnId ).prop('title', 'Drop a new pushpin onto the map');
+      gmElem.prop('id', _addMarkerBtnId ).prop('title', 'Add a pushpin to the map');
       if ( _maxNumMarkers > 1 ) {
         gmElem.prop('title', gmElem.prop('title'));
       }
@@ -731,4 +736,5 @@ function reloadMapState()
     _tutMarker.setMap(null);
     _tutMarker = null;
   }
+  _tutMode = false;
 }
