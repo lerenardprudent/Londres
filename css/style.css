@@ -354,7 +354,7 @@ a { text-decoration: none; }
 .places-control {
   position: absolute;
   top: 200px;
-  right: 140px;
+  left: 200px;
   font-size: 10px;
 }
 
@@ -512,4 +512,8 @@ div[title='Stop drawing'] {
   width: 180px;
   border-style: inset;
   height: 25px;
+}
+
+.btn-disabled {
+  color: lightblue;
 }

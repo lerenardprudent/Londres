@@ -212,6 +212,7 @@ function noteAnyDBIssues()
 <script type="text/javascript">
   var _latLngLondon;
   var _map;
+  var _bnds;
   var _mapmarker, _markers = [];
   var _maxNumMarkers = 3;
   var _geocoder;
@@ -629,14 +630,15 @@ function noteAnyDBIssues()
     
     function switchSearchMode(searchModePlaces)
     {
-      if ( isUndef(searchModePlaces) ) {
+      if ( !isUndef(searchModePlaces.type) ) { /* For the case where the click event is passed */
         $('.search-button').toggleClass('search-mode-places');
       }
       else {
         searchModePlaces ? $('.search-button').addClass('search-mode-places') : $('.search-button').removeClass('search-mode-places');
       }
-      $('.searchf').select();
       setSearchSliderAttrs();
+      $('.searchf').focus().select();
+      return false;
     }
 
     function setSearchSliderAttrs()
@@ -890,7 +892,7 @@ function noteAnyDBIssues()
       boxWidth = 400;
       var boxHeight = 138;
     
-      states = ["START", "QUESTION", "MAP", "IDENTIFY_BY_BTN", "IDENTIFY_BY_CLICK", "LOC_SEARCH", "TOGGLE_SEARCH", "PLACE_SEARCH"];
+      states = ["START", "QUESTION", "MAP", "IDENTIFY_BY_BTN", "IDENTIFY_BY_CLICK", "LOC_SEARCH", "TOGGLE_SEARCH", "PLACE_SEARCH", "PLACE_SELECT", "PLACES_REMOVE"];
       
       var tourSubmitFunc = function(e,v,m,f){
         if(v === -1){
@@ -961,10 +963,26 @@ function noteAnyDBIssues()
         },
         {
           title: 'Searching for a place',
-          html: 'To search for a place, type its name and/or terms that describe it, then press \'Enter\'.',
+          html: 'To search for a place, type its name and/or terms that describe it, then press \'Enter\'. A list of names of potential matches will appear, alomg with icons on the map showing those places\' location.',
           buttons: { Back: -1, Next: 1 },
           focus: 1,
           position: { container: '.search-slider', x: -boxWidth+($('.search-slider').outerWidth()/2)+20, y: $('.search-slider').outerHeight()+15, width: boxWidth, arrow: 'tr' },
+          submit: tourSubmitFunc
+        },
+        {
+          title: 'Selecting a place',
+          html: 'Click on an item in the list to zoom to that place on the map. Click on the icon to select the place.',
+          buttons: { Back: -1, Next: 1 },
+          focus: 1,
+          position: { container: '.draggable', x: $('.draggable').outerWidth()*.75, y: 10, width: boxWidth*.6, arrow: 'lt' },
+          submit: tourSubmitFunc
+        },
+        {
+          title: 'Removing Place search results',
+          html: 'If you wish to remove the search results overlay, click the \'x\' in the top-right corner of the list.',
+          buttons: { Back: -1, Next: 1 },
+          focus: 1,
+          position: { container: '.draggable', x: 0, y: 10, width: boxWidth, arrow: 'lt' },
           submit: tourSubmitFunc
         },
         {
@@ -977,7 +995,7 @@ function noteAnyDBIssues()
         }
       ];
     
-      _mapState = { 'add_marker_btn' : $('#' + _addMarkerBtnId).is(':visible') };
+      _mapState = { 'add_marker_btn' : $('#' + _addMarkerBtnId).is(':visible'), 'search_mode_places' : _searchModePlaces };
       var myPrompt = $.prompt(tourStates);
       /* Make some visual changes to impromptu dialog box */
       myPrompt.on('impromptu:loaded', function(e) {
@@ -996,7 +1014,7 @@ function noteAnyDBIssues()
         window.clearTimeout(_timer);
         window.clearTimeout(_demoTimer);
         _tutMarker.setVisible(false);
-        
+        _infoBubble.close();
         $('.search-container').removeClass('search-container-hover');
         $('.searchfld').val("");
       });
@@ -1012,6 +1030,7 @@ function noteAnyDBIssues()
           $.noty.closeAll();
           _infoBubble.close();
           showMarkersOnMap(false);
+          switchSearchMode(false);
           _tutMarker = new google.maps.Marker({position: _map.getCenter(), visible: false, map: _map});
         }
         else if ( _currTourState == 'IDENTIFY_BY_BTN' ) {
@@ -1026,8 +1045,9 @@ function noteAnyDBIssues()
           }, 1200 );
         }
         else if ( _currTourState == 'LOC_SEARCH' ) {
+          toggleBtnNextEnabled();
           _timer = setTimeout( function() {
-            demoSearch("Pall Mall");
+            demoSearch("Pall Mall", toggleBtnNextEnabled );
           }, 1500);
         }
         else if ( _currTourState == 'TOGGLE_SEARCH' ) {
@@ -1036,15 +1056,31 @@ function noteAnyDBIssues()
           }, 2000);
         }
         else if ( _currTourState == 'PLACE_SEARCH' ) {
+          toggleBtnNextEnabled();
           _timer = setTimeout( function() {
             switchSearchMode(true);
-            demoSearch("Korean Restaurant");
+            demoSearch("Koba", toggleBtnNextEnabled );
           }, 1500);
+        }
+        else if ( _currTourState == 'PLACE_SELECT' ) {
+          toggleBtnNextEnabled();
+          _timer = setTimeout( function() {
+            $('.places-list li').eq(0).find('a')[0].click();
+            _demoTimer = setTimeout(function() { 
+              google.maps.event.trigger(_placeMarkers[0], 'click');
+              toggleBtnNextEnabled();
+            }, 4500);
+          }, 1500);
+        }
+        else if ( _currTourState == 'PLACES_REMOVE' ) {
+          _demoTimer = setTimeout(function() { 
+            //removePlaceMarkers();
+          }, 4000 );
         }
       });
     }
     
-    function demoSearch(query)
+    function demoSearch(query, onDone)
     {      
       $('.search-container').toggleClass('search-container-hover');
       fld = $('.searchfld');
@@ -1059,6 +1095,9 @@ function noteAnyDBIssues()
           else { /* Run this when typing demo is finished */
             $('.search-container').toggleClass('search-container-hover');
             runSearch();
+            if ( typeof(onDone) == 'function' ) {
+              _demoTimer = setTimeout( onDone, 3000 );
+            }
             $('.jqidefaultbutton').focus();
           }
         }, 300);
@@ -1068,10 +1107,20 @@ function noteAnyDBIssues()
       return true;
     }
     
+    function toggleBtnNextEnabled()
+    {
+      var disablClassName = 'btn-disabled';
+      var btn = $('.jqidefaultbutton');
+      var btnPanel = $('.jqibuttons');
+      var param = {message:null};
+      btn.toggleClass(disablClassName);
+      btn.hasClass(disablClassName) ? btnPanel.block(param) : btnPanel.unblock(param);
+    }
+    
   </script>
   <div id="draggable" class="ui-widget-content draggable places-control">
     <div class="ui-widget-header draggable-heading">
-      <span>Search results</span>
+      <span>Search results (<a href='javascript:showAll();'>Show all</a>)</span>
       <button class='close-draggable close' onclick='removePlaceMarkers();' title='Closes panel and removes search result icons from map'>x</button>
     </div>
     <ul class='places-list'></ul>

@@ -157,18 +157,24 @@ function geocoderResponseCenterMap(results, status)
 function pinMapMarker(coords, address)
 {
   var marker = (!_tutMode ? _mapmarker : _tutMarker);
-  var mustAddMarker = (_mapmarker == null);
+  var mustAddMarker = (marker == null);
   if ( mustAddMarker ) {
-    _mapmarker = addMarkerToMap(coords, address);
+    if ( !_tutMode ) {
+      _mapmarker  = addMarkerToMap(coords, address);
+    }
+    else {
+      _tutMarker  = addMarkerToMap(coords, address);
+    }
+    marker = (!_tutMode ? _mapmarker : _tutMarker);
   }
   else {
-    _mapmarker.setOptions({visible:true, position:coords});
-    setMarkerAddress(_mapmarker, address);
+    marker.setOptions({visible:true, position:coords});
+    setMarkerAddress(marker, address);
     resetActiveModal();
   }
   
   if ( !isUndef(address) ) {
-    showMarkerInfoBubble(_mapmarker, true);
+    showMarkerInfoBubble(marker, true);
   }
 }
 
@@ -357,15 +363,17 @@ function getPlaceInfoBubbleHtml(place)
 function handlePlaceMarkerClick()
 {
   _infoBubble.close();
-	var addr = this.address ? this.address : ( this.vicinity ? this.vicinity : "" );
-  var coords = this.getPosition();
+  var clickedMarker = this;
+	var addr = clickedMarker.address ? clickedMarker.address : ( clickedMarker.vicinity ? clickedMarker.vicinity : "" );
+  var coords = clickedMarker.getPosition();
 	highlightLocation(coords);
-  setMarkerAddress(_mapmarker, this.name + ", " + addr);
+  setMarkerAddress(_mapmarker, clickedMarker.name + ", " + addr);
 }
 
 function selectPlaceMarker(id)
 {
 	var markerPos = _placeMarkers[id].getPosition();
+  _map.setZoom(15);
 	_map.panTo(markerPos);
 	google.maps.event.trigger(_placeMarkers[id], 'mouseover');
 }
@@ -655,7 +663,7 @@ function loadDBAnswer()
       setSubmitAnswerOptionEnabled();
     }
     else {
-      var bnds = new google.maps.LatLngBounds();
+      _bnds = new google.maps.LatLngBounds();
       var addrs = $('#ansAddr').val().split("¦");
       var labels = $('#ansDestLabel').val().split("¦");
       var toggleAddMarkerBtn = false;
@@ -666,7 +674,7 @@ function loadDBAnswer()
         setMarkerLabel(y, labels[y]);
       }
       if ( y > 1 ) {
-        _map.fitBounds(bnds);
+        _map.fitBounds(_bnds);
       }
       else {
         _map.panTo(_markers[0].getPosition());
@@ -737,4 +745,12 @@ function reloadMapState()
     _tutMarker = null;
   }
   _tutMode = false;
+  switchSearchMode(_mapState.search_mode_places);
+}
+
+/* Zooms out to show all place search result icons */    
+function showAll()
+{
+  _infoBubble.close();
+  _map.fitBounds(_bnds);
 }
