@@ -902,15 +902,23 @@ function noteAnyDBIssues()
         {name:"TOGGLE_SEARCH"},
         {name:"PLACE_SEARCH", blockUI:true, hideMarker:true},
         {name:"PLACE_SELECT", blockUI:true},
-        {name:"PLACES_REMOVE"}
+        {name:"PLACES_REMOVE"},
+        // {name:"CONFIRM"}
+        // {name:"REMOVE"}
+        // {name:"ZOOM"}
+        // {name:"SATELLITE VIEW"}
+        // {name:"LOGOUT"}
+        // {name:"NEXT/BACK"}
+        // {name:"DRAW POLY"}
+        {name:"END",hideMarker:true}
       ];
       
       var tourSubmitFunc = function(e,v,m,f){
-        if(v === -1){
+        if (v === -1){
           $.prompt.prevState();
           return false;
         }
-        else if(v === 1){
+        else if (v === 1){
           $.prompt.nextState();
           return false;
         }
@@ -921,7 +929,7 @@ function noteAnyDBIssues()
           html: 'This quick tour will show you how to use the features of the VERITAS site.',
           buttons: { Begin: 1 },
           focus: 0,
-          position: { container: '.discover-icon', x: -(boxWidth/2) + 4, y: $('.discover-icon').outerHeight(), width: boxWidth },
+          position: { container: '.discover-icon', x: -(boxWidth/2) + 4, y: $('.discover-icon').outerHeight()+20, width: boxWidth },
           submit: tourSubmitFunc
         },
         {
@@ -997,11 +1005,11 @@ function noteAnyDBIssues()
           submit: tourSubmitFunc
         },
         {
-          title: 'End',
-          html: 'If you would like to learn more please consider purchasing a copy of Impromptu From I to U. If you found Impromptu helpful you can also donate to help fund development.  If not, thanks for stopping by!',
+          title: 'End of tour',
+          html: 'Thank you for taking the time to learn more about the site you are using. Enjoy!',
           buttons: { Done: 2 },
           focus: 0,
-          position: { container: '.ebook', x: 370, y: 120, width: 275, arrow: 'lt' },
+          position: { container: '.discover-icon', x: -(boxWidth/2) + 4, y: $('.discover-icon').outerHeight()+20, width: boxWidth },
           submit: tourSubmitFunc
         }
       ];
@@ -1011,7 +1019,8 @@ function noteAnyDBIssues()
       /* Make some visual changes to impromptu dialog box */
       myPrompt.on('impromptu:loaded', function(e) {
         $('.jqi').width(boxWidth);
-        $('.jqi .jqiclose').css({'font-size':'25px','top': '-5px', 'right': '1px','cursor':'pointer'}).prop('title','Exit the tour').click(reloadMapState);
+        $('.jqi').width(boxWidth);
+        $('.jqi .jqiclose').css({'font-size':'25px','top': '-5px', 'right': '1px','cursor':'pointer'}).prop('title','Exit the tour');
         $('.jqimessage').css({'margin-top':'-10px','padding-top':'0px'});
         $('.jqititle').css('font-weight', 'bold');
         $(".jqibuttons button").css('padding', '10px');
@@ -1095,6 +1104,8 @@ function noteAnyDBIssues()
           }, 4000 );
         }
       });
+      
+      myPrompt.on('impromptu:close', reloadMapState);
     }
     
     function demoSearch(query, onDone)
@@ -1105,8 +1116,9 @@ function noteAnyDBIssues()
       var idx = 0;
       function typeNextLetter() {
         _demoTimer = setTimeout( function() {
-          if ( idx < query.length ) {
-            fld.val( fld.val() + query[idx++] );
+          if ( idx <= query.length ) {
+            fld.val( fld.val() + ( idx < query.length ? query[idx] : "" ) );
+            ++idx;
             typeNextLetter();
           }
           else { /* Run this when typing demo is finished */

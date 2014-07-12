@@ -281,7 +281,7 @@ function banishPlacesControl()
 
 function pinPlaceMarkers(places) 			//search results
 {
-	_bnds = new google.maps.LatLngBounds();
+	var bnds = new google.maps.LatLngBounds();
 	var placesList = $('.places-list');
   placesList.html("");
 
@@ -300,7 +300,7 @@ function pinPlaceMarkers(places) 			//search results
 		google.maps.event.addListener(marker, 'mouseover', showPlaceMarkerAddr);
 		google.maps.event.addListener(marker, 'mouseout', function() { _infoBubble.close(); });
 		google.maps.event.addListener(marker, 'click', handlePlaceMarkerClick );
-		_bnds.extend(place.geometry.location);
+		bnds.extend(place.geometry.location);
 		_zoomSnapTo = true;
 		addAddress(marker, place.reference);
 		_placeMarkers.push(marker);
@@ -308,7 +308,7 @@ function pinPlaceMarkers(places) 			//search results
                           "<div class='place-number'>" + (marker.ID+1) + ".</div><a href='javascript:selectPlaceMarker(" + marker.ID + ")'>" + /*(marker.ID+1) + ". " + */place.name + "</a>"+
                         "</li>");
 	}
-	_map.fitBounds(_bnds);
+	_map.fitBounds(bnds);
   $('.places-control').draggable().show();
   var w = $('.places-list').outerWidth();
   var h = $('.places-list').height()+20;
@@ -670,15 +670,10 @@ function loadDBAnswer()
       for ( var y = 0; y < latLngs.length; y++ ) {
         addMarkerToMap(latLngs[y], addrs[y], null, toggleAddMarkerBtn);
         confirmMarker(y, toggleAddMarkerBtn);
-        bnds.extend(latLngs[y]);
+        _bnds.extend(latLngs[y]);
         setMarkerLabel(y, labels[y]);
       }
-      if ( y > 1 ) {
-        _map.fitBounds(_bnds);
-      }
-      else {
-        _map.panTo(_markers[0].getPosition());
-      }
+      setMapBounds();
     }
   }
 }
@@ -734,6 +729,10 @@ function showMarkersOnMap(show)
   for ( var v = 0; v < _markers.length; v++ ) {
     _markers[v].setVisible(show);
   }
+  
+  if ( show ) {
+    setMapBounds();
+  }
 }
 
 function reloadMapState()
@@ -753,4 +752,14 @@ function showAll()
 {
   _infoBubble.close();
   _map.fitBounds(_bnds);
+}
+
+function setMapBounds()
+{
+  if ( _markers.length > 1 ) {
+    _map.fitBounds(_bnds);
+  }
+  else {
+    _map.panTo(_markers[0].getPosition());
+  }
 }
