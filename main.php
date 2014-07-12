@@ -892,7 +892,18 @@ function noteAnyDBIssues()
       boxWidth = 400;
       var boxHeight = 138;
     
-      states = ["START", "QUESTION", "MAP", "IDENTIFY_BY_BTN", "IDENTIFY_BY_CLICK", "LOC_SEARCH", "TOGGLE_SEARCH", "PLACE_SEARCH", "PLACE_SELECT", "PLACES_REMOVE"];
+      states = [
+        {name:"START"},
+        {name:"QUESTION"},
+        {name:"MAP"},
+        {name:"IDENTIFY_BY_BTN"},
+        {name:"IDENTIFY_BY_CLICK"},
+        {name:"LOC_SEARCH", block:true},
+        {name:"TOGGLE_SEARCH"},
+        {name:"PLACE_SEARCH", block:true},
+        {name:"PLACE_SELECT", block:true},
+        {name:"PLACES_REMOVE"}
+      ];
       
       var tourSubmitFunc = function(e,v,m,f){
         if(v === -1){
@@ -916,73 +927,73 @@ function noteAnyDBIssues()
         {
           title: 'The question',
           html: 'A question is presented to you in this panel. Please read it carefully.',
-          buttons: { Back: -1, Next: 1 },
-          focus: 1,
+          buttons: { Next: 1 },
+          focus: 0,
           position: { container: '.quest-block', x: 0, y: $('.quest-block').outerHeight() + 10, arrow: 'tl', width: boxWidth },
           submit: tourSubmitFunc
         },
         {
           title: "The map",
           html: 'To answer the question, you are required to locate a place or a region on the map.',
-          buttons: { Back: -1, Next: 1 },
-          focus: 1,
+          buttons: { Next: 1 },
+          focus: 0,
           position: { container: '.quest-block', x: 0, y: $('.quest-block').outerHeight() + 10, arrow: 'br', width: boxWidth },
           submit: tourSubmitFunc
         },
         {
           title: 'Identifying a location',
           html: 'You may place a pushpin on the map by clicking the \'Add pushpin\' button...',
-          buttons: { Back: -1, Next: 1 },
-          focus: 1,
+          buttons: { Next: 1 },
+          focus: 0,
           position: { container: '#' + _addMarkerBtnId, x: -(boxWidth+($('#' + _addMarkerBtnId).outerWidth()/2)+5), y: 0, width: boxWidth, arrow: 'rt' },
           submit: tourSubmitFunc
         },
         {
           title: 'Identifying a location (continued)',
           html: '...or by clicking directly on the map at the particular location that you wish to identify.',
-          buttons: { Back: -1, Next: 1 },
-          focus: 1,
-          position: { container: '#map', x: _tutPoint.x+25, y: _tutPoint.y-boxHeight, width: boxWidth, arrow: 'lb' },
+          buttons: { Next: 1 },
+          focus: 0,
+          position: { container: '#map', x: _tutPoint.x+20, y: _tutPoint.y-boxHeight+15, width: boxWidth, arrow: 'lb' },
           submit: tourSubmitFunc
         },
         {
           title: 'Searching',
           html: 'To perform a search, move your mouse over the magnifying glass, type your search terms into the text box that appears, and press \'Enter\'. In <i>Location</i> search mode, the location best matching your search terms will be shown with the pushpin.',
-          buttons: { Back: -1, Next: 1 },
-          focus: 1,
+          buttons: { Next: 1 },
+          focus: 0,
           position: { container: '.search-slider', x: -boxWidth+($('.search-slider').outerWidth()/2)+20, y: $('.search-slider').outerHeight()+15, width: boxWidth, arrow: 'tr' },
           submit: tourSubmitFunc
         },
         {
           title: 'Two search modes',
           html: 'Toggle between <i>Location</i> and <i>Place</i> search modes by clicking on the magnifying glass.',
-          buttons: { Back: -1, Next: 1 },
-          focus: 1,
+          buttons: { Next: 1 },
+          focus: 0,
           position: { container: '.search-slider', x: -boxWidth+($('.search-slider').outerWidth()/2)+20, y: $('.search-slider').outerHeight()+15, width: boxWidth, arrow: 'tr' },
           submit: tourSubmitFunc
         },
         {
           title: 'Searching for a place',
           html: 'To search for a place, type its name and/or terms that describe it, then press \'Enter\'. A list of names of potential matches will appear, alomg with icons on the map showing those places\' location.',
-          buttons: { Back: -1, Next: 1 },
-          focus: 1,
+          buttons: { Next: 1 },
+          focus: 0,
           position: { container: '.search-slider', x: -boxWidth+($('.search-slider').outerWidth()/2)+20, y: $('.search-slider').outerHeight()+15, width: boxWidth, arrow: 'tr' },
           submit: tourSubmitFunc
         },
         {
           title: 'Selecting a place',
           html: 'Click on an item in the list to zoom to that place on the map. Click on the icon to select the place.',
-          buttons: { Back: -1, Next: 1 },
-          focus: 1,
-          position: { container: '.draggable', x: $('.draggable').outerWidth()*.75, y: 10, width: boxWidth*.6, arrow: 'lt' },
+          buttons: { Next: 1 },
+          focus: 0,
+          position: { container: '.draggable', x: $('.draggable').outerWidth()*.55, y: 10, width: boxWidth*.6, arrow: 'lt' },
           submit: tourSubmitFunc
         },
         {
           title: 'Removing Place search results',
           html: 'If you wish to remove the search results overlay, click the \'x\' in the top-right corner of the list.',
-          buttons: { Back: -1, Next: 1 },
-          focus: 1,
-          position: { container: '.draggable', x: 0, y: 10, width: boxWidth, arrow: 'lt' },
+          buttons: { Next: 1 },
+          focus: 0,
+          position: { container: '.draggable', x: 160, y: -8, width: boxWidth*.6, arrow: 'lt' },
           submit: tourSubmitFunc
         },
         {
@@ -1017,12 +1028,17 @@ function noteAnyDBIssues()
         _infoBubble.close();
         $('.search-container').removeClass('search-container-hover');
         $('.searchfld').val("");
+        
+        /* Check if we should block UI for next state */
+        if ( !isUndef(states[parseInt($.prompt.getCurrentStateName())+1].block) ) {
+          toggleBtnNextEnabled();
+        }
       });
       
       myPrompt.on('impromptu:statechanged', function(e) {
         var currStateIdx = parseInt($.prompt.getCurrentStateName());
         _currTourState = ( currStateIdx < states.length ? states[currStateIdx] : _unknownStateId );
-        if ( _currTourState == "START") {
+        if ( _currTourState.name == "START") {
           _tutMode = true;
           if ( !_mapState.map_button && !_drawingPoly ) {
             $('#' + _addMarkerBtnId).show();
@@ -1033,48 +1049,45 @@ function noteAnyDBIssues()
           switchSearchMode(false);
           _tutMarker = new google.maps.Marker({position: _map.getCenter(), visible: false, map: _map});
         }
-        else if ( _currTourState == 'IDENTIFY_BY_BTN' ) {
+        else if ( _currTourState.name == 'IDENTIFY_BY_BTN' ) {
           _timer = setTimeout( function() {
           _tutMarker.setOptions({visible: true, animation: google.maps.Animation.DROP });
           }, 2000 );
         }
-        else if ( _currTourState == 'IDENTIFY_BY_CLICK' ) {
+        else if ( _currTourState.name == 'IDENTIFY_BY_CLICK' ) {
           _timer = setTimeout( function() {
             var latLng = _overlayProjection.fromContainerPixelToLatLng(_tutPoint);
             _tutMarker.setOptions({position: latLng, visible: true});
-          }, 1200 );
+          }, 2000 );
         }
-        else if ( _currTourState == 'LOC_SEARCH' ) {
-          toggleBtnNextEnabled();
+        else if ( _currTourState.name == 'LOC_SEARCH' ) {
           _timer = setTimeout( function() {
             demoSearch("Pall Mall", toggleBtnNextEnabled );
-          }, 1500);
+          }, 2000);
         }
-        else if ( _currTourState == 'TOGGLE_SEARCH' ) {
+        else if ( _currTourState.name == 'TOGGLE_SEARCH' ) {
           _timer = setTimeout( function() {
             switchSearchMode(true);
           }, 2000);
         }
-        else if ( _currTourState == 'PLACE_SEARCH' ) {
-          toggleBtnNextEnabled();
+        else if ( _currTourState.name == 'PLACE_SEARCH' ) {
           _timer = setTimeout( function() {
             switchSearchMode(true);
             demoSearch("Koba", toggleBtnNextEnabled );
-          }, 1500);
+          }, 2000);
         }
-        else if ( _currTourState == 'PLACE_SELECT' ) {
-          toggleBtnNextEnabled();
+        else if ( _currTourState.name == 'PLACE_SELECT' ) {
           _timer = setTimeout( function() {
             $('.places-list li').eq(0).find('a')[0].click();
             _demoTimer = setTimeout(function() { 
               google.maps.event.trigger(_placeMarkers[0], 'click');
               toggleBtnNextEnabled();
             }, 4500);
-          }, 1500);
+          }, 2000);
         }
-        else if ( _currTourState == 'PLACES_REMOVE' ) {
-          _demoTimer = setTimeout(function() { 
-            //removePlaceMarkers();
+        else if ( _currTourState.name == 'PLACES_REMOVE' ) {
+          _demoTimer = setTimeout(function() {
+            removePlaceMarkers();
           }, 4000 );
         }
       });
@@ -1112,9 +1125,8 @@ function noteAnyDBIssues()
       var disablClassName = 'btn-disabled';
       var btn = $('.jqidefaultbutton');
       var btnPanel = $('.jqibuttons');
-      var param = {message:null};
       btn.toggleClass(disablClassName);
-      btn.hasClass(disablClassName) ? btnPanel.block(param) : btnPanel.unblock(param);
+      btn.hasClass(disablClassName) ? btnPanel.block({message:null}) : btnPanel.unblock();
     }
     
   </script>
