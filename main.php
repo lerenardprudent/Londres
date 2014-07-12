@@ -898,10 +898,10 @@ function noteAnyDBIssues()
         {name:"MAP"},
         {name:"IDENTIFY_BY_BTN"},
         {name:"IDENTIFY_BY_CLICK"},
-        {name:"LOC_SEARCH", block:true},
+        {name:"LOC_SEARCH", blockUI:true, hideMarker:true},
         {name:"TOGGLE_SEARCH"},
-        {name:"PLACE_SEARCH", block:true},
-        {name:"PLACE_SELECT", block:true},
+        {name:"PLACE_SEARCH", blockUI:true, hideMarker:true},
+        {name:"PLACE_SELECT", blockUI:true},
         {name:"PLACES_REMOVE"}
       ];
       
@@ -1024,14 +1024,17 @@ function noteAnyDBIssues()
         }
         window.clearTimeout(_timer);
         window.clearTimeout(_demoTimer);
-        _tutMarker.setVisible(false);
         _infoBubble.close();
         $('.search-container').removeClass('search-container-hover');
         $('.searchfld').val("");
         
         /* Check if we should block UI for next state */
-        if ( !isUndef(states[parseInt($.prompt.getCurrentStateName())+1].block) ) {
+        var nextState = states[parseInt($.prompt.getCurrentStateName())+1];
+        if ( !isUndef(nextState.blockUI) ) {
           toggleBtnNextEnabled();
+        }
+        if ( !isUndef(nextState.blockUI) ) {
+          _tutMarker.setVisible(false);
         }
       });
       
@@ -1048,6 +1051,7 @@ function noteAnyDBIssues()
           showMarkersOnMap(false);
           switchSearchMode(false);
           _tutMarker = new google.maps.Marker({position: _map.getCenter(), visible: false, map: _map});
+          google.maps.event.addListener(_tutMarker, 'click', function() { showMarkerInfoBubble(this, false); } );
         }
         else if ( _currTourState.name == 'IDENTIFY_BY_BTN' ) {
           _timer = setTimeout( function() {

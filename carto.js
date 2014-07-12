@@ -367,7 +367,7 @@ function handlePlaceMarkerClick()
 	var addr = clickedMarker.address ? clickedMarker.address : ( clickedMarker.vicinity ? clickedMarker.vicinity : "" );
   var coords = clickedMarker.getPosition();
 	highlightLocation(coords);
-  setMarkerAddress(_mapmarker, clickedMarker.name + ", " + addr);
+  setMarkerAddress(!_tutMode ? _mapmarker : _tutMarker, clickedMarker.name + ", " + addr);
 }
 
 function selectPlaceMarker(id)
