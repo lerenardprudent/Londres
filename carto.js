@@ -410,7 +410,9 @@ function applyGoogleMapHacks()
   var hackSelectors = { 
     '1' : { 'elem' : $('.gm-style').children().eq(0), 'applied' : false }, 
     '2' : { 'elem' : $('.gmnoprint').eq(2).children(), 'applied' : false }, 
-    '3' : { 'elem' : $('.gmnoprint').find("[title='Add a marker']"), applied: false } 
+    '3' : { 'elem' : $('.gmnoprint').find("[title='Add a marker']"), applied: false } ,
+    '4' : { 'elem' : $('.gmnoprint').find("[title='Zoom in']"), applied: false },
+    '5' : { 'elem' : $('.gmnoprint').find("[title^='Show sat']"), applied: false }
   };
   
   var allHacksApplied = true;
@@ -446,6 +448,12 @@ function applyGoogleMapHacks()
       $('#' + _addMarkerBtnId).css('cursor', 'pointer').click( function() {
         geocodeMarker(_map.getCenter());
       });
+    }
+    else if ( i == 4 ) {
+      gmElem.prop('id', _zoomInBtnId );
+    }
+    else if ( i == 5 ) {
+      gmElem.prop('id', _changeMapViewBtnId );
     }
     log("GM hack " + i + " applied");
   }

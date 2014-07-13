@@ -236,6 +236,8 @@ function noteAnyDBIssues()
   var _followUpBlockClassTag;
   var _overlay, _overlayProjection;
   var _addMarkerBtnId = 'addMarkerBtn';
+  var _zoomInBtnId = 'zoomInBtn';
+   var _changeMapViewBtnId = 'satelliteBtn';
   var _greenMarker;
   var _noAnswerModalId = 'noAnsModal';
   var _modalState;
@@ -903,11 +905,12 @@ function noteAnyDBIssues()
         {name:"PLACE_SEARCH", blockUI:true, hideMarker:true},
         {name:"PLACE_SELECT", blockUI:true},
         {name:"PLACES_REMOVE"},
+        {name:"ZOOM"},
         // {name:"CONFIRM"}
         // {name:"REMOVE"}
-        // {name:"ZOOM"}
-        // {name:"SATELLITE VIEW"}
-        // {name:"LOGOUT"}
+        
+        {name:"CHANGE_MAP_VIEW"},
+        {name:"LOGOUT"},
         // {name:"NEXT/BACK"}
         // {name:"DRAW POLY"}
         {name:"END",hideMarker:true}
@@ -1005,8 +1008,32 @@ function noteAnyDBIssues()
           submit: tourSubmitFunc
         },
         {
+          title: 'Zooming in/out',
+          html: "To change the zoom level of the map, use the '+' and '-' buttons.",
+          buttons: { Next: 1 },
+          focus: 0,
+          position: { container: '#' + _zoomInBtnId, x: $('#' + _zoomInBtnId).outerWidth()+10, y: -2, width: boxWidth*.6, arrow: 'lt' },
+          submit: tourSubmitFunc
+        },
+        {
+          title: 'Changing the map view',
+          html: 'Use these buttons to change the map view. Possibile views are Road, Satellite, Terrain, and Hydrid.',
+          buttons: { Next: 1 },
+          focus: 0,
+          position: { container: '#' + _changeMapViewBtnId, x: -boxWidth+20, y: $('#' + _changeMapViewBtnId).outerHeight()+10, width: boxWidth, arrow: 'tr' },
+          submit: tourSubmitFunc
+        },
+        {
+          title: 'Logging out',
+          html: 'To log out of VERITAS, click on the exit door.',
+          buttons: { Next: 1 },
+          focus: 0,
+          position: { container: '.logout-icon', x: -boxWidth-12, y: -2, width: boxWidth, arrow: 'rt' },
+          submit: tourSubmitFunc
+        },
+        {
           title: 'End of tour',
-          html: 'Thank you for taking the time to learn more about the site you are using. Enjoy!',
+          html: 'Thank you for taking the time to learn more about VERITAS. Enjoy!',
           buttons: { Done: 2 },
           focus: 0,
           position: { container: '.discover-icon', x: -(boxWidth/2) + 4, y: $('.discover-icon').outerHeight()+20, width: boxWidth },
@@ -1036,6 +1063,7 @@ function noteAnyDBIssues()
         _infoBubble.close();
         $('.search-container').removeClass('search-container-hover');
         $('.searchfld').val("");
+        _map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
         
         /* Check if we should block UI for next state */
         var nextState = states[parseInt($.prompt.getCurrentStateName())+1];
@@ -1099,9 +1127,22 @@ function noteAnyDBIssues()
           }, 2000);
         }
         else if ( _currTourState.name == 'PLACES_REMOVE' ) {
-          _demoTimer = setTimeout(function() {
+          _timer = setTimeout(function() {
             removePlaceMarkers();
           }, 4000 );
+        }
+        else if ( _currTourState.name == 'ZOOM' ) {
+          _timer = setTimeout(function() {
+            var z = _map.getZoom();
+            _map.setZoom(z+1);
+            _demoTimer = setTimeout(function() {_map.setZoom(z);}, 1500);
+          }, 2000 );
+        }
+        else if ( _currTourState.name == 'CHANGE_MAP_VIEW' ) {
+          _timer = setTimeout(function() {
+            _map.setMapTypeId(google.maps.MapTypeId.SATELLITE);
+            _demoTimer = setTimeout(function() {_map.setMapTypeId(google.maps.MapTypeId.ROADMAP);}, 2500);
+          }, 2000 );
         }
       });
       
