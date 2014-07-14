@@ -266,7 +266,7 @@ a { text-decoration: none; }
   background-repeat:no-repeat;
 }
 
-.logout-icon:hover
+.logout-icon-hover
 {
   background-position: -31px 0;
 }

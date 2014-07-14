@@ -410,7 +410,7 @@ function applyGoogleMapHacks()
   var hackSelectors = { 
     '1' : { 'elem' : $('.gm-style').children().eq(0), 'applied' : false }, 
     '2' : { 'elem' : $('.gmnoprint').eq(2).children(), 'applied' : false }, 
-    '3' : { 'elem' : $('.gmnoprint').find("[title='Add a marker']"), applied: false } ,
+    '3' : { 'elem' : $('.gmnoprint').find("[title='Add a marker'],[title='Draw a shape']"), applied: false } ,
     '4' : { 'elem' : $('.gmnoprint').find("[title='Zoom in']"), applied: false },
     '5' : { 'elem' : $('.gmnoprint').find("[title^='Show sat']"), applied: false }
   };
@@ -441,13 +441,18 @@ function applyGoogleMapHacks()
       gmElem.eq(0).insertAfter(gmElem.eq(1));
     }
     else if ( i == 3 ) {
-      gmElem.prop('id', _addMarkerBtnId ).prop('title', 'Add a pushpin to the map');
-      if ( _maxNumMarkers > 1 ) {
-        gmElem.prop('title', gmElem.prop('title'));
+      if ( !_drawingPoly ) {
+        gmElem.prop('id', _addMarkerBtnId ).prop('title', 'Add a pushpin to the map');
+        if ( _maxNumMarkers > 1 ) {
+          gmElem.prop('title', gmElem.prop('title'));
+        }
+        $('#' + _addMarkerBtnId).css('cursor', 'pointer').click( function() {
+          geocodeMarker(_map.getCenter());
+        });
       }
-      $('#' + _addMarkerBtnId).css('cursor', 'pointer').click( function() {
-        geocodeMarker(_map.getCenter());
-      });
+      else {
+        gmElem.prop('id', _drawPolyBtnId ).prop('title', 'Trace a region').css('cursor', 'pointer');
+      }
     }
     else if ( i == 4 ) {
       gmElem.prop('id', _zoomInBtnId );

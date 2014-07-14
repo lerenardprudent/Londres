@@ -235,9 +235,9 @@ function noteAnyDBIssues()
   var _freqQuestType = false;
   var _followUpBlockClassTag;
   var _overlay, _overlayProjection;
-  var _addMarkerBtnId = 'addMarkerBtn';
+  var _addMarkerBtnId = 'addMarkerBtn', _drawPolyBtnId = 'drawPolyBtn';
   var _zoomInBtnId = 'zoomInBtn';
-   var _changeMapViewBtnId = 'satelliteBtn';
+  var _changeMapViewBtnId = 'satelliteBtn';
   var _greenMarker;
   var _noAnswerModalId = 'noAnsModal';
   var _modalState;
@@ -252,6 +252,7 @@ function noteAnyDBIssues()
   var _tutMarker = null;
   var _tutPoint = new google.maps.Point(100,100);
   var _tutMode = false;
+  var _tutPoly = null;
 </script>
 
 <script type="text/javascript">
@@ -304,11 +305,14 @@ function noteAnyDBIssues()
       
       $('.searchfld').focusin( function() { $(this).toggleClass('searchfld-focus'); });
       $('.searchfld').focusout(function() { $(this).toggleClass('searchfld-focus'); });
-      $('.search-container').hover( function() { $(this).toggleClass('search-container-hover'); },
-                                    function() { $(this).toggleClass('search-container-hover'); });
+      function searchContainerHoverToggle() { $(this).toggleClass('search-container-hover'); };
+      $('.search-container').hover( searchContainerHoverToggle, searchContainerHoverToggle);
       $('.blocked').mouseover(function() {
         generateIt(5, "You cannot add any more destinations to the map. Please remove one of them before continuing.");
       });
+      
+      function logoutHoverToggle() { $(this).toggleClass('logout-icon-hover') };
+      $('.logout-icon').hover(logoutHoverToggle, logoutHoverToggle);
       
       $('.answer-btn').attr('type','button').addClass('confirm-btn');
       $('.confirm-btn').click( function() { 
@@ -456,7 +460,7 @@ function noteAnyDBIssues()
                         </select>
                       </div>
                       <div class='follow-up-pair'>
-                        <label>Are you usually supervised?</label>
+                        <label>When you go to this place, are you <b>usually supervised</b> by a parent, another adult or an older brother/sister?</label>
                         <select class='nested-option'>
                           <option value='0'>-- Please choose --</option>
                           <option class='ANS_SPRVS_YES' value='2'>Yes</option>
@@ -473,30 +477,30 @@ function noteAnyDBIssues()
                         </select>
                       </div>
                       <div class='follow-up-pair'>
-                        <label>Who do you <b>usually</b> go with?</label>
+                        <label>With whom do you <b>usually</b> go?</label>
                         <select class='nested-option'>
                           <option value='0'>-- Please choose --</option>
                           <option class='ANS_CMPNY_FR'>Friends</option>
                           <option class='ANS_CMPNY_YBS'>Younger brother(s)/sister(s)</option>
-                          <option class='ANS_CMPNY_NO'>By myself</option>
+                          <option class='ANS_CMPNY_NO'>On my own</option>
                         </select>
                       </div>
                     </div>
     <div id='noAnswerModel' class='follow-up-block no-fub example'>
                       <div class='follow-up-pair'>
-                        <label>Why did you not answer the question?</label>
+                        <label>Could you please indicate why you did you not answer the question?</label>
                         <select id='reasonOptions' class='nested-option'>
                           <option>-- Please indicate your reason --</option>
                           <?php if ($taskno == 3 && $qno == 2 && $U->question_answered(3,1)) { 
-                                  echo "<option class='NOANS_SNHN' value='3'>School neighbourhood and home neighbourhood are identical</option>";
+                                  echo "<option class='NOANS_SNHN' value='3'>The school and home neighbourhoods are identical</option>";
                                 }
                                 else if ($freq_quest == 4) {
-                                  echo "<option class='NOANS_NRD' value='4'>Do not have regularly visited destination</option>" .
-                                       "<option class='NOANS_DPA' value='5'>Do not perform this activity</option>";
+                                  echo "<option class='NOANS_NRD' value='4'>I do not have regularly visited destination</option>" .
+                                       "<option class='NOANS_DPA' value='5'>I do not perform this activity</option>";
                                 }
                           ?>
-                          <option class='NOANS_CLP' value="1">Cannot locate place on map</option>
-                          <option class='NOANS_DWA' value="2">Do not wish to answer</option>
+                          <option class='NOANS_CLP' value="1">I could not locate the place on the map</option>
+                          <option class='NOANS_DWA' value="2">I did not wish to answer</option>
                         </select>
                       </div>
                     </div>
@@ -909,10 +913,11 @@ function noteAnyDBIssues()
         {name:"CONFIRM"},
         {name:"REMOVE"},
         {name:"DRAW_POLY", blockUI:true},
+        {name:"SUBMIT"},
+        {name:"GO_BACK"},
         {name:"ZOOM"},
         {name:"CHANGE_MAP_VIEW"},
         {name:"LOGOUT"},
-        // {name:"NEXT/BACK"}
         
         {name:"END",hideMarker:true}
       ];
@@ -946,7 +951,7 @@ function noteAnyDBIssues()
         },
         {
           title: "The map",
-          html: 'To answer the question, you are required to locate a place or a region on the map.',
+          html: 'To answer the question, you are required to identify a location (or locations) or region on the map.',
           buttons: { Next: 1 },
           focus: 0,
           position: { container: '.quest-block', x: 0, y: $('.quest-block').outerHeight() + 10, arrow: 'br', width: boxWidth },
@@ -957,7 +962,7 @@ function noteAnyDBIssues()
           html: 'You may place a pushpin on the map by clicking the \'Add pushpin\' button...',
           buttons: { Next: 1 },
           focus: 0,
-          position: { container: '#' + _addMarkerBtnId, x: -(boxWidth+($('#' + _addMarkerBtnId).outerWidth()/2)+5), y: 0, width: boxWidth, arrow: 'rt' },
+          position: { container: '#' + _addMarkerBtnId, x: -(boxWidth+($('#' + _addMarkerBtnId).outerWidth()/2)), y: -3, width: boxWidth, arrow: 'rt' },
           submit: tourSubmitFunc
         },
         {
@@ -994,7 +999,7 @@ function noteAnyDBIssues()
         },
         {
           title: 'Selecting a place',
-          html: 'Click on an item in the list to zoom to that place on the map. Click on the icon to select the place.',
+          html: 'Click on an item in the list to zoom to that place on the map. Click on the icon directly to select the place.',
           buttons: { Next: 1 },
           focus: 0,
           position: { container: '.draggable', x: $('.draggable').outerWidth()*.55, y: 10, width: boxWidth*.6, arrow: 'lt' },
@@ -1034,10 +1039,26 @@ function noteAnyDBIssues()
         },
         {
           title: 'Drawing a region',
-          html: 'For some questions, you will be required to designate a region rather than simply indicate a location. To do so, click the \'Trace a region\' button, then beginning clicking on the map to drawing. Click once to add a point, repeating as many times as necessary, then double-click when you wish to add the final point. The region outlined will become visible.<p><p>You may repeat these steps to replace a previously drawn region with another one.',
+          html: 'For some questions, you will be required to designate a region rather than simply indicate a location. To do so, click the \'Trace a region\' button, then beginning clicking on the map to drawing. Click once to add a point, repeating as many times as necessary, then double-click when you wish to add the final point. The region outlined will become visible.<p><p>You may repeat these steps to erase a previously drawn region and replace it with the one you have just drawn.<p><p>There is no confirmation process required for questions that ask you to designate a region on the map.',
           buttons: { Next: 1 },
           focus: 0,
           position: { container: '#' + _addMarkerBtnId, x: $('#' + _addMarkerBtnId).outerWidth()+10, y: -5, width: boxWidth, arrow: 'lt' },
+          submit: tourSubmitFunc
+        },
+        {
+          title: 'Transitioning to the next question',
+          html: "To advance to the next question, click this button. If you have red (i.e. unconfirmed) pushpin on the map, you will be asked to either confirm its location or to remove it. Alternatively, if you have chosen to not answer the question, you will be asked a few questions on why you did not answer the question.",
+          buttons: { Next: 1 },
+          focus: 0,
+          position: { container: '.answer-btn', x: -boxWidth-12, y: -3, width: boxWidth, arrow: 'rt' },
+          submit: tourSubmitFunc
+        },
+        {
+          title: 'Returning to the previous question',
+          html: "You can go back to the previous question by clicking this button. Please note that any changes made to your answer to the question currently being shown will not be saved if you click the \'Go back\' button.",
+          buttons: { Next: 1 },
+          focus: 0,
+          position: { container: '.back-btn', x: $('.back-btn').outerWidth()+12, y: -3, width: boxWidth, arrow: 'lt' },
           submit: tourSubmitFunc
         },
         {
@@ -1106,7 +1127,14 @@ function noteAnyDBIssues()
         if ( !isUndef(nextState.blockUI) ) {
           _tutMarker.setVisible(false);
         }
+        
+        if ( _tutPoly != null ) {
+          _tutPoly.setMap(null);
+          _tutPoly = null;
+        }
       });
+      
+      $('.logout-icon').removeClass('logout-icon-hover');
       
       myPrompt.on('impromptu:statechanged', function(e) {
         var currStateIdx = parseInt($.prompt.getCurrentStateName());
@@ -1196,8 +1224,9 @@ function noteAnyDBIssues()
                   _overlayProjection.fromContainerPixelToLatLng(new google.maps.Point(350,150)),
                   _overlayProjection.fromContainerPixelToLatLng(new google.maps.Point(200,80))
                 ];
-                var tutPoly = new google.maps.Polygon({paths: tutPolyCoords});
-                tutPoly.setMap(_map);
+                _tutPoly = new google.maps.Polygon({paths: tutPolyCoords});
+                _tutPoly.setMap(_map);
+                _drawingManager.setDrawingMode(null);
               }, 5000);
             }, 2000);
           }, 500 );
@@ -1214,6 +1243,13 @@ function noteAnyDBIssues()
             _map.setMapTypeId(google.maps.MapTypeId.SATELLITE);
             _demoTimer = setTimeout(function() {_map.setMapTypeId(google.maps.MapTypeId.ROADMAP);}, 2500);
           }, 2000 );
+        }
+        else if ( _currTourState.name == 'LOGOUT' ) {
+          _timer = setTimeout(function() {
+            var logoutIcon = $('.logout-icon');
+            logoutIcon.toggleClass('logout-icon-hover');
+            _demoTimer = setTimeout(function() { logoutIcon.toggleClass('logout-icon-hover'); }, 1000);
+          }, 1500 );
         }
       });
       
