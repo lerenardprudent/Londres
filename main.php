@@ -908,11 +908,12 @@ function noteAnyDBIssues()
         {name:"INITIATE_CONFIRM"},
         {name:"CONFIRM"},
         {name:"REMOVE"},
+        {name:"DRAW_POLY", blockUI:true},
         {name:"ZOOM"},
         {name:"CHANGE_MAP_VIEW"},
         {name:"LOGOUT"},
         // {name:"NEXT/BACK"}
-        // {name:"DRAW POLY"}
+        
         {name:"END",hideMarker:true}
       ];
       
@@ -1032,6 +1033,14 @@ function noteAnyDBIssues()
           submit: tourSubmitFunc
         },
         {
+          title: 'Drawing a region',
+          html: 'For some questions, you will be required to designate a region rather than simply indicate a location. To do so, click the \'Trace a region\' button, then beginning clicking on the map to drawing. Click once to add a point, repeating as many times as necessary, then double-click when you wish to add the final point. The region outlined will become visible.<p><p>You may repeat these steps to replace a previously drawn region with another one.',
+          buttons: { Next: 1 },
+          focus: 0,
+          position: { container: '#' + _addMarkerBtnId, x: $('#' + _addMarkerBtnId).outerWidth()+10, y: -5, width: boxWidth, arrow: 'lt' },
+          submit: tourSubmitFunc
+        },
+        {
           title: 'Zooming in/out',
           html: "To change the zoom level of the map, use the '+' and '-' buttons.",
           buttons: { Next: 1 },
@@ -1070,7 +1079,7 @@ function noteAnyDBIssues()
       /* Make some visual changes to impromptu dialog box */
       myPrompt.on('impromptu:loaded', function(e) {
         $('.jqi').width(boxWidth);
-        $('.jqi').width(boxWidth);
+       $('.jqi').width(boxWidth);
         $('.jqi .jqiclose').css({'font-size':'25px','top': '-5px', 'right': '1px','cursor':'pointer'}).prop('title','Exit the tour');
         $('.jqimessage').css({'margin-top':'-10px','padding-top':'0px'});
         $('.jqititle').css('font-weight', 'bold');
@@ -1173,6 +1182,25 @@ function noteAnyDBIssues()
               _infoBubble.close();
             }, 2000);
           }, 2500 );
+        }
+        else if ( _currTourState.name == 'DRAW_POLY' ) {
+          _timer = setTimeout(function() {
+            _drawingManager.set('drawingControlOptions', {position: google.maps.ControlPosition.TOP_CENTER, drawingModes: ['polygon']});
+            _demoTimer = setTimeout(function() {
+              _drawingManager.setDrawingMode(google.maps.drawing.OverlayType.POLYGON);
+              setTimeout(function() {
+                var tutPolyCoords = [
+                  _overlayProjection.fromContainerPixelToLatLng(new google.maps.Point(100,100)),
+                  _overlayProjection.fromContainerPixelToLatLng(new google.maps.Point(50,200)),
+                  _overlayProjection.fromContainerPixelToLatLng(new google.maps.Point(220,250)),
+                  _overlayProjection.fromContainerPixelToLatLng(new google.maps.Point(350,150)),
+                  _overlayProjection.fromContainerPixelToLatLng(new google.maps.Point(200,80))
+                ];
+                var tutPoly = new google.maps.Polygon({paths: tutPolyCoords});
+                tutPoly.setMap(_map);
+              }, 5000);
+            }, 2000);
+          }, 500 );
         }
         else if ( _currTourState.name == 'ZOOM' ) {
           _timer = setTimeout(function() {
