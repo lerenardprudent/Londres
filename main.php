@@ -414,7 +414,7 @@ function noteAnyDBIssues()
             <div class="modal-content">
               <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h4 class="modal-title" id="myModalLabel">Confirm answer</h4>
+                <h4 class="modal-title" id="myModalLabel">Confirm location</h4>
               </div>
               <div class="modal-body"></div>
               <div class="modal-footer">
@@ -733,7 +733,7 @@ function noteAnyDBIssues()
       //var idxRadioBtnChecked = radioBtns.index($('input[name=ansConfirm]:checked'));
       //var underRadioDiv = $('input[name=ansConfirm]:checked').parent('.radio-div').next();
       var fub = thisModal.find('.follow-up-block');
-      var numVisibleValidSelectsExpected = ( _freqQuestType && fub.hasClass('yes-fub') ? 3 : 1 );
+      var numVisibleValidSelectsExpected = ( _freqQuestType && !_tutMode && fub.hasClass('yes-fub') ? 3 : 1 );
       var allFUBQuestionsAnswered = ( getVisibleValidSelectCount(fub) == numVisibleValidSelectsExpected );
       thisModal.find('.btn-primary').prop('disabled', !allFUBQuestionsAnswered);
     }
@@ -806,7 +806,7 @@ function noteAnyDBIssues()
       }
       
       var noAnsModel = 'noAnswerModel', freqQuestModel = 'freqQuestModel';
-      fubModelId = (isUndef(idx) ? noAnsModel : ( _freqQuestType ? freqQuestModel : 'confQuestModel' ) );
+      fubModelId = (isUndef(idx) ? noAnsModel : ( _freqQuestType && !_tutMode ? freqQuestModel : 'confQuestModel' ) );
       cloneDiv.find('.modal-body').append($('#' + fubModelId).clone().prop('id', '').removeClass('example')[0].outerHTML);
       
       if ( fubModelId == freqQuestModel ) {
@@ -819,7 +819,7 @@ function noteAnyDBIssues()
         cloneDiv.find('.modal-title').text("Confirm non-answer");
       }
       else {  
-        cloneDiv.find('.btn-primary').text("Save destination");
+        cloneDiv.find('.btn-primary').text("Confirm");
       }
       
       cloneDiv.find('.nested-option').change( function() {
@@ -905,10 +905,10 @@ function noteAnyDBIssues()
         {name:"PLACE_SEARCH", blockUI:true, hideMarker:true},
         {name:"PLACE_SELECT", blockUI:true},
         {name:"PLACES_REMOVE"},
+        {name:"INITIATE_CONFIRM"},
+        {name:"CONFIRM"},
+        {name:"REMOVE"},
         {name:"ZOOM"},
-        // {name:"CONFIRM"}
-        // {name:"REMOVE"}
-        
         {name:"CHANGE_MAP_VIEW"},
         {name:"LOGOUT"},
         // {name:"NEXT/BACK"}
@@ -1005,6 +1005,30 @@ function noteAnyDBIssues()
           buttons: { Next: 1 },
           focus: 0,
           position: { container: '.draggable', x: 160, y: -8, width: boxWidth*.6, arrow: 'lt' },
+          submit: tourSubmitFunc
+        },
+        {
+          title: 'Initiating confirmation',
+          html: 'We would like the position of the pushpin on the map to accurately indicate your response to the question being asked. Once you are satisfied with the pushpin\'s position, we ask you to confirm your selection. Initiate confirmation by clicking on the pushpin and then on the \'Confirm\' link.',
+          buttons: { Next: 1 },
+          focus: 0,
+          position: { container: '#map', x: ($('#map').width()/2)-(boxWidth*1.2/2)+2, y: ($('#map').height()/2)+15, width: boxWidth*1.2, arrow: 'tc' },
+          submit: tourSubmitFunc
+        },
+        {
+          title: 'Confirming a location',
+          html: 'Upon clicking the \'Confirm\' link, a panel (not shown) will appear that contains one (or sometimes more) multiple-choice questions about the location you have selected. Once you have answered these questions, you may click the \'Confirm\' button to complete the confirmation process. The pushpin will change colour to indicate that the location has been confirmed.',
+          buttons: { Next: 1 },
+          focus: 0,
+          position: { container: '#map', x: ($('#map').width()/2)-(boxWidth*1.2/2)+2, y: ($('#map').height()/2)+15, width: boxWidth*1.2, arrow: 'tc' },
+          submit: tourSubmitFunc
+        },
+        {
+          title: 'Removing a pushpin',
+          html: 'At any time, a pushpin may be removed from the map by clicking on it and then on the \'Remove\' link.',
+          buttons: { Next: 1 },
+          focus: 0,
+          position: { container: '#map', x: ($('#map').width()/2)+25, y: ($('#map').height()/2)-25, width: boxWidth, arrow: 'lt' },
           submit: tourSubmitFunc
         },
         {
@@ -1123,13 +1147,32 @@ function noteAnyDBIssues()
             _demoTimer = setTimeout(function() { 
               google.maps.event.trigger(_placeMarkers[0], 'click');
               toggleBtnNextEnabled();
-            }, 4500);
+            }, 3000);
           }, 2000);
         }
         else if ( _currTourState.name == 'PLACES_REMOVE' ) {
           _timer = setTimeout(function() {
             removePlaceMarkers();
           }, 4000 );
+        }
+        else if ( _currTourState.name == 'INITIATE_CONFIRM' ) {
+          _timer = setTimeout(function() {
+            google.maps.event.trigger(_tutMarker, 'click');
+          }, 3500 );
+        }
+        else if ( _currTourState.name == 'CONFIRM' ) {
+          _timer = setTimeout(function() {
+            _tutMarker.setIcon(_greenMarker);
+          }, 5000 );
+        }
+        else if ( _currTourState.name == 'REMOVE' ) {
+          _timer = setTimeout(function() {
+            google.maps.event.trigger(_tutMarker, 'click');
+            _demoTimer = setTimeout( function() {
+              _tutMarker.setVisible(false);
+              _infoBubble.close();
+            }, 2000);
+          }, 2500 );
         }
         else if ( _currTourState.name == 'ZOOM' ) {
           _timer = setTimeout(function() {
@@ -1170,7 +1213,7 @@ function noteAnyDBIssues()
             }
             $('.jqidefaultbutton').focus();
           }
-        }, 300);
+        }, 225);
       }
       typeNextLetter();
       

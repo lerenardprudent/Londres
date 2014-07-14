@@ -198,8 +198,8 @@ function showMarkerInfoBubble(marker, timeOut)
     content:  "<div class='info-bubble'>" +
                 ( isUndef(marker.label) ? "" : "<span class='desc-label'>" + marker.label + "</span>" ) +
                 "<span>Approximate location: <i>" + escapeSpecialChars(marker.address) + "</i></span><br>(" +
-                ( !marker.confirmed ? "<a href='javascript:showConfirmMarkerDialog(" + marker.idx + ");'>Confirm</a> or " : "" ) +
-                "<a href='javascript:removeMarker(" + marker.idx + ");'>Remove</a>)" +
+                ( !marker.confirmed ? "<a class='confirm-marker' href='javascript:showConfirmMarkerDialog(" + marker.idx + ");'>Confirm</a> or " : "" ) +
+                "<a class='remove-marker' href='javascript:removeMarker(" + marker.idx + ");'>Remove</a>)" +
               "</div>"
   });
   $.noty.closeAll();
@@ -613,6 +613,10 @@ function showConfirmMarkerDialog(idx)
 
 function confirmMarker(idx, dontToggleAddMarkerBtn)
 {
+  if ( idx >= _markers.length ) {
+    return;
+  }
+  
   _markers[idx].setIcon(_greenMarker);
   setMarkerConfirmationFlag(_markers[idx]);
   _markers[idx].setOptions({draggable:false});
