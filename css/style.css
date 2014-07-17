@@ -537,3 +537,12 @@ div[title='Stop drawing'] {
 .li-content {
   display: inline-block;
 }
+
+.infowin {
+  display: inline-block;
+  padding: 2px;
+}
+
+.gm-style-iw {
+  width: auto !important
+}

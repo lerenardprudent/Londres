@@ -241,6 +241,7 @@ function noteAnyDBIssues()
   var _searchModePlaces = false;
   var _placesSearchRadius = 15; // km
   var _placeMarkers = [];
+  var _focusMarker;
   var _zoomSnapTo = false;
   var _closeUpZoomLevel = 15;
   var _hackSelectors;

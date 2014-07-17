@@ -39,14 +39,16 @@ function initMap()
   if ( $('.map-focus').val().length > 0 ) {
     var focusCoords = convertGeomTextToLatLng($('.map-focus').val()).coords[0];
     _map.setCenter(focusCoords);
-    if ( $('.map-focus').hasClass('home') ) {
-      var homeMarker = new google.maps.Marker({position:focusCoords, icon:'img/home2.png', draggable:false, clickable: false});
-      homeMarker.setMap(_map);
-    }
-    else if ( $('.map-focus').hasClass('school') ) {
-      var schoolMarker = new google.maps.Marker({position:focusCoords, icon:'img/school2.png', draggable:false, clickable: false});
-      schoolMarker.setMap(_map);
-    }
+    _focusMarker = new google.maps.Marker({position:focusCoords, draggable:false, map: _map });
+    var isHome = ( $('.map-focus').hasClass('home') ); /* For now it can only be home or school */
+    var options = {content: "<div class='infowin'><span>" + (isHome ? "Your home" : "Your school") + "</span></div>"};
+    var iw = new google.maps.InfoWindow(options);
+    google.maps.event.addListener(_focusMarker, 'click', function() {
+      iw.open(_map, this);
+      /* Below is a hack so that the info window does not cut off text */
+    } );
+    _focusMarker.setIcon ( isHome ? 'img/home2.png' : 'img/school3.png' );
+    _focusMarker.setMap(_map);
   }
   
   /********* Map listeners *************/
