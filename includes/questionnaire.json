@@ -32,8 +32,7 @@
   },
   "4" : {
     "0" : { "type" : "exp",
-            "html" : "We are interested in the places you go regularly as part of your day-to-day life. If you spend time in any of the following places please mark them on the map as best as you can. Sometimes the answers to different questions might be the same place; it is ok to give the same answer more than once if it is correct. If you regularly use more than one of any place, please add these additional places.",
-            "show_heading" : 0
+            "html" : "We are interested in the places you go regularly as part of your day-to-day life. If you spend time in any of the following places please mark them on the map as best as you can. Sometimes the answers to different questions might be the same place; it is ok to give the same answer more than once if it is correct. If you regularly use more than one of any place, please add these additional places."
           },
     "1" : { "type" : "quest",
             "html" : "Please could you locate a <b>newsagent/convenience store</b> that you use regularly?",

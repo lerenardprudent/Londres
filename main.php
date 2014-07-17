@@ -49,6 +49,22 @@ if ($U->authorised()) {
         $db_ans_addr = $ans_tokens[1];
         $db_ans_destlabel = $ans_tokens[2];
       }
+      if ( $taskno == 3 && $qno == 1 ) {
+        $home_ans = $U->question_answered(2, 1);
+        if ( $home_ans ) {
+          $home_ans_tokens = explode("|", $home_ans);
+          $map_focus = $home_ans_tokens[0];
+          $map_focus_icon = 'home';
+        }
+      }
+      else if ( $taskno == 3 && $qno == 2 ) {
+        $school_ans = $U->question_answered(1, 1);
+        if ( $school_ans ) {
+          $school_ans_tokens = explode("|", $school_ans);
+          $map_focus = $school_ans_tokens[0];
+          $map_focus_icon = 'school';
+        }
+      }
     }
   }
   
@@ -212,7 +228,7 @@ function noteAnyDBIssues()
 <script type="text/javascript">
   var _latLngLondon;
   var _map;
-  var _bnds;
+  var _bnds, _placesBnds;
   var _mapmarker, _markers = [];
   var _maxNumMarkers = 3;
   var _geocoder;
@@ -227,6 +243,7 @@ function noteAnyDBIssues()
   var _placeMarkers = [];
   var _zoomSnapTo = false;
   var _closeUpZoomLevel = 15;
+  var _hackSelectors;
   var _placesIBOffset, _markerIBOffset;
   var _drawingPoly = false;
   var _drawingManager;
@@ -409,6 +426,7 @@ function noteAnyDBIssues()
         <input class='questInfo' type='hidden' value='<?php echo $questInfo; ?>' />
         <input class='dbErr' type='hidden' value='<?php echo $db_err; ?>' />
         <input class='dbLog' type='hidden' value='<?php echo $db_log; ?>' />
+        <input class='map-focus <?php if (isset($map_focus_icon)) { echo $map_focus_icon; } ?>' type='hidden' value='<?php if (isset($map_focus)) {echo $map_focus;}; ?>' />
         <div class='submit-div'>
           <input id='back' type='submit' value='&larr; Go back' class='back-btn submit-btn' />
           <input id='submit' type='submit' value='Next question &rarr;' class='answer-btn submit-btn'/>
@@ -962,7 +980,7 @@ function noteAnyDBIssues()
           html: 'You may place a pushpin on the map by clicking the \'Add pushpin\' button...',
           buttons: { Next: 1 },
           focus: 0,
-          position: { container: '#' + _addMarkerBtnId, x: -(boxWidth+($('#' + _addMarkerBtnId).outerWidth()/2)), y: -3, width: boxWidth, arrow: 'rt' },
+          position: { container: "[title^='Add'],[title^='Trace']", x: -(boxWidth+($("[title^='Add'],[title^='Trace']").outerWidth()/2)), y: -3, width: boxWidth, arrow: 'rt' },
           submit: tourSubmitFunc
         },
         {
@@ -1039,15 +1057,15 @@ function noteAnyDBIssues()
         },
         {
           title: 'Drawing a region',
-          html: 'For some questions, you will be required to designate a region rather than simply indicate a location. To do so, click the \'Trace a region\' button, then beginning clicking on the map to drawing. Click once to add a point, repeating as many times as necessary, then double-click when you wish to add the final point. The region outlined will become visible.<p><p>You may repeat these steps to erase a previously drawn region and replace it with the one you have just drawn.<p><p>There is no confirmation process required for questions that ask you to designate a region on the map.',
+          html: 'For some questions, you will be required to designate a region rather than simply indicate a location. To do so, click the \'Trace a region\' button, then begin clicking on the map to draw. Click once to add a point, repeating as many times as necessary, then double-click when you wish to add the final point. The region traced by the points will become visible.<p><p>You may repeat these steps to erase a previously drawn region and replace it with one that you have just drawn.<p><p>There is no confirmation process required for questions that ask you to designate a region on the map.',
           buttons: { Next: 1 },
           focus: 0,
-          position: { container: '#' + _addMarkerBtnId, x: $('#' + _addMarkerBtnId).outerWidth()+10, y: -5, width: boxWidth, arrow: 'lt' },
+          position: { container: "[title^='Add'],[title^='Trace']", x: $("[title^='Add'],[title^='Trace']").outerWidth()+10, y: -5, width: boxWidth, arrow: 'lt' },
           submit: tourSubmitFunc
         },
         {
           title: 'Transitioning to the next question',
-          html: "To advance to the next question, click this button. If you have red (i.e. unconfirmed) pushpin on the map, you will be asked to either confirm its location or to remove it. Alternatively, if you have chosen to not answer the question, you will be asked a few questions on why you did not answer the question.",
+          html: "To advance to the next question, click this button. If you have a red (i.e. unconfirmed) pushpin on the map, you will be asked to either confirm its location or remove it. Alternatively, if you have chosen not to answer the question, you will be asked a few questions on why this is so.",
           buttons: { Next: 1 },
           focus: 0,
           position: { container: '.answer-btn', x: -boxWidth-12, y: -3, width: boxWidth, arrow: 'rt' },
@@ -1095,17 +1113,21 @@ function noteAnyDBIssues()
         }
       ];
     
-      _mapState = { 'add_marker_btn' : $('#' + _addMarkerBtnId).is(':visible'), 'search_mode_places' : _searchModePlaces };
+      _mapState = { 'add_marker_btn' : $('#' + _addMarkerBtnId).is(':visible'), 'search_mode_places' : _searchModePlaces, 'poly' : _drawnPolygon != null };
       var myPrompt = $.prompt(tourStates);
       /* Make some visual changes to impromptu dialog box */
       myPrompt.on('impromptu:loaded', function(e) {
         $('.jqi').width(boxWidth);
-       $('.jqi').width(boxWidth);
+        $('.jqi').width(boxWidth);
         $('.jqi .jqiclose').css({'font-size':'25px','top': '-5px', 'right': '1px','cursor':'pointer'}).prop('title','Exit the tour');
         $('.jqimessage').css({'margin-top':'-10px','padding-top':'0px'});
         $('.jqititle').css('font-weight', 'bold');
         $(".jqibuttons button").css('padding', '10px');
         $('.jqi .jqidefaultbutton').focus();
+        _drawingManager.set('drawingControlOptions', {position: google.maps.ControlPosition.TOP_CENTER, drawingModes: [google.maps.drawing.OverlayType.MARKER]});
+        if ( _drawnPolygon != null ) {
+          _drawnPolygon.setVisible(false);
+        }
       });
 
       myPrompt.on('impromptu:statechanging', function(e) {
@@ -1154,7 +1176,7 @@ function noteAnyDBIssues()
         else if ( _currTourState.name == 'IDENTIFY_BY_BTN' ) {
           _timer = setTimeout( function() {
           _tutMarker.setOptions({visible: true, animation: google.maps.Animation.DROP });
-          }, 2000 );
+          }, 1500 );
         }
         else if ( _currTourState.name == 'IDENTIFY_BY_CLICK' ) {
           _timer = setTimeout( function() {
@@ -1227,6 +1249,7 @@ function noteAnyDBIssues()
                 _tutPoly = new google.maps.Polygon({paths: tutPolyCoords});
                 _tutPoly.setMap(_map);
                 _drawingManager.setDrawingMode(null);
+                toggleBtnNextEnabled();
               }, 5000);
             }, 2000);
           }, 500 );
@@ -1300,6 +1323,7 @@ function noteAnyDBIssues()
       <button class='close-draggable close' onclick='removePlaceMarkers();' title='Closes panel and removes search result icons from map'>x</button>
     </div>
     <ul class='places-list'></ul>
+    <a id='moreResults' class='load-more-res-link'>Load more results...</a>
   </div>
 </body>
 </html>

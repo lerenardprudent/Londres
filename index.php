@@ -206,6 +206,11 @@ function validate_pos()
     });
     
     $('#dob').datepicker({ maxDate: "-10y", dateFormat: "yy-mm-dd" });
+    
+    function logoutHoverToggle() { $(this).toggleClass('logout-icon-hover') };
+    $('.logout-icon').hover(logoutHoverToggle, logoutHoverToggle);
+      
+      
   });
 </script>
 </head>

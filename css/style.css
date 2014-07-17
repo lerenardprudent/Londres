@@ -367,6 +367,14 @@ a { text-decoration: none; }
   line-height: 1.5;
 }
 
+.places-control a {
+  color: green
+}
+
+.places-control li > div > a {
+    color: #3366CC
+}
+
 .places-list li {
     background-color: #f4f4f4;
     padding: 0px 3px 1px 1px;
@@ -383,7 +391,9 @@ a { text-decoration: none; }
 
 .places-list {
   padding-left: 30px;
-  margin-bottom: 0
+  margin-bottom: 0;
+  max-height: 306px;
+  overflow-y: auto;
 }
 
 ul {
@@ -516,4 +526,14 @@ div[title='Stop drawing'] {
 
 .btn-disabled {
   color: lightblue;
+}
+
+.load-more-res-link {
+  display: none;
+  padding-left: 5px;
+  cursor: pointer;
+}
+
+.li-content {
+  display: inline-block;
 }
