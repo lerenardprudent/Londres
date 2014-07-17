@@ -53,7 +53,7 @@ class MySql {
     $curr_pos_key = $this->C['CURR_POS_KEY'];
     
     /*** prepare the select statement ***/
-    $stmt = $dbh->prepare("SELECT " . $uid_key . "," . $curr_pos_key . ", uname FROM " . $usrtbl . " WHERE pwd = :phpro_password");
+    $stmt = $dbh->prepare("SELECT " . $uid_key . "," . $curr_pos_key . ", uname, admin FROM " . $usrtbl . " WHERE pwd = :phpro_password");
     /*** bind the parameters ***/
     $stmt->bindParam(':phpro_password', $salted_password, PDO::PARAM_STR, 40);
 
@@ -67,7 +67,7 @@ class MySql {
       return false;
     }
     /*** if we do have a result, all is well ***/
-    return implode("|", array( $row[$uid_key], $row[$curr_pos_key], $row['uname']));
+    return implode("|", array( $row[$uid_key], $row[$curr_pos_key], $row['uname'], $row['admin']));
   }
   
   function set_connected($uid, $val = true)
@@ -170,15 +170,16 @@ class MySql {
     $_SESSION[$this->C['MYSQL_LOG']] = $log_msg;
   }
 
-  function admin_connected()
+  function admin_connected($uid)
   {
     $dbh = $this->initNewPDO();
     $usrtbl = $this->C['TBL_USERS'];
     $admin_uname = $this->C['USR_NAME_ADMIN'];
     
-    $stmt = $dbh->prepare("SELECT connected, curr_pos FROM " . $usrtbl . " WHERE uname = :admin_uname");
+    $sql = "select u2.curr_pos from (select * from " . $usrtbl . " where uid = :uid) u join (select * from " . $usrtbl . " where connected = 1) u2 on u.resp_admin = u2.uname";
+    $stmt = $dbh->prepare($sql);
     /*** bind the parameters ***/
-    $stmt->bindParam(':admin_uname', $admin_uname, PDO::PARAM_STR);
+    $stmt->bindParam(':uid', $uid, PDO::PARAM_INT);
 
     /*** execute the prepared statement ***/
     $this->execute($stmt);
@@ -186,7 +187,7 @@ class MySql {
     $row = $stmt->fetch();
     
     /*** if we have no result then fail boat ***/
-    if ($row == false || $row['connected'] == "0" ) {
+    if ($row == false  ) {
       return false; 
     }
     
@@ -210,21 +211,23 @@ class MySql {
     return $codes;
   }
   
-  function create_entries($codes)
+  function create_entries($codes, $admin_name)
   {
     $dbh = $this->initNewPDO();
     $usrtbl = $this->C['TBL_USERS'];
     $params = array();
     for ( $x = 0; $x < count($codes); $x++ ) {
-      array_push($params, "('xyz', :code" . $x . ")");
+      array_push($params, "('xyz', :code" . $x . ", :resp_admin)");
     }
     $values = implode(",", $params);
-    $sql = "INSERT INTO " . $usrtbl . " (uname, pwd) VALUES " . $values;
+    $sql = "INSERT INTO " . $usrtbl . " (uname, pwd, resp_admin) VALUES " . $values;
     $stmt = $dbh->prepare($sql);
     for ( $x = 0; $x < count($codes); $x++ ) {
       $stmt->bindParam(':code' . $x, $codes[$x], PDO::PARAM_STR);
     }
+    $stmt->bindParam(':resp_admin' , $admin_name, PDO::PARAM_STR);
     $this->execute($stmt);
+    $rows_updated = $stmt->rowCount();
   }
   
   function delete_entries($codes)

@@ -12,6 +12,7 @@ class User {
     $this->Q = new Questionnaire();
     $this->uid = -1;
     $this->curr_pos = "0" . $this->C['CURR_POS_SEPARATOR'] . "0";
+    $this->uname = "unknown";
     $this->is_instructor = (isset($_SESSION[$this->C['IS_INSTR_KEY']]) ? $_SESSION[$this->C['IS_INSTR_KEY']] : false);
   }
   
@@ -35,6 +36,7 @@ class User {
     if ($is_authorised) {
       $this->uid = $_SESSION[$this->C['USR_ID_KEY']];
       $this->curr_pos = $_SESSION[$this->C['MAX_POS_KEY']];
+      $this->uname = $_SESSION[$this->C['USR_NAME_KEY']];
     }
     
     return $is_authorised;
@@ -44,12 +46,15 @@ class User {
     $tokens = explode("|", $db_vals);
     $uid = $tokens[0];
     $curr_pos = $tokens[1];
+    $uname = $tokens[2];
+    $is_admin = $tokens[3];
     
     $_SESSION[$this->C['USR_ID_KEY']] = $uid;
     $_SESSION[$this->C['CURR_POS_KEY']] = $curr_pos;
     $_SESSION[$this->C['MAX_POS_KEY']] = $curr_pos;
+    $_SESSION[$this->C['USR_NAME_KEY']] = $uname;
     $this->mysql->set_connected($uid);
-    $this->is_instructor = ( $tokens[2] == $this->C['USR_NAME_ADMIN'] );
+    $this->is_instructor = $is_admin;
     $_SESSION[$this->C['IS_INSTR_KEY']] = $this->is_instructor;
   }
   
@@ -104,7 +109,7 @@ class User {
   
   function instructor_connected()
   {
-    return $this->mysql->admin_connected();   
+    return $this->mysql->admin_connected($this->uid);   
   }
   
   function instructor_ahead()
@@ -182,7 +187,7 @@ class User {
   function create_users($codes)
   {
     for ( $x = 0; $x < count($codes); $x++ ) { $codes[$x] = sha1($codes[$x]); }
-    return $this->mysql->create_entries($codes);
+    return $this->mysql->create_entries($codes, $this->uname);
   }
   
   function delete_users($codes)
