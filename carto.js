@@ -306,18 +306,21 @@ function pinPlaceMarkers(places) 			//search results
 		marker.ID = _placeMarkers.length;
 		marker.name = place.name;
 		google.maps.event.addListener(marker, 'mouseover', showPlaceMarkerAddr);
-		google.maps.event.addListener(marker, 'mouseout', function() { _infoBubble.close(); });
+		google.maps.event.addListener(marker, 'mouseout', function() {
+      _infoBubble.close(); $('.places-list li').eq(this.ID).toggleClass('highlight-li');
+    });
 		google.maps.event.addListener(marker, 'click', handlePlaceMarkerClick );
 		_placesBnds.extend(place.geometry.location);
 		_zoomSnapTo = true;
 		addAddress(marker, place.reference);
 		_placeMarkers.push(marker);
-    placesList.append(  "<li id='lsm" + marker.ID + "' title=\"" + place.name + "\"><div class='li-content'>" +
+    var newLi = $("<li id='lsm" + marker.ID + "' title=\"" + place.name + "\"><div class='li-content'>" +
                           "<div class='place-number'>" + (marker.ID+1) + ".</div><a href='javascript:selectPlaceMarker(" + marker.ID + ")'>" + /*(marker.ID+1) + ". " + */place.name + "</a></div>"+
-                        "</li>");
+                        "</li>").hover( function() { $(this).toggleClass('highlight-li'); }, function() { $(this).toggleClass('highlight-li'); } );
+    placesList.append(newLi);
 	}
 	_map.fitBounds(_placesBnds);
-  $('.places-control').draggable({handle: "span"}).show();
+  $('.places-control').draggable({handle: ".draggable-heading"}).show();
   var maxWidth = 0;
   placesList.find('.li-content').each( function() {
     if ( $(this).outerWidth() > maxWidth ) {
@@ -362,6 +365,17 @@ function showPlaceMarkerAddr() {
   var scale = 1.1;
   $('.info-bubble-place-details').height(h*scale);
   $('.info-bubble-place-details').width(w*scale);
+  $('.places-list li').eq(this.ID).toggleClass('highlight-li');
+  var scrollPos = 15*(this.ID);
+  var scrollTop = $('.places-list')[0].scrollTop;
+  var scrollDiff = 0;
+  if ( scrollPos < scrollTop ) {
+    scrollDiff = scrollPos - scrollTop;
+  }
+  else if ( (scrollPos+15) > (scrollTop + (20*15)) ) { /* We want the whole li to be visible, not just the top of it */
+    scrollDiff = scrollPos - scrollTop - (18*15);
+  }
+  $('.places-list').animate({scrollTop:scrollTop+scrollDiff}, 600);
 };
 
 function getPlaceInfoBubbleHtml(place)
@@ -567,10 +581,6 @@ function removeMarker(idx)
   }
   _infoBubble.close();
   
-  /* Unblock the UI if it was blocked before */
-  if ( idx == _maxNumMarkers-1 ) {
-    blockUI(false);
-  }
   setCursor();
 }
 
@@ -650,10 +660,6 @@ function confirmMarker(idx, dontToggleAddMarkerBtn)
   setCursor();
   _infoBubble.close();
   
-  if ( _maxNumMarkers == _markers.length ) {
-    blockUI();
-  }
-  
   /* If this variable is undefined then chances are we are in the middle of adding location(s) 
    * to map loaded from DB and so we don't want to show any popups here
    */
@@ -719,7 +725,8 @@ function resetActiveModal()
 
 function highlightLocation(coords, address)
 {
-  _drawingPoly && !_tutMode ? _map.setCenter(coords) : pinMapMarker(coords, address);
+  var dontPlaceMarker = ( _drawingPoly && !_tutMode ) || _markers.length == _maxNumMarkers;
+  dontPlaceMarker ? _map.setCenter(coords) : pinMapMarker(coords, address);
 }
 
 function setCursor()

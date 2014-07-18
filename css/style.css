@@ -382,6 +382,15 @@ a { text-decoration: none; }
     white-space: nowrap;
 }
 
+.highlight-li {
+  background-color: #66CCCC !important;
+}
+
+.highlight-li a {
+  color: white !important;
+  font-weight: bold !important;
+}
+
 .close-draggable{
   font-size: 15px !important;
   position: absolute;
