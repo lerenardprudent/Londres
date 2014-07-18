@@ -200,6 +200,11 @@ class User {
   {
     return $this->mysql->answer_exists($this->uid, $taskno, $qno);
   }
+  
+  function get_all_records()
+  {
+    return $this->mysql->get_users();
+  }
 }
 
 ?>

@@ -662,7 +662,7 @@ function noteAnyDBIssues()
         searchModePlaces ? $('.search-button').addClass('search-mode-places') : $('.search-button').removeClass('search-mode-places');
       }
       setSearchSliderAttrs();
-      $('.searchf').focus().select();
+      $('.searchfld').focus().select();
       return false;
     }
 

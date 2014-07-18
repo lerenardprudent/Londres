@@ -277,6 +277,26 @@ class MySql {
     return ($row !== false ? implode("|", array($row['geom_txt'], $row['addr'], $row['label'])) : false);
     //select x(p1), y(p1), x(p2), y(p2) from (select pointn(points,1) as p1, pointn(points,2) as p2 from (select ExteriorRing(geom) as points from answers where geom_type = 'polygon' and geom is not null) s) s2
   }
+  
+  function get_users()
+  {
+    $dbh = $this->initNewPDO();
+    $usrtbl = $this->C['TBL_USERS'];
+    $stmt = $dbh->prepare("SELECT uid, bdate, sex, curr_pos FROM " . $usrtbl);
+    $this->execute($stmt);
+    $rows = $stmt->fetchAll();
+    $users = array();
+    foreach ( $rows as $row ) {
+      $rowObj = new stdClass();
+      foreach($row as $key => $value) {
+        if ( !is_numeric($key) ) {
+          $rowObj->$key = $value;
+        }
+      }
+      array_push($users, json_encode($rowObj));
+    }
+    return $users;
+  }
 }
 
 ?>
