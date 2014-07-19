@@ -205,6 +205,11 @@ class User {
   {
     return $this->mysql->get_users();
   }
+  
+  function get_all_answers()
+  {
+    return $this->mysql->get_answers();
+  }
 }
 
 ?>

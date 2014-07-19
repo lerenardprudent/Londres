@@ -110,36 +110,47 @@ class MySql {
     $dbh2 = $this->initNewPDO();
     $answers_tbl = $this->C['TBL_ANSWERS'];
     $num_coords = count(explode(",", $coords));
-    if ( $num_coords > 1 ) {
-      if ( strlen($addr) > 0 ) {
-        $geom_txt = "LINESTRING(" . $coords . ")";
-      }
-      else {
-        $geom_txt = "POLYGON((" . $coords . "))";
-      }
+    if ( $num_coords > 1 && strlen($addr) == 0 ) {
+      $geom_txt_ends = array( "POLYGON((", "))");
+      $coo = array($coords);
     }
     else {
-      $geom_txt = "POINT(" . $coords . ")";
+      $geom_txt_ends = array("POINT(", ")");
+      $coo = explode(",", $coords);
     }
     $geom_str = ( $answered ? "GeomFromText(:geom_txt)" : "null" );
+    $addresses = explode('¦', $addr );
+    $labels = explode('¦', $labl );
     $ret_code = -1;
     
-    /*** prepare the select statement ***/
-    $stmt = $dbh->prepare("INSERT INTO " . $answers_tbl . " (taskno,qno,answered,ansinfo,num_coords,id,searches,addr,label,geom) VALUES (:taskno,:qno,:answered,:ans_info, :num_coords,:uid,:searches,:addr,:label," . $geom_str . ")");
+    /* Delete any existing answer(s) */
+    $stmt0 = $dbh->prepare("DELETE FROM " . $answers_tbl . " WHERE id = :id and taskno = :taskno and qno = :qno");
     /*** bind the parameters ***/
-    $stmt->bindParam(':taskno', $taskno, PDO::PARAM_INT);
-    $stmt->bindParam(':qno', $qno, PDO::PARAM_INT);
-    $stmt->bindParam(':answered', $answered, PDO::PARAM_INT);
-    $stmt->bindParam(':ans_info', $ans_info, PDO::PARAM_STR);
-    $stmt->bindParam(':num_coords', $num_coords, PDO::PARAM_INT);
-    $stmt->bindParam(':uid', $uid, PDO::PARAM_INT);
-    $stmt->bindParam(':searches', $searches, PDO::PARAM_STR);
-    $stmt->bindParam(':addr', $addr, PDO::PARAM_STR);
-    $stmt->bindParam(':label', $labl, PDO::PARAM_STR);
-    if ( $answered ) { $stmt->bindParam(':geom_txt', $geom_txt, PDO::PARAM_STR); }
-    $ret_code = $this->execute($stmt);
-    $rowsUpdated = $stmt->rowCount();
+    $stmt0->bindParam(':id', $uid, PDO::PARAM_INT);
+    $stmt0->bindParam(':taskno', $taskno, PDO::PARAM_INT);
+    $stmt0->bindParam(':qno', $qno, PDO::PARAM_INT);
+    $this->execute($stmt0);
     
+    /*** prepare the select statement ***/
+    for ( $i = 0; $i < count($coo); $i++ ) {
+      $sql = "INSERT INTO " . $answers_tbl . " (taskno,qno,answered,ansinfo,num_coords,id,searches,addr,label,geom) VALUES (:taskno,:qno,:answered,:ans_info, :num_coords,:uid,:searches,:addr,:label," . $geom_str . ")";
+      $stmt = $dbh->prepare($sql);
+      /*** bind the parameters ***/
+      $stmt->bindParam(':taskno', $taskno, PDO::PARAM_INT);
+      $stmt->bindParam(':qno', $qno, PDO::PARAM_INT);
+      $stmt->bindParam(':answered', $answered, PDO::PARAM_INT);
+      $stmt->bindParam(':ans_info', $ans_info, PDO::PARAM_STR);
+      $stmt->bindParam(':num_coords', $num_coords, PDO::PARAM_INT);
+      $stmt->bindParam(':uid', $uid, PDO::PARAM_INT);
+      $stmt->bindParam(':searches', $searches, PDO::PARAM_STR);
+      $stmt->bindParam(':addr', $addresses[$i], PDO::PARAM_STR);
+      $stmt->bindParam(':label', $labels[$i], PDO::PARAM_STR);
+      if ( $answered ) { $geom_txt = $geom_txt_ends[0] . $this->swap_coords($coo[$i]) . $geom_txt_ends[1]; $stmt->bindParam(':geom_txt', $geom_txt, PDO::PARAM_STR); }
+      $ret_code = $this->execute($stmt);
+      $rowsUpdated = $stmt->rowCount();
+    }
+    
+    /*
     if ( $ret_code == 23000 ) {
       $stmt2 = $dbh2->prepare("UPDATE " . $answers_tbl . " SET answered=:answered, ansinfo=:ans_info, addr=:addr, label=:label, num_coords=:num_coords, geom=" . $geom_str . ",searches=:searches WHERE id=:uid AND taskno=:taskno AND qno=:qno");
       $stmt2->bindParam(':uid', $uid, PDO::PARAM_INT);
@@ -155,6 +166,7 @@ class MySql {
       $ret_code = $this->execute($stmt2);
       $rowsUpdated = $stmt2->rowCount();
     }
+    */
     
     if ( $ret_code == 0 ) {
       if ( $rowsUpdated == 0) {
@@ -163,6 +175,14 @@ class MySql {
       return true;
     }
     return false;
+  }
+  
+  function swap_coords($str)
+  {
+    $pattern = '/([-\.0123456789]+) ([-\.0123456789]+)/';
+    $replacement = '${2} ${1}';
+    $flipped = preg_replace($pattern, $replacement, $str);
+    return $flipped;
   }
   
   function log_back($log_msg)
@@ -273,16 +293,28 @@ class MySql {
     $stmt->bindParam(':qno', $qno, PDO::PARAM_INT);
 
     $this->execute($stmt);
-    $row = $stmt->fetch();
-    return ($row !== false ? implode("|", array($row['geom_txt'], $row['addr'], $row['label'])) : false);
-    //select x(p1), y(p1), x(p2), y(p2) from (select pointn(points,1) as p1, pointn(points,2) as p2 from (select ExteriorRing(geom) as points from answers where geom_type = 'polygon' and geom is not null) s) s2
+    $rows = $stmt->fetchAll();
+    if ($rows === false ) {
+      return false;
+    }
+    $coords = array();
+    $addrs = array();
+    $labels = array();
+    foreach ( $rows as $row ) {
+      array_push($coords, $this->swap_coords($row['geom_txt']));
+      array_push($addrs, $row['addr']);
+      array_push($labels, $row['label']);
+    }
+    return implode('|', array(implode('¦', $coords), implode('¦', $addrs), implode('¦', $labels)));
   }
   
   function get_users()
   {
     $dbh = $this->initNewPDO();
     $usrtbl = $this->C['TBL_USERS'];
-    $stmt = $dbh->prepare("SELECT uid, bdate, sex, curr_pos FROM " . $usrtbl);
+    $cols = array('uid', 'bdate', 'sex', 'curr_pos');
+    $sql = 
+    $stmt = $dbh->prepare("SELECT " . implode(',', $cols) . " FROM " . $usrtbl);
     $this->execute($stmt);
     $rows = $stmt->fetchAll();
     $users = array();
@@ -295,7 +327,39 @@ class MySql {
       }
       array_push($users, json_encode($rowObj));
     }
-    return $users;
+    $res = new stdClass();
+    $col_name = "cols";
+    $res->$col_name = $cols;
+    $col_name = "rows";
+    $res->$col_name = $users;
+    return $res;
+  }
+  
+function get_answers()
+  {
+    $dbh = $this->initNewPDO();
+    $anstbl = $this->C['TBL_ANSWERS'];
+    $cols = array('id', 'taskno', 'qno', 'answered', 'ansinfo');
+    $sql = 
+    $stmt = $dbh->prepare("SELECT " . implode(',', $cols) . " FROM " . $anstbl);
+    $this->execute($stmt);
+    $rows = $stmt->fetchAll();
+    $answers = array();
+    foreach ( $rows as $row ) {
+      $rowObj = new stdClass();
+      foreach($row as $key => $value) {
+        if ( !is_numeric($key) ) {
+          $rowObj->$key = $value;
+        }
+      }
+      array_push($answers, json_encode($rowObj));
+    }
+    $res = new stdClass();
+    $col_name = "cols";
+    $res->$col_name = $cols;
+    $col_name = "rows";
+    $res->$col_name = $answers;
+    return $res;
   }
 }
 

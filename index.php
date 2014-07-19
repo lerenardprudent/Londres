@@ -13,7 +13,6 @@ $code_leng = 6;
 $sess_curr_pos = -1;
 $curr_pos_key = $C['CURR_POS_KEY'];
 $first_time = false;
-$export_db = false;
 
 if ($U->authorised()) {
   $sess_curr_pos = $_SESSION[$curr_pos_key];
@@ -37,8 +36,12 @@ if ($U->authorised()) {
       $generated_codes = generate_new_codes(intval($_POST[$C['CREATE_USERS_KEY']]));
     }
     
-    if ( isset($_POST['exportDB'])) {
-      exportDB();
+    if ( isset($_POST['exportUsers'])) {
+      exportDB(true);
+    }
+    
+    if ( isset($_POST['exportAnswers'])) {
+      exportDB(false);
     }
   }
 }
@@ -141,20 +144,21 @@ function validate_pos()
   return "Start questionnaire";
 }
 
-function exportDB()
+function exportDB($export_users)
 {
-  global $export_db;
   global $U;
     
-  $user_db = $U->get_all_records();
+  $db = $export_users ? $U->get_all_records() : $U->get_all_answers();
   $delim = ',';
+  
   $f = fopen('php://memory', 'w'); 
-  foreach ($user_db as $user) { 
-    fputcsv($f, json_decode($user, true), $delim); 
+  fputcsv($f, $db->cols, $delim); 
+  foreach ($db->rows as $row) { 
+    fputcsv($f, json_decode($row, true), $delim); 
   }
   fseek($f, 0);
   header('Content-Type: application/csv');
-  header('Content-Disposition: attachement; filename="foobar.csv"');
+  header('Content-Disposition: attachement; filename="veritasDB_' . ($export_users ? "Users" : "Answers") . '.csv"');
   fpassthru($f);
   exit();
 }
@@ -285,7 +289,8 @@ function exportDB()
     </div>
     <input type="submit" id="submit" value="<?php echo $btn_text; ?>" name="submit" <?php echo ($first_time && strlen($instr_err_html) == 0 ? "disabled" : ""); ?> />
     <?php if ($is_instructor) { echo "<input type='button' onclick=\"$('.new-users').show();\" value='Generate user codes' />"; } ?>
-    <?php if ($is_instructor) { echo "<input type='submit' name='exportDB' value='Export database to CSV' />"; } ?>
+    <?php if ($is_instructor) { echo "<input type='submit' name='exportUsers' value='Export users database to CSV' />"; } ?>
+    <?php if ($is_instructor) { echo "<input type='submit' name='exportAnswers' value='Export answers database to CSV' />"; } ?>
     <div class='new-users'>
       <span>How many new users?</span>
       <input class='num-new-users' name='<?php echo $C['CREATE_USERS_KEY']; ?>' type='number' min='1' />
