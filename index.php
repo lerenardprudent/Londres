@@ -41,7 +41,49 @@ if ($U->authorised()) {
     }
     
     if ( isset($_POST['exportAnswers'])) {
-      exportDB(false);
+      $dir = "export";
+      $now = new DateTime();
+      $timestamp = $now->format('Ymd_His');
+      $out_prefix = $dir . "/db_" . $timestamp;
+      $out_shapefile = $out_prefix . ".shp";
+      $cmd = "ogr2ogr -f \"ESRI Shapefile\" -s_srs EPSG:4326 -t_srs EPSG:4326 $out_shapefile MYSQL:\"koncept_Ekogito2,host=localhost,user=koncept_root,password=2E#pL_dA56H2\" -sql \"select id, taskno, qno,
+ addr, label, geom from ans where id = 6 and taskno = 4 and qno = 1 and not (geom is null)\"";
+      $stdout = shell_exec($cmd); //exportDB(false);
+      if (file_exists($out_shapefile)) {
+      	$x = "ls $out_prefix*";
+        $stdout = shell_exec($x);
+        
+        $all_files = explode("\n", $stdout);
+        $zip = new ZipArchive();
+        $zip_name = 'db.zip';
+        $filename = "$dir/$zip_name";
+        if ( file_exists($filename) ) {
+           unlink($filename);
+        }
+
+        if ($zip->open($filename, ZipArchive::CREATE)!==TRUE) {
+          exit("cannot open <$filename>\n");
+        }
+        foreach ( $all_files as $file ) {
+         $zip->addFile($file, basename($file)); 
+        }
+        $zip->close();
+        foreach ( $all_files as $file ) {
+           unlink($file);
+        }
+        ob_clean();
+        flush();
+        header('Pragma: public');
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+        header('Content-Description: File Transfer');
+        header('Content-type: application/octet-stream');
+        header('Content-Disposition: attachment; filename=' .$zip_name);
+        header('Content-Transfer-Encoding: binary');
+        header('Content-Length: '.filesize($filename));
+        readfile($filename);
+        exit();
+      }
     }
   }
 }
