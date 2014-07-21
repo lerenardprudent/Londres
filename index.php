@@ -49,34 +49,39 @@ if ($U->authorised()) {
       
       $qs = explode(',', $_POST['exportQs']);
       $comp = array();
+      
       foreach ( $qs as $q ) {
         $task_and_q = explode('-', $q);
         $outfile = $out_prefix . ".T" . $task_and_q[0] . "Q" . $task_and_q[1] . ".shp";
         $cond = '(taskno = ' . $task_and_q[0] . " AND qno = " . $task_and_q[1] . ')';
-        $cmd = "ogr2ogr -f \"ESRI Shapefile\" -s_srs EPSG:4326 -t_srs EPSG:4326 $outfile MYSQL:\"koncept_Ekogito2,host=localhost,user=koncept_root,password=2E#pL_dA56H2\" -sql \"select id, taskno, qno,
- addr, label, geom from ans where $cond and not (geom is null)\"";
+        $cmd = "ogr2ogr -f \"ESRI Shapefile\" -s_srs EPSG:4326 -t_srs EPSG:4326 $outfile MYSQL:\"" . $C['DB_NAME'] . ",host=" . $C['DB_SERVER'] . ",user=" . $C['DB_USER'] . ",password=" . $C['DB_PASSWORD'] . "\" -sql \"select a.id, a.taskno, a.qno, a.addr, a.label, a.geom from " . $C['TBL_ANSWERS'] . " a join " . $C['TBL_USERS'] . " u on a.id = u.uid and u.admin = 0 where $cond and not (geom is null)\"";
         shell_exec($cmd);
       }
       
-      	$x = "ls $out_prefix*";
-        $stdout = shell_exec($x);
+      $x = "ls $out_prefix*";
+      $stdout = shell_exec($x);
         
-        $all_files = explode("\n", $stdout);
+      $all_files = explode("\n", $stdout);
       if ( count($all_files) > 0 ) {
         $zip = new ZipArchive();
         $zip_name = 'db.zip';
         $filename = "$dir/$zip_name";
         if ( file_exists($filename) ) {
-           unlink($filename);
+          unlink($filename);
         }
 
         if ($zip->open($filename, ZipArchive::CREATE)!==TRUE) {
           exit("cannot open <$filename>\n");
         }
         foreach ( $all_files as $file ) {
-         $zip->addFile($file, basename($file)); 
+          $zip->addFile($file, basename($file)); 
         }
         $zip->close();
+        
+        foreach ( $all_files as $file ) {
+          unlink($file);
+        }
+        
         ob_clean();
         flush();
         header('Pragma: public');
@@ -89,11 +94,6 @@ if ($U->authorised()) {
         header('Content-Length: '.filesize($filename));
         readfile($filename);
         exit();
-        
-        /*
-        foreach ( $all_files as $file ) {
-          unlink($file);
-        }*/
       }
     }
   }
@@ -297,9 +297,10 @@ function exportDB($export_users)
         qs.push($(this).val());
       });
       $('.export-qs-list').val(qs.join(','));
-      
+      $('#selectAll').prop('checked', qs.length == $(' option', this).length);
       $('.export-ans-btn').prop('disabled', $(':selected', this).length == 0);
     });
+    $('.export-select').change();
   });
 </script>
 </head>
@@ -366,7 +367,7 @@ function exportDB($export_users)
       </select>
       <label for='selectAll'>Select / Deselect all</label>
       <input id='selectAll' type='checkbox' onclick="$('.export-select option').prop('selected', function(idx, oldProp) {return !oldProp;});" checked/>
-      <input class='export-ans-btn' name='exportAns' type='submit' value='Export' disabled/>
+      <input class='export-ans-btn' name='exportAns' type='submit' value='Export'/>
       <input class='export-qs-list' type='hidden' name='exportQs' />
     </div>
     
