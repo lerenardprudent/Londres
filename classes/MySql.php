@@ -361,6 +361,23 @@ function get_answers()
     $res->$col_name = $answers;
     return $res;
   }
+  
+  function get_questions_answered()
+  {
+    $dbh = $this->initNewPDO();
+    $usrtbl = $this->C['TBL_USERS'];
+    $anstbl = $this->C['TBL_ANSWERS'];
+    $cols = array('id', 'taskno', 'qno', 'answered', 'ansinfo');
+    $sql = 
+    $stmt = $dbh->prepare("SELECT distinct concat(concat(a.taskno, '-'), a.qno) as q from $anstbl a join $usrtbl u on a.id = u.uid and u.admin = 0 order by q");
+    $this->execute($stmt);
+    $rows = $stmt->fetchAll();
+    $qs = array();
+    foreach ( $rows as $row ) {
+      array_push($qs, $row['q']);
+    }
+    return $qs;
+  }
 }
 
 ?>

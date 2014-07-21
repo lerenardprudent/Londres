@@ -40,20 +40,29 @@ if ($U->authorised()) {
       exportDB(true);
     }
     
-    if ( isset($_POST['exportAnswers'])) {
+    if ( isset($_POST['exportAns'])) {
       $dir = "export";
       $now = new DateTime();
       $timestamp = $now->format('Ymd_His');
       $out_prefix = $dir . "/db_" . $timestamp;
       $out_shapefile = $out_prefix . ".shp";
-      $cmd = "ogr2ogr -f \"ESRI Shapefile\" -s_srs EPSG:4326 -t_srs EPSG:4326 $out_shapefile MYSQL:\"koncept_Ekogito2,host=localhost,user=koncept_root,password=2E#pL_dA56H2\" -sql \"select id, taskno, qno,
- addr, label, geom from ans where id = 6 and taskno = 4 and qno = 1 and not (geom is null)\"";
-      $stdout = shell_exec($cmd); //exportDB(false);
-      if (file_exists($out_shapefile)) {
+      
+      $qs = explode(',', $_POST['exportQs']);
+      $comp = array();
+      foreach ( $qs as $q ) {
+        $task_and_q = explode('-', $q);
+        $outfile = $out_prefix . ".T" . $task_and_q[0] . "Q" . $task_and_q[1] . ".shp";
+        $cond = '(taskno = ' . $task_and_q[0] . " AND qno = " . $task_and_q[1] . ')';
+        $cmd = "ogr2ogr -f \"ESRI Shapefile\" -s_srs EPSG:4326 -t_srs EPSG:4326 $outfile MYSQL:\"koncept_Ekogito2,host=localhost,user=koncept_root,password=2E#pL_dA56H2\" -sql \"select id, taskno, qno,
+ addr, label, geom from ans where $cond and not (geom is null)\"";
+        shell_exec($cmd);
+      }
+      
       	$x = "ls $out_prefix*";
         $stdout = shell_exec($x);
         
         $all_files = explode("\n", $stdout);
+      if ( count($all_files) > 0 ) {
         $zip = new ZipArchive();
         $zip_name = 'db.zip';
         $filename = "$dir/$zip_name";
@@ -68,9 +77,6 @@ if ($U->authorised()) {
          $zip->addFile($file, basename($file)); 
         }
         $zip->close();
-        foreach ( $all_files as $file ) {
-           unlink($file);
-        }
         ob_clean();
         flush();
         header('Pragma: public');
@@ -83,6 +89,11 @@ if ($U->authorised()) {
         header('Content-Length: '.filesize($filename));
         readfile($filename);
         exit();
+        
+        /*
+        foreach ( $all_files as $file ) {
+          unlink($file);
+        }*/
       }
     }
   }
@@ -279,7 +290,16 @@ function exportDB($export_users)
     function logoutHoverToggle() { $(this).toggleClass('logout-icon-hover') };
     $('.logout-icon').hover(logoutHoverToggle, logoutHoverToggle);
       
+    $('.export-select').change( function() {
+      /* Keep note of selected questions. Store list of questions in hidden input */
+      var qs = [];
+      $(':selected', this).each( function() {
+        qs.push($(this).val());
+      });
+      $('.export-qs-list').val(qs.join(','));
       
+      $('.export-ans-btn').prop('disabled', $(':selected', this).length == 0);
+    });
   });
 </script>
 </head>
@@ -332,12 +352,22 @@ function exportDB($export_users)
     <input type="submit" id="submit" value="<?php echo $btn_text; ?>" name="submit" <?php echo ($first_time && strlen($instr_err_html) == 0 ? "disabled" : ""); ?> />
     <?php if ($is_instructor) { echo "<input type='button' onclick=\"$('.new-users').show();\" value='Generate user codes' />"; } ?>
     <?php if ($is_instructor) { echo "<input type='submit' name='exportUsers' value='Export users database to CSV' />"; } ?>
-    <?php if ($is_instructor) { echo "<input type='submit' name='exportAnswers' value='Export answers database to CSV' />"; } ?>
+    <?php if ($is_instructor) { echo "<input type='button' onclick=\"$('.export-qs').show();\" value='Export answers database to CSV' />"; } ?>
     <div class='new-users'>
       <span>How many new users?</span>
       <input class='num-new-users' name='<?php echo $C['CREATE_USERS_KEY']; ?>' type='number' min='1' />
       <input name='gen_users' type='submit' value='Go' />
       <input name='<?php echo $C['CREATED_USERS_KEY']; ?>' type='hidden' value='<?php if (isset($generated_codes)) {echo implode(",", $generated_codes); } ?>' />
+    </div>
+    <div class='export-qs' style='display:none'>
+      <span>Select the questions for which answers may be exported</span>
+      <select class='export-select' multiple>
+        <?php foreach ( $U->get_questions_answered() as $q ) { echo "<option selected>$q</option>"; } ?>
+      </select>
+      <label for='selectAll'>Select / Deselect all</label>
+      <input id='selectAll' type='checkbox' onclick="$('.export-select option').prop('selected', function(idx, oldProp) {return !oldProp;});" checked/>
+      <input class='export-ans-btn' name='exportAns' type='submit' value='Export' disabled/>
+      <input class='export-qs-list' type='hidden' name='exportQs' />
     </div>
     
     <div class="ui-widget-content new-codes draggable">

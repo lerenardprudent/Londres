@@ -210,6 +210,11 @@ class User {
   {
     return $this->mysql->get_answers();
   }
+  
+  function get_questions_answered()
+  {
+    return $this->mysql->get_questions_answered();
+  }
 }
 
 ?>
