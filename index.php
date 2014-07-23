@@ -37,62 +37,11 @@ if ($U->authorised()) {
     }
     
     if ( isset($_POST['exportUsers'])) {
-      exportDB(true);
+      export_user_db();
     }
     
     if ( isset($_POST['exportAns'])) {
-      $dir = "export";
-      $now = new DateTime();
-      $timestamp = $now->format('Ymd_His');
-      $out_prefix = $dir . "/db_" . $timestamp;
-      $out_shapefile = $out_prefix . ".shp";
-      
-      $qs = explode(',', $_POST['exportQs']);
-      $comp = array();
-      
-      foreach ( $qs as $q ) {
-        $task_and_q = explode('-', $q);
-        $outfile = $out_prefix . ".T" . $task_and_q[0] . "Q" . $task_and_q[1] . ".shp";
-        $cond = '(taskno = ' . $task_and_q[0] . " AND qno = " . $task_and_q[1] . ')';
-        $cmd = "ogr2ogr -f \"ESRI Shapefile\" -s_srs EPSG:4326 -t_srs EPSG:4326 $outfile MYSQL:\"" . $C['DB_NAME'] . ",host=" . $C['DB_SERVER'] . ",user=" . $C['DB_USER'] . ",password=" . $C['DB_PASSWORD'] . "\" -sql \"select a.id, a.taskno, a.qno, a.addr, a.label, a.geom from " . $C['TBL_ANSWERS'] . " a join " . $C['TBL_USERS'] . " u on a.id = u.uid and u.admin = 0 where $cond and not (geom is null)\"";
-        shell_exec($cmd);
-      }
-      
-      $x = "ls $out_prefix*";
-      $stdout = shell_exec($x);
-        
-      $all_files = explode("\n", $stdout);
-      if ( count($all_files) > 0 ) {
-        $zip = new ZipArchive();
-        $zip_name = 'db.zip';
-        $filename = "$dir/$zip_name";
-        if ( file_exists($filename) ) {
-          unlink($filename);
-        }
-
-        if ($zip->open($filename, ZipArchive::CREATE)!==TRUE) {
-          exit("cannot open <$filename>\n");
-        }
-        foreach ( $all_files as $file ) {
-          $zip->addFile($file, basename($file)); 
-        }
-        $zip->close();
-        
-        foreach ( $all_files as $file ) {
-          unlink($file);
-        }
-        ob_clean();
-        header('Pragma: public');
-        header('Expires: 0');
-        header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-        header('Content-Description: File Transfer');
-        header('Content-type: application/octet-stream');
-        header('Content-Disposition: attachment; filename=' .$zip_name);
-        header('Content-Transfer-Encoding: binary');
-        header('Content-Length: '.filesize($filename));
-        readfile($filename);
-        exit();
-      }
+      export_ans_db();
     }
   }
 }
@@ -195,11 +144,11 @@ function validate_pos()
   return "Start questionnaire";
 }
 
-function exportDB($export_users)
+function export_user_db()
 {
   global $U;
     
-  $db = $export_users ? $U->get_all_records() : $U->get_all_answers();
+  $db = $U->get_all_records();
   $delim = ',';
   
   $f = fopen('php://memory', 'w'); 
@@ -212,6 +161,66 @@ function exportDB($export_users)
   header('Content-Disposition: attachement; filename="veritasDB_' . ($export_users ? "Users" : "Answers") . '.csv"');
   fpassthru($f);
   exit();
+}
+
+function export_ans_db()
+{
+  global $C, $U;
+  
+  $dir = "export";
+  $now = new DateTime();
+  $timestamp = $now->format('Ymd_His');
+  $out_prefix = $dir . "/db_" . $timestamp;
+  $out_shapefile = $out_prefix . ".shp";
+      
+  $qs = explode(',', $_POST['exportQs']);
+  $comp = array();
+  
+  foreach ( $qs as $q ) {
+    $task_and_q = explode('-', $q);
+    $outfile = $out_prefix . ".T" . $task_and_q[0] . "Q" . $task_and_q[1] . ".shp";
+    $cond = '(taskno = ' . $task_and_q[0] . " AND qno = " . $task_and_q[1] . ')';
+    $sql_get_db_req = "select a.id, a.taskno, a.qno, a.addr, a.label, a.ansinfo, a.geom from " . $C['TBL_ANSWERS'] . " a join " . $C['TBL_USERS'] . " u on a.id = u.uid and u.admin = 0 where $cond and not (geom is null)";
+    $cmd = "ogr2ogr -f \"ESRI Shapefile\" -s_srs EPSG:4326 -t_srs EPSG:4326 $outfile MYSQL:\"" . $C['DB_NAME'] . ",host=" . $C['DB_SERVER'] . ",user=" . $C['DB_USER'] . ",password=" . $C['DB_PASSWORD'] . "\" -sql \"$sql_get_db_req\"";
+    shell_exec($cmd);
+  }
+  
+  $x = "ls $out_prefix*";
+  $stdout = shell_exec($x);
+        
+  $all_files = explode("\n", $stdout);
+  if ( count($all_files) > 0 ) {
+    $zip = new ZipArchive();
+    $zip_name = 'db.zip';
+    $filename = "$dir/$zip_name";
+    if ( file_exists($filename) ) {
+      unlink($filename);
+    }
+
+    if ($zip->open($filename, ZipArchive::CREATE)!==TRUE) {
+      exit("cannot open <$filename>\n");
+    }
+    foreach ( $all_files as $file ) {
+      $zip->addFile($file, basename($file)); 
+    }
+    $zip->close();
+        
+    foreach ( $all_files as $file ) {
+      unlink($file);
+    }
+    
+    ob_clean();
+    header('Pragma: public');
+    header('Expires: 0');
+    header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+    header('Content-Description: File Transfer');
+    header('Content-type: application/octet-stream');
+    header('Content-Disposition: attachment; filename=' .$zip_name);
+    header('Content-Transfer-Encoding: binary');
+    header('Content-Length: '.filesize($filename));
+    readfile($filename);
+    exit();
+  }
 }
 
 ?>
@@ -349,9 +358,9 @@ function exportDB($export_users)
       <p/>
     </div>
     <input type="submit" id="submit" value="<?php echo $btn_text; ?>" name="submit" <?php echo ($first_time && strlen($instr_err_html) == 0 ? "disabled" : ""); ?> />
-    <?php if ($is_instructor) { echo "<input type='button' onclick=\"$('.new-users').show();\" value='Generate user codes' />"; } ?>
-    <?php if ($is_instructor) { echo "<input type='submit' name='exportUsers' value='Export users database to CSV' />"; } ?>
-    <?php if ($is_instructor) { echo "<input type='button' onclick=\"$('.export-qs').show();\" value='Export answers database to CSV' />"; } ?>
+    <?php if ($is_instructor) { echo "<input type='button' onclick=\"$('.new-users').show();\" value='Generate user codes' title='Generate access codes for new users' />"; } ?>
+    <?php if ($is_instructor) { echo "<input type='submit' name='exportUsers' value='Export users database' title='Export users database as CSV file' />"; } ?>
+    <?php if ($is_instructor) { echo "<input type='button' onclick=\"$('.export-qs').show();\" value='Export answers database' title='Export answers database as archive (.zip) of shapefiles'/>"; } ?>
     <div class='new-users'>
       <span>How many new users?</span>
       <input class='num-new-users' name='<?php echo $C['CREATE_USERS_KEY']; ?>' type='number' min='1' />
@@ -363,8 +372,8 @@ function exportDB($export_users)
       <select class='export-select' multiple>
         <?php foreach ( $U->get_questions_answered() as $q ) { echo "<option selected>$q</option>"; } ?>
       </select>
-      <label for='selectAll'>Select / Deselect all</label>
-      <input id='selectAll' type='checkbox' onclick="$('.export-select option').prop('selected', function(idx, oldProp) {return !oldProp;});" checked/>
+      <label for='selectAll' class='pointer'>Select / Deselect all</label>
+      <input id='selectAll' type='checkbox' class='pointer' onclick="toggleSelectedQs();" checked/>
       <input class='export-ans-btn' name='exportAns' type='submit' value='Export'/>
       <input class='export-qs-list' type='hidden' name='exportQs' />
     </div>
@@ -437,6 +446,11 @@ function exportDB($export_users)
     return datestr;
   }
 
+  function toggleSelectedQs()
+  {
+     var newVal = $('#selectAll').prop('checked'); 
+     $('.export-select option').prop('selected', newVal);
+  }
 </script>
 </body>
 </html>

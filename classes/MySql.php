@@ -287,7 +287,7 @@ class MySql {
     $dbh = $this->initNewPDO();
     $tbl_ans = $this->C['TBL_ANSWERS'];
     
-    $stmt = $dbh->prepare("SELECT AsText(geom) AS geom_txt, addr, label FROM " . $tbl_ans . " WHERE id=:uid AND taskno=:taskno AND qno=:qno AND answered=1");
+    $stmt = $dbh->prepare("SELECT AsText(geom) AS geom_txt, addr, label, ansinfo FROM " . $tbl_ans . " WHERE id=:uid AND taskno=:taskno AND qno=:qno AND answered=1");
     $stmt->bindParam(':uid', $uid, PDO::PARAM_INT);
     $stmt->bindParam(':taskno', $taskno, PDO::PARAM_INT);
     $stmt->bindParam(':qno', $qno, PDO::PARAM_INT);
@@ -300,12 +300,14 @@ class MySql {
     $coords = array();
     $addrs = array();
     $labels = array();
+    $ans_infos = array();
     foreach ( $rows as $row ) {
       array_push($coords, $this->swap_coords($row['geom_txt']));
       array_push($addrs, $row['addr']);
       array_push($labels, $row['label']);
+      array_push($ans_infos, $row['ansinfo']);
     }
-    return implode('|', array(implode('¦', $coords), implode('¦', $addrs), implode('¦', $labels)));
+    return implode('|', array(implode('¦', $coords), implode('¦', $addrs), implode('¦', $labels), implode('¦', $ans_infos)));
   }
   
   function get_users()

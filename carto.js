@@ -714,6 +714,25 @@ function loadDBAnswer()
       setMapBounds();
     }
   }
+  
+  var ansInfos = $('#ansInfo').val();
+  var markerInfos = ansInfos.split('¦');
+  for ( var x = 0; x < markerInfos.length; x++ ) {
+    var mInfos = markerInfos[x];
+    var infos = mInfos.split(' + ');
+    for ( var y = 0; y < infos.length; y++ ) {
+      var q_and_a = infos[y];
+      var tokens = q_and_a.split('[');
+      var q = tokens[0];
+      var a = tokens[1].replace(/\]/, '');
+      var l = getElemByText('#' + _modalMarkerPfx + x + ' label', q);
+      if ( l.length == 1 ) {
+        getElemByText('option', a, l.next()).prop('selected', true);
+        l.closest('.follow-up-pair').addClass('active');
+        log("Adding active to " + l.text());
+      }
+    }
+  }
 }
 
 function resetActiveModal()
@@ -812,4 +831,10 @@ function setMapBounds()
   else {
     _map.panTo(_markers[0].getPosition());
   }
+}
+
+function getElemByText(selector, text, rootElem)
+{
+  var s = ( isUndef(rootElem) ? $(selector) : $(selector, rootElem) );
+  return s.filter(function() { return $(this).text() == text });
 }

@@ -48,6 +48,7 @@ if ($U->authorised()) {
         $db_ans_geom_txt = $ans_tokens[0];
         $db_ans_addr = $ans_tokens[1];
         $db_ans_destlabel = $ans_tokens[2];
+        $db_ans_assoc_infos = $ans_tokens[3];
       }
       if ( $taskno == 3 && $qno == 1 ) {
         $home_ans = $U->question_answered(2, 1);
@@ -252,7 +253,7 @@ function noteAnyDBIssues()
   var _drawnPolyJustAdded = false;
   var _freqQuestType = false;
   var _followUpBlockClassTag;
-  var _overlay, _overlayProjection;
+  var _overlay, db_;
   var _addMarkerBtnId = 'addMarkerBtn', _drawPolyBtnId = 'drawPolyBtn';
   var _zoomInBtnId = 'zoomInBtn';
   var _changeMapViewBtnId = 'satelliteBtn';
@@ -418,7 +419,7 @@ function noteAnyDBIssues()
       <form method="post" action="" class='form'>
         <input id='ansQID' name='ansQID' type='hidden' value='<?php echo $_SESSION[$curr_pos_key]; ?>'/>
         <input id='ansAnswered' name='ansAnswered' type='hidden' />
-        <input id='ansInfo' name='ansInfo' type='hidden' />
+        <input id='ansInfo' name='ansInfo' type='hidden' value='<?php if (isset($db_ans_assoc_infos)) { echo $db_ans_assoc_infos; } ?>' />
         <input id='ansCoords' name='ansCoords' value='<?php if (isset($db_ans_geom_txt)) { echo $db_ans_geom_txt; } ?>' type='hidden' />
         <input id='ansAddr' name='ansAddr' value='<?php if (isset($db_ans_addr)) { echo $db_ans_addr; } ?>' type='hidden' />
         <input id='ansDestLabel' name='ansDestLabel' value='<?php if (isset($db_ans_destlabel)) { echo $db_ans_destlabel; } ?>' type='hidden' />
@@ -453,7 +454,7 @@ function noteAnyDBIssues()
       <div id='map' class='adjust-height'></div>
     </div>
     <div id='confQuestModel' class='follow-up-block yes-fub example'>
-      <div class='follow-up-pair'>
+      <div class='follow-up-pair active'>
                         <label>How <b>sure</b> are you that the location you have chosen/area you have drawn is correct?</label>
                         <select id='confOptions' class='nested-option'>
                           <option>-- Please rate your confidence level --</option>
@@ -466,7 +467,7 @@ function noteAnyDBIssues()
                       </div>
     </div>
     <div id='freqQuestModel' class='follow-up-block yes-fub example'>
-                      <div class='follow-up-pair'>
+                      <div class='follow-up-pair active'>
                         <label>How often do you visit this place?</label>
                         <select class='nested-option'>
                           <option value='0'>-- Please choose --</option>
@@ -506,7 +507,7 @@ function noteAnyDBIssues()
                       </div>
                     </div>
     <div id='noAnswerModel' class='follow-up-block no-fub example'>
-                      <div class='follow-up-pair'>
+                      <div class='follow-up-pair active'>
                         <label>Could you please indicate why you did you not answer the question?</label>
                         <select id='reasonOptions' class='nested-option'>
                           <option>-- Please indicate your reason --</option>
@@ -777,10 +778,16 @@ function noteAnyDBIssues()
         for ( var v = 0; v < _markers.length; v++ ) {
           var modalId = _modalMarkerPfx + v;
           var markerInfo = [];
-          $('#' + modalId + ' option:selected').each(function() {
-            markerInfo.push($(this)[0].className);
+          $('#' + modalId + ' .active option:selected').each(function() {
+          
+            /* For newly created markers, we would not need to verify the selectedIndex because the user would not have been able to submit an answer if the selectedIndex for every select was not > 0. However, if the user returns to a previous question, leaves the markers unchanged then clicks submit, the modals will contain selects where the selectedIndex is 0.
+            */
+            if ( $(this)[0].index > 0 ) {
+              var ansText = $(this).parent().prev().text() + "[" + $(this).text() + "]";
+              markerInfo.push(ansText);
+            }
           });
-          info.push(markerInfo.join(","));
+          info.push(markerInfo.join(" + "));
         }
         return info.join("|");
       }
@@ -850,9 +857,9 @@ function noteAnyDBIssues()
         var idxThisSelect = scope.find('.nested-option').index($(this));
         var idxNextSelect = parseInt($('option:checked', this).val());
         if ( idxNextSelect != "0" ) {
-          scope.find('.follow-up-pair:gt(' + idxThisSelect + ')').hide();
+          scope.find('.follow-up-pair:gt(' + idxThisSelect + ')').removeClass('active').hide();
           scope.find('.nested-option').eq(idxNextSelect).val(0);
-          scope.find('.follow-up-pair').eq(idxNextSelect).show('blind', 200);
+          scope.find('.follow-up-pair').eq(idxNextSelect).addClass('active').show('blind', 200);
         }
         setSubmitBtnEnabledStatus(scope);
       });
