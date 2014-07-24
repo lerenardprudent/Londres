@@ -180,15 +180,28 @@ function export_ans_db()
     $task_and_q = explode('-', $q);
     $outfile = $out_prefix . ".T" . $task_and_q[0] . "Q" . $task_and_q[1] . ".shp";
     $cond = '(taskno = ' . $task_and_q[0] . " AND qno = " . $task_and_q[1] . ')';
-    $sql_get_db_req = "select a.id, a.taskno, a.qno, a.addr, a.label, a.ansinfo, a.geom from " . $C['TBL_ANSWERS'] . " a join " . $C['TBL_USERS'] . " u on a.id = u.uid and u.admin = 0 where $cond and not (geom is null)";
+    $sql_get_db_req = "select a.id, a.taskno, a.qno, a.addr, a.label, a.ansinfo, a.searches, a.geom from " . $C['TBL_ANSWERS'] . " a join " . $C['TBL_USERS'] . " u on a.id = u.uid and u.admin = 0 where $cond and not (geom is null)";
     $cmd = "ogr2ogr -f \"ESRI Shapefile\" -s_srs EPSG:4326 -t_srs EPSG:4326 $outfile MYSQL:\"" . $C['DB_NAME'] . ",host=" . $C['DB_SERVER'] . ",user=" . $C['DB_USER'] . ",password=" . $C['DB_PASSWORD'] . "\" -sql \"$sql_get_db_req\"";
     shell_exec($cmd);
   }
+  
+  $db = $U->get_all_answers($qs);
+  $delim = ',';
+  
+  $f = fopen($out_prefix . ".csv", 'w'); 
+  fputcsv($f, $db->cols, $delim); 
+  foreach ($db->rows as $row) { 
+    fputcsv($f, json_decode($row, true), $delim); 
+  }
+  fclose($f);
   
   $x = "ls $out_prefix*";
   $stdout = shell_exec($x);
         
   $all_files = explode("\n", $stdout);
+  if ($all_files[count($all_files)-1] == "") {
+    array_pop($all_files);
+  }
   if ( count($all_files) > 0 ) {
     $zip = new ZipArchive();
     $zip_name = 'db.zip';
@@ -357,7 +370,7 @@ function export_ans_db()
       </span>
       <p/>
     </div>
-    <input type="submit" id="submit" value="<?php echo $btn_text; ?>" name="submit" <?php echo ($first_time && strlen($instr_err_html) == 0 ? "disabled" : ""); ?> />
+    <input type="submit" id="submit" value="<?php echo $btn_text; ?>" name="submit" <?php echo ($first_time && strlen($instr_err_html) == 0 ? "disabled" : ""); ?> autofocus />
     <?php if ($is_instructor) { echo "<input type='button' onclick=\"$('.new-users').show();\" value='Generate user codes' title='Generate access codes for new users' />"; } ?>
     <?php if ($is_instructor) { echo "<input type='submit' name='exportUsers' value='Export users database' title='Export users database as CSV file' />"; } ?>
     <?php if ($is_instructor) { echo "<input type='button' onclick=\"$('.export-qs').show();\" value='Export answers database' title='Export answers database as archive (.zip) of shapefiles'/>"; } ?>

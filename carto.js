@@ -65,6 +65,7 @@ function initMap()
     initGoogleMapHacks();
     applyGoogleMapHacks();
     loadDBAnswer();
+    blockUI(false);
     log("Map ready"); 
   });
   
@@ -102,7 +103,7 @@ function runSearch()
   if ( searchString.length > 0 ) {
     log("Searched for " + quote(searchString,"'"));
     $('.searchfld').val("");
-    _searchActivity.push((_searchModePlaces ? "PL_SEARCH:" : "LOC_SEARCH:") + quote(searchString));
+    _searchActivity.push((_searchModePlaces ? "placeSearch[" : "locationSearch[") + quote(searchString) + ']');
     // Force search slider to close
     if ( _searchModePlaces ) {
       radialPlaceSearch(searchString);
@@ -219,8 +220,8 @@ function showMarkerInfoBubble(marker, timeOut)
   });
   $.noty.closeAll();
   _infoBubble.open(_map, marker);
-  $('.info-bubble').parent().parent().width($('.info-bubble').width()*1.2);
-  $('.info-bubble').parent().parent().height($('.info-bubble').height()*1.2);
+  $('.info-bubble').parent().parent().width($('.info-bubble').width()*1.1);
+  $('.info-bubble').parent().parent().height($('.info-bubble').height()*1.1);
   if ( timeOut ) {
     window.clearTimeout(_timer);
     _timer = setTimeout( function() {_infoBubble.close()}, 8000);
@@ -352,7 +353,7 @@ function addAddress(mark, ref)
 
 function logMapTypeChange()
 {
-  _searchActivity.push( "VIEW_CHANGE:" + quote(_map.getMapTypeId()) );
+  _searchActivity.push( "mapViewChange[" + _map.getMapTypeId() + ']' );
 }
 
 function showPlaceMarkerAddr() {
@@ -722,14 +723,16 @@ function loadDBAnswer()
     var infos = mInfos.split(' + ');
     for ( var y = 0; y < infos.length; y++ ) {
       var q_and_a = infos[y];
-      var tokens = q_and_a.split('[');
-      var q = tokens[0];
-      var a = tokens[1].replace(/\]/, '');
-      var l = getElemByText('#' + _modalMarkerPfx + x + ' label', q);
-      if ( l.length == 1 ) {
-        getElemByText('option', a, l.next()).prop('selected', true);
-        l.closest('.follow-up-pair').addClass('active');
-        log("Adding active to " + l.text());
+      if ( q_and_a.length > 0 && q_and_a.indexOf('[') > 0 ) {
+        var tokens = q_and_a.split('[');
+        var q = tokens[0];
+        var a = tokens[1].replace(/\]/, '');
+        var l = getElemByText('#' + _modalMarkerPfx + x + ' label', q);
+        if ( l.length == 1 ) {
+          getElemByText('option', a, l.next()).prop('selected', true);
+          l.closest('.follow-up-pair').addClass('active');
+          log("Adding active to " + l.text());
+        }
       }
     }
   }
@@ -750,7 +753,7 @@ function highlightLocation(coords, address)
 
 function setCursor()
 {
-  var canAddMarker = !_drawingPoly && _markers.length < _maxNumMarkers;
+  var canAddMarker = !_drawingPoly && _mapmarker == null && _markers.length < _maxNumMarkers;
   var cursorVal = ( canAddMarker ? 'crosshair' : null );
   toggleAddMarkerButton(canAddMarker);
   _map.set('draggableCursor', cursorVal );

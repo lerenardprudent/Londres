@@ -42,30 +42,31 @@ if ($U->authorised()) {
       if ( !$goBack) {
         $U->update_curr_pos();
       }
-      $existing_ans = $U->question_answered($taskno, $qno);
-      if ( $existing_ans ) {
-        $ans_tokens = explode("|", $existing_ans);
-        $db_ans_geom_txt = $ans_tokens[0];
-        $db_ans_addr = $ans_tokens[1];
-        $db_ans_destlabel = $ans_tokens[2];
-        $db_ans_assoc_infos = $ans_tokens[3];
-      }
-      if ( $taskno == 3 && $qno == 1 ) {
-        $home_ans = $U->question_answered(2, 1);
-        if ( $home_ans ) {
-          $home_ans_tokens = explode("|", $home_ans);
-          $map_focus = $home_ans_tokens[0];
-          $map_focus_icon = 'home';
-        }
-      }
-      else if ( $taskno == 3 && $qno == 2 ) {
-        $school_ans = $U->question_answered(1, 1);
-        if ( $school_ans ) {
-          $school_ans_tokens = explode("|", $school_ans);
-          $map_focus = $school_ans_tokens[0];
-          $map_focus_icon = 'school';
-        }
-      }
+    }
+  }
+  
+  $existing_ans = $U->question_answered($taskno, $qno);
+  if ( $existing_ans ) {
+    $ans_tokens = explode("|", $existing_ans);
+    $db_ans_geom_txt = $ans_tokens[0];
+    $db_ans_addr = $ans_tokens[1];
+    $db_ans_destlabel = $ans_tokens[2];
+    $db_ans_assoc_infos = $ans_tokens[3];
+  }
+  if ( $taskno == 3 && $qno == 1 ) {
+    $home_ans = $U->question_answered(2, 1);
+    if ( $home_ans ) {
+      $home_ans_tokens = explode("|", $home_ans);
+      $map_focus = $home_ans_tokens[0];
+      $map_focus_icon = 'home';
+    }
+  }
+  else if ( $taskno == 3 && $qno == 2 ) {
+    $school_ans = $U->question_answered(1, 1);
+    if ( $school_ans ) {
+      $school_ans_tokens = explode("|", $school_ans);
+      $map_focus = $school_ans_tokens[0];
+      $map_focus_icon = 'school';
     }
   }
   
@@ -262,7 +263,6 @@ function noteAnyDBIssues()
   var _modalState;
   var _noAnsFlag = 'no-ans';
   var _modalMarkerPfx = 'modalMarker';
-  var _blockUIElems = ['.search-slider'];
   
   /* For use with tutorials */
   var _unknownStateId = 'UNKNOWN';
@@ -305,6 +305,7 @@ function noteAnyDBIssues()
       }
     }
     else {
+      blockUI(); /* Protection against early clicks of buttons */
       $('.discover-icon').show('puff', 400);
       log("Preparing map display");
       $(window).resize( handleWindowResize );
@@ -398,7 +399,7 @@ function noteAnyDBIssues()
 </head>
 <body>
   <div id="container">
-    <div id='topPanel'>
+    <div id='topPanel' class='block-ui-candidate'>
       <span class='headingText'>VERITAS London</span>
       <a title='Discover how to use this site' class='discover-icon' onclick='startTour();'>Log out</a>
       <a title='Log out' class='logout-icon logout-link'>Log out</a>
@@ -615,7 +616,7 @@ function noteAnyDBIssues()
           $('#ansAnswered').val(answered ? 1 : 0);
           var ansInfoStr = buildAnsInfoStr(answered);
           $('#ansInfo').val(ansInfoStr);
-          $('#ansSearchActivity').val(_searchActivity.join(","));
+          $('#ansSearchActivity').val(_searchActivity.join("~"));
           if (_drawnPolygon != null) {
             var path = _drawnPolygon.getPath().getArray();
             path.push(path[0]); // Repeat first point so that path is closed loop and polygon is valid
@@ -777,22 +778,28 @@ function noteAnyDBIssues()
         var info = [];
         for ( var v = 0; v < _markers.length; v++ ) {
           var modalId = _modalMarkerPfx + v;
-          var markerInfo = [];
-          $('#' + modalId + ' .active option:selected').each(function() {
-          
-            /* For newly created markers, we would not need to verify the selectedIndex because the user would not have been able to submit an answer if the selectedIndex for every select was not > 0. However, if the user returns to a previous question, leaves the markers unchanged then clicks submit, the modals will contain selects where the selectedIndex is 0.
-            */
-            if ( $(this)[0].index > 0 ) {
-              var ansText = $(this).parent().prev().text() + "[" + $(this).text() + "]";
-              markerInfo.push(ansText);
-            }
-          });
-          info.push(markerInfo.join(" + "));
+          var t = getModalText(modalId);
+          info.push(t);
         }
-        return info.join("|");
+        return info.join("¦");
       }
       
-      return $('#' + _noAnswerModalId + ' option:selected')[0].className;
+      return getModalText(_noAnswerModalId); //return $('#' + _noAnswerModalId + ' option:selected')[0].className;
+    }
+    
+    function getModalText(modalId)
+    {
+      var xinfo = [];
+      $('#' + modalId + ' .active option:selected').each(function() {
+         
+        /* For newly created markers, we would not need to verify the selectedIndex because the user would not have been able to submit an answer if the selectedIndex for every select was not > 0. However, if the user returns to a previous question, leaves the markers unchanged then clicks submit, the modals will contain selects where the selectedIndex is 0.
+        */
+        if ( $(this)[0].index > 0 ) {
+          var ansText = $(this).parent().prev().text() + "[" + $(this).text() + "]";
+          xinfo.push(ansText);
+        }
+      });
+      return xinfo.join(" + ");
     }
     
     function setSubmitAnswerOptionEnabled(enabled)
@@ -874,9 +881,7 @@ function noteAnyDBIssues()
         }
       });
       
-      /*cloneDiv.find('.btn-default,.close').click( function() {
-        loadPreviousModalState(newModalId);
-      });*/
+      cloneDiv.find('.modal-dialog').width(700); /* Make the modal a little wider */
       return newModalId;
     }
     
@@ -913,10 +918,9 @@ function noteAnyDBIssues()
     
     function blockUI(unblockFlag)
     {
-      for ( var v = 0; v < _blockUIElems.length; v++ ) {
-        $(_blockUIElems[v]).toggleClass('blocked');
-        ( isUndef(unblockFlag) ? $(_blockUIElems[v]).block({message:null}) : $(_blockUIElems[v]).unblock() );
-      }
+      $('.block-ui-candidate').each(function() {
+        ( isUndef(unblockFlag) ? $(this).block({message:null}) : $(this).unblock() );
+      });
     }
     
     function startTour()

@@ -121,6 +121,7 @@ class MySql {
     $geom_str = ( $answered ? "GeomFromText(:geom_txt)" : "null" );
     $addresses = explode('¦', $addr );
     $labels = explode('¦', $labl );
+    $infos = explode('¦', $ans_info );
     $ret_code = -1;
     
     /* Delete any existing answer(s) */
@@ -139,9 +140,12 @@ class MySql {
       $stmt->bindParam(':taskno', $taskno, PDO::PARAM_INT);
       $stmt->bindParam(':qno', $qno, PDO::PARAM_INT);
       $stmt->bindParam(':answered', $answered, PDO::PARAM_INT);
-      $stmt->bindParam(':ans_info', $ans_info, PDO::PARAM_STR);
+      $stmt->bindParam(':ans_info', $infos[$i], PDO::PARAM_STR);
       $stmt->bindParam(':num_coords', $num_coords, PDO::PARAM_INT);
       $stmt->bindParam(':uid', $uid, PDO::PARAM_INT);
+      $stmt->bindParam(':searches', $searches, PDO::PARAM_STR);
+      $stmt->bindParam(':addr', $addresses[$i], PDO::PARAM_STR);
+      $stmt->bindParam(':label', $labels[$i], PDO::PARAM_STR);
       $stmt->bindParam(':searches', $searches, PDO::PARAM_STR);
       $stmt->bindParam(':addr', $addresses[$i], PDO::PARAM_STR);
       $stmt->bindParam(':label', $labels[$i], PDO::PARAM_STR);
@@ -337,13 +341,20 @@ class MySql {
     return $res;
   }
   
-function get_answers()
+function get_answers($qs)
   {
     $dbh = $this->initNewPDO();
     $anstbl = $this->C['TBL_ANSWERS'];
-    $cols = array('id', 'taskno', 'qno', 'answered', 'ansinfo');
-    $sql = 
-    $stmt = $dbh->prepare("SELECT " . implode(',', $cols) . " FROM " . $anstbl);
+    $cols = array('id', 'taskno', 'qno', 'answered', 'ansinfo', 'searches');
+    $comp = array();
+    foreach ( $qs as $q ) {
+      $task_and_q = explode('-', $q);
+      $cond = '(taskno = ' . $task_and_q[0] . " AND qno = " . $task_and_q[1] . ')';
+      array_push($comp, $cond);
+    }
+    $conj = "(" . implode(' OR ', $comp) . ")";
+    $sql = "SELECT " . implode(',', $cols) . " FROM " . $anstbl . " WHERE $conj";
+    $stmt = $dbh->prepare($sql);
     $this->execute($stmt);
     $rows = $stmt->fetchAll();
     $answers = array();

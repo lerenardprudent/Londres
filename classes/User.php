@@ -206,9 +206,9 @@ class User {
     return $this->mysql->get_users();
   }
   
-  function get_all_answers()
+  function get_all_answers($qs)
   {
-    return $this->mysql->get_answers();
+    return $this->mysql->get_answers($qs);
   }
   
   function get_questions_answered()
