@@ -60,12 +60,20 @@ a { text-decoration: none; }
   position: relative;
 }
 
-.headingText {
-  font-size: 25px;
+.heading-text {
+  position: absolute;
+  top: 25%;
+  font-size: 30px;
+  color: cadetblue;
+  margin-left: 10px;
 }
 
 .mini-line-break {
   margin: 2px
+}
+
+.logo-container {
+  position: relative
 }
 
 #main {
@@ -101,10 +109,18 @@ a { text-decoration: none; }
   font-size: 15px;
 }
 
-#logo {
-  height: 100%;
-  width: 10%;
-  float: left;
+.heading-logo  {
+  background-image: url('../img/logo.png');
+  background-position:  0px 0px;
+  background-repeat: no-repeat;
+  background-color: none;
+  cursor: pointer;
+  outline: 0;
+  height: 61px;
+  width: 130px;
+  margin: 4px 0 0 -10px;
+  display: inline-block;
+  margin-left: 3px;
 }
 
 #veritas-id {

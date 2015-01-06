@@ -102,12 +102,16 @@ if ($U->authorised()) {
       $freq_quest = true;
       array_push($questInfo, $C['FREQ_QUEST_KEY']);
     }
+    if ( isset($info->place)) {
+      $freq_quest = true;
+      array_push($questInfo, $C['PLACE_TYPE_KEY'], $info->place);
+    }
   }
   else {
     echo "ERROR! Question not found :(";
   }
   
-  $questInfo = implode("-", $questInfo);
+  $questInfo = implode($C['VALS_SEPARATOR'], $questInfo);
 }
 else {
   /* Redirect to login screen */
@@ -272,6 +276,7 @@ function noteAnyDBIssues()
   var _tutPoint = new google.maps.Point(100,100);
   var _tutMode = false;
   var _tutPoly = null;
+  var _placeType = "location";
 </script>
 
 <script type="text/javascript">
@@ -289,6 +294,14 @@ function noteAnyDBIssues()
     _endOfQuestionnaire = ($('.questInfo').val().indexOf(Consts.get('QUEST_TEXT_END')) >= 0);
     _drawingPoly = ($('.questInfo').val().indexOf(Consts.get('DRAW_KEY')) >= 0);
     _freqQuestType = ($('.questInfo').val().indexOf(Consts.get('FREQ_QUEST_KEY')) >= 0);
+    var gotPlaceType = ($('.questInfo').val().indexOf(Consts.get('PLACE_TYPE_KEY')) >= 0);
+    if ( gotPlaceType ) {
+      var vals = $('.questInfo').val().split(Consts.get('VALS_SEPARATOR'));
+      var place = vals[vals.length-1];
+      if ( place.length ) {
+        _placeType = place[0].toUpperCase() + place.substr(1);
+      }
+    }
     
     if ( _isExplanation ) {
       $('.quest-block').removeClass('quest-block').addClass('explanation-block');
@@ -400,7 +413,12 @@ function noteAnyDBIssues()
 <body>
   <div id="container">
     <div id='topPanel' class='block-ui-candidate'>
-      <span class='headingText'>VERITAS London</span>
+      <div class='logo-container'>
+        <div class='heading-logo' src='img/record-logo.png' onclick="window.open('http://www.lshtm.ac.uk/', '_blank');">
+        </div>
+        <span class='heading-text'>VERITAS</span>
+      </div>
+      
       <a title='Discover how to use this site' class='discover-icon' onclick='startTour();'>Log out</a>
       <a title='Log out' class='logout-icon logout-link'>Log out</a>
       <p class='mini-line-break' />
@@ -1183,7 +1201,7 @@ function noteAnyDBIssues()
           showMarkersOnMap(false);
           switchSearchMode(false);
           _tutMarker = new google.maps.Marker({position: _map.getCenter(), visible: false, map: _map});
-          google.maps.event.addListener(_tutMarker, 'click', function() { showMarkerInfoBubble(this, false); } );
+          google.maps.event.addListener(_tutMarker, 'click', function() { showInfoBubble(this, false); } );
         }
         else if ( _currTourState.name == 'IDENTIFY_BY_BTN' ) {
           _timer = setTimeout( function() {

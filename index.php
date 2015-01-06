@@ -328,7 +328,7 @@ function export_ans_db()
 <a title='Log out' class='logout-icon logout-link'>Log out</a>
 <div id="container">
   <p>
-    <h3>Welcome to VERITAS! <?php if ( $is_instructor ) { echo "[You have <i>instructor</i> priviledges]"; } ?></h3>
+    <h3>Welcome to VERITAS London! <?php if ( $is_instructor ) { echo "[You have <i>instructor</i> priviledges]"; } ?></h3>
   </p>
   <form method="post" action="">
     <?php
@@ -425,7 +425,9 @@ function export_ans_db()
   function retry()
   {
     $('.retry-info').text("Retrying...");
-    setTimeout(function() { $('input').click() }, 500 );
+    setTimeout(function() {
+      $('#submit').click()
+    }, 500 );
   }
   
   function wipeCodes()

@@ -35,5 +35,7 @@
   "GENDER_KEY"          : "gender",
   "DOB_KEY"             : "dob",
   "DRAW_KEY"            : "draw",
-  "FREQ_QUEST_KEY"      : "freq"
+  "FREQ_QUEST_KEY"      : "freq",
+  "PLACE_TYPE_KEY"      : "placetype",
+  "VALS_SEPARATOR"      : ":-:"
 }

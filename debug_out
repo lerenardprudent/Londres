@@ -1,0 +1,1 @@
+select u2.curr_pos from (select * from users where uid = :uid) u join (select * from users where connected = 1) u2 on u.resp_admin = u2.uname - 8

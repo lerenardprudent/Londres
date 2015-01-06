@@ -9,15 +9,19 @@
     "0" : { "type" : "exp",
             "html" : "We are interested in how well you can use online maps. The next five questions will ask you to locate places in East London, please locate them as best as you can. You can use your knowledge of the places, or the Google Maps search box to help you find the places." },
     "1" : { "type" : "quest",
+            "place": "school",
             "html" : "Can you locate your school using a pushpin?" },
     "2" : { "type" : "quest",
+            "place": "London Olympic Stadium",
             "html" : "Can you locate the London Olympic Stadium using a pushpin?" }
   },
   "2" : {
     "0" : { "type" : "exp",
             "html" : "In this question we will ask you to locate your home on the map. Remember that we will keep this information private, and only the research team will see it. We will not share it with anyone else. This information is really useful for our work, but if you really do not want to give it to us, then consider locating your postcode or your street instead, if you feel more comfortable." },
     "1" : { "type" : "quest",
-            "html" : "Can you locate your home, or the home you live in most of the time, using a pushpin?" }
+            "html" : "Can you locate your home, or the home you live in most of the time, using a pushpin?",
+            "place": "home"
+          }
   },
   "3" : {
     "0" : { "type" : "exp",
@@ -25,10 +29,14 @@
           },
     "1" : { "type" : "quest",
             "html" : "Could you draw an area that covers your <b>home neighbourhood</b> where you live now?",
-            "draw" : "true" },
+            "draw" : "true",
+            "place": "home neighbourhood"
+          },
     "2" : { "type" : "quest",
             "html" : "Please could you draw an area that covers the <b>neighbourhood that you use around your school</b>?",
-            "draw" : "true" }
+            "place": "school neighbourhood",
+            "draw" : "true"
+          }
   },
   "4" : {
     "0" : { "type" : "exp",
@@ -36,28 +44,42 @@
           },
     "1" : { "type" : "quest",
             "html" : "Please could you locate a <b>newsagent/convenience store</b> that you use regularly?",
+            "place": "newsagent/convenience store",
             "freq" : "true" },
     "2" : { "type" : "quest",
             "html" : "Please could you locate a <b>fast-food shop</b>, or <b>takeaway</b>, that you use regularly?",
-            "freq" : "true" },
+            "place": "fast-food shop/takeaway",
+            "freq" : "true"
+          },
     "3" : { "type" : "quest",
             "html" : "Please could you locate a place where you like to <b>hang out/spend time</b> with your friends?",
-            "freq" : "true" },
+            "place": "Hang-out location",
+            "freq" : "true"
+          },
     "4" : { "type" : "quest",
             "html" : "Please could you locate a <b>youth club</b> that you might attend?",
-            "freq" : "true" },
+            "place": "youth club",
+            "freq" : "true"
+          },
     "5" : { "type" : "quest",
             "html" : "Please could you locate a <b>sports</b> or <b>exercise club</b> you might attend <b>outside of school?</b>",
-            "freq" : "true" },
+            "place": "sports/exercise club (outside of school)",
+            "freq" : "true"
+          },
     "6" : { "type" : "quest",
             "html" : "Please could you locate an <b>after-school activity</b> that you might attend (non-sporting)?",
+            "place": "after-school activity location (non-sporting)",
             "freq" : "true" },
     "7" : { "type" : "quest",
             "html" : "Please could you locate a <b>friend</b> whom you visit regularly?",
-            "freq" : "true" },
+            "place": "friend",
+            "freq" : "true"
+          },
     "8" : { "type" : "quest",
             "html" : "Please could you locate a <b>park or green space</b> that you visit regularly?",
-            "freq" : "true" }
+            "place": "park/green space",
+            "freq" : "true"
+          }
   },
   "5" : {
     "0" : { "type" : "exp",

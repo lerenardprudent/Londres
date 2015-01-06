@@ -130,18 +130,22 @@ function handleMapClick(clickEvent)
       log("Map canvas click at distance of only ", minEdgeDist, "; recentering map.");
     }
     geocodeMarker(clickEvent.latLng, needToRecenter);
+    highlightLocation(clickEvent.latLng);
   }
 }
 
 function geocodeMarker(lat_lng, centerOnMarker)
 {
-	_geocoder.geocode( {latLng:lat_lng}, centerOnMarker ? geocoderResponseCenterMap : geocoderResponse );
+  if ( centerOnMarker ) {
+    _map.panTo(lat_lng);
+  }
+  _geocoder.geocode( {latLng:lat_lng}, geocoderResponse );
 }
 
-function geocodeAddress(addr, centerOnMarker)
+function geocodeAddress(addr)
 {
 	/* Give hint to where we want to search */
-	_geocoder.geocode( { 'address': addr + ",London,UK" }, centerOnMarker ? geocoderResponseCenterMap : geocoderResponse );
+	_geocoder.geocode( { 'address': addr + ",London,UK" }, geocoderResponse );
 }
 
 function geocoderResponse(results, status)
@@ -153,21 +157,13 @@ function geocoderResponse(results, status)
     var res_index = 0;
     var addr = results[res_index].formatted_address;
     log(results.length + " match" + (results.length == 1 ? "" : "es") + " found - choosing "  + quote(addr, "'"));
-    highlightLocation(results[res_index].geometry.location, addr);
+    setMarkerAddress(_mapmarker, addr);
   }
   else if (status == google.maps.GeocoderStatus.ZERO_RESULTS) {
     showPopupMsg(5, "Location not found.");
   }
   
   return { 'ok' : ok };
-}
-
-function geocoderResponseCenterMap(results, status)
-{
-  var res = geocoderResponse(results, status);
-  if ( res.ok ) {
-    _map.panTo(_mapmarker.getPosition());
-  }
 }
 
 function pinMapMarker(coords, address)
@@ -185,22 +181,19 @@ function pinMapMarker(coords, address)
   }
   else {
     marker.setOptions({visible:true, position:coords});
-    setMarkerAddress(marker, address);
     resetActiveModal();
   }
   
-  if ( !isUndef(address) ) {
-    showMarkerInfoBubble(marker, true);
-  }
+  showInfoBubble(marker, true);
 }
 
 function handleMarkerDrag(e)
 {
   geocodeMarker(e.latLng, true);
-  showMarkerInfoBubble();
+  showInfoBubble();
 }
 
-function showMarkerInfoBubble(marker, timeOut)
+function showInfoBubble(marker, timeOut)
 {
   if ( isUndef(marker) ) {
     marker = _mapmarker;
@@ -209,17 +202,33 @@ function showMarkerInfoBubble(marker, timeOut)
     timeOut = false;
   }
   
-  _infoBubble.setOptions({
+  var iwOptions;
+  if ( _drawingPoly ) {
+    iwOptions = { position : _drawnPolygon.centroid,
+                  content:  "<div class='info-bubble'>" +
+                            "<span><b>ZONE</b>: <i>" + _placeType + "</i></span><br>(" +
+                            ( !_drawnPolygon.confirmed ? "<a class='confirm-poly' href='javascript:confirmZone();'>Confirm zone</a> or " : "" ) +
+                            "<a class='remove-marker' href='javascript:removePolygon();'>Remove polygon</a>)" +
+                            "</div>"
+                };
+  } else
+  iwOptions = {
     pixelOffset: _markerIBOffset,
     content:  "<div class='info-bubble'>" +
                 ( isUndef(marker.label) ? "" : "<span class='desc-label'>" + marker.label + "</span>" ) +
-                "<span>Approximate location: <i>" + escapeSpecialChars(marker.address) + "</i></span><br>(" +
-                ( !marker.confirmed ? "<a class='confirm-marker' href='javascript:showConfirmMarkerDialog(" + marker.idx + ");'>Confirm</a> or " : "" ) +
-                "<a class='remove-marker' href='javascript:removeMarker(" + marker.idx + ");'>Remove</a>)" +
+                "<span><b>PLACE</b>: <i>" + _placeType + "</i></span><br>(" +
+                ( !marker.confirmed ? "<a class='confirm-marker' href='javascript:showConfirmMarkerDialog(" + marker.idx + ");'>Confirm location</a> or " : "" ) +
+                "<a class='remove-marker' href='javascript:removeMarker(" + marker.idx + ");'>Remove pushpin</a>)" +
               "</div>"
-  });
+  };
+  
+  _infoBubble.setOptions(iwOptions);
   $.noty.closeAll();
-  _infoBubble.open(_map, marker);
+  if ( _drawingPoly ) {
+    _infoBubble.open(_map);
+  } else {
+    _infoBubble.open(_map, marker);
+  }
   $('.info-bubble').parent().parent().width($('.info-bubble').width()*1.1);
   $('.info-bubble').parent().parent().height($('.info-bubble').height()*1.1);
   if ( timeOut ) {
@@ -415,9 +424,13 @@ function processNewMapObject(e)
     /* Validate what has been drawn to make sure it's not bogative */
     if ( tempPath.length > 2 ) {
       _drawnPolygon = newMapObj;
+      _drawnPolygon.centroid = calcPolyCenter();
+      _drawnPolygon.confirmed = false;
+      google.maps.event.addListener(_drawnPolygon, 'click', showInfoBubble);
       _drawnPolyJustAdded = true;
       setSubmitAnswerOptionEnabled();
     }
+    showInfoBubble();
   }
 }
 
@@ -600,7 +613,7 @@ function addMarkerToMap(coords, addr, anima, dontToggleAddMarkerBtn)
   }
   
   addMarkerToList(marker);
-  google.maps.event.addListener(marker, 'click', function() { showMarkerInfoBubble(this, false); } );
+  google.maps.event.addListener(marker, 'click', function() { showInfoBubble(this, false); } );
   google.maps.event.addListener(marker, 'dragstart', function() { _infoBubble.close(); } );
   google.maps.event.addListener(marker, 'dragend', handleMarkerDrag );
   setMarkerConfirmationFlag(marker, false);
@@ -623,7 +636,7 @@ function addMarkerToMap(coords, addr, anima, dontToggleAddMarkerBtn)
 
 function setMarkerAddress(marker, addr)
 {
-  if ( marker != null ) {
+  if ( marker != null && !isUndef(addr) ) {
     marker.address = addr;
   }
 }
@@ -697,8 +710,15 @@ function loadDBAnswer()
     var latLngs = lls.coords;
     if ( lls.isPoly ) {
       _drawnPolygon = new google.maps.Polygon({ paths:latLngs });
-      _drawnPolygon.setMap(_map);  
-      _map.setCenter(calcPolyCenter());
+      _drawnPolygon.setOptions({
+        map: _map,
+        fillColor: 'green',
+        fillOpacity: 0.85
+      });
+      _drawnPolygon.centroid = calcPolyCenter();
+      _drawnPolygon.confirmed = true;
+      google.maps.event.addListener(_drawnPolygon, 'click', showInfoBubble);
+      _map.setCenter(_drawnPolygon.centroid);
       setSubmitAnswerOptionEnabled();
     }
     else {
@@ -747,7 +767,7 @@ function resetActiveModal()
 
 function highlightLocation(coords, address)
 {
-  var dontPlaceMarker = ( _drawingPoly && !_tutMode ) || _markers.length == _maxNumMarkers;
+  var dontPlaceMarker = ( _drawingPoly && !_tutMode )/* || _markers.length == _maxNumMarkers*/;
   dontPlaceMarker ? _map.setCenter(coords) : pinMapMarker(coords, address);
 }
 
@@ -840,4 +860,19 @@ function getElemByText(selector, text, rootElem)
 {
   var s = ( isUndef(rootElem) ? $(selector) : $(selector, rootElem) );
   return s.filter(function() { return $(this).text() == text });
+}
+
+function confirmZone()
+{
+  _drawnPolygon.confirmed = true;
+  _drawnPolygon.setOptions({ fillColor: 'green', fillOpacity: 0.8 });
+  _infoBubble.close();
+  
+}
+
+function removePolygon()
+{
+  _drawnPolygon.setMap(null);
+  _drawnPolygon = null;
+  _infoBubble.close();
 }

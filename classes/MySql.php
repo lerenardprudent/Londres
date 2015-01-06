@@ -201,6 +201,7 @@ class MySql {
     $admin_uname = $this->C['USR_NAME_ADMIN'];
     
     $sql = "select u2.curr_pos from (select * from " . $usrtbl . " where uid = :uid) u join (select * from " . $usrtbl . " where connected = 1) u2 on u.resp_admin = u2.uname";
+    file_put_contents('debug_out', "$sql - $uid\n");
     $stmt = $dbh->prepare($sql);
     /*** bind the parameters ***/
     $stmt->bindParam(':uid', $uid, PDO::PARAM_INT);

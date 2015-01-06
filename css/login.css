@@ -1,7 +1,11 @@
 body {
   font-family: trebuchet ms;
-  background-image: url('../img/london.jpg');
-  background-repeat: repeat;
+  background-image: url('../img/frontpagebackground.png');
+  background-repeat: no-repeat;
+  background-size: 80%;
+  background-attachment: fixed;
+  background-position: center 25%;
+  background-color: black;
 }
 
 #login {
