@@ -365,13 +365,17 @@ function noteAnyDBIssues()
           var canSubmit = false;
           var cantSubmitYetExpl = "";
           if ( _drawingPoly ) {
-            canSubmit = (_drawnPolygon != null);
+            canSubmit = (_drawnPolygon != null && _drawnPolygon.confirmed );
+            if ( !canSubmit ) {
+              _infoBubble.close();
+              cantSubmitYetExpl = "Please confirm or remove the polygon.";
+            }
           }
           else if ( _markers.length > 0 ) {
             canSubmit = allMarkersConfirmed();
             if ( !canSubmit ) {
               _infoBubble.close();
-              cantSubmitYetExpl = "Please confirm or remove active marker.";
+              cantSubmitYetExpl = "Please confirm or remove the pushpin.";
             }
           }    
           

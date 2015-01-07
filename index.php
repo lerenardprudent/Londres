@@ -127,11 +127,11 @@ function validate_pos()
   
   if ( $U->pos_leq($Q->get_final_pos()) ) {
     $_SESSION[$C['CURR_POS_KEY']] = $Q->get_final_pos(); /* Set it again in case the value was bogatively high */
-    return "Repeat questionnaire";
+    return "Repeat survey";
   }
   
   if ( $U->pos_less( $Q->get_initial_pos() ) ) {
-    return "Resume questionnaire";
+    return "Resume survey";
   }
   
   if ( $U->pos_greater( $Q->get_initial_pos() ) ) {
@@ -141,7 +141,7 @@ function validate_pos()
   /* This triggers a call to reset_curr_pos() later on in this file */
   $_SESSION[$C['CURR_POS_KEY']] = $Q->get_final_pos(); 
   
-  return "Start questionnaire";
+  return "Start survey";
 }
 
 function export_user_db()
@@ -274,7 +274,7 @@ function export_ans_db()
     $('.logout-link').attr('href', logoutHref);
     
     $('.retry').each(function() {
-      $('h3').text('Retry situation');
+      $('h3').text('Connection error');
       $('#submit').attr('value', 'Retry now');
       startCountdownToRetry();
     });

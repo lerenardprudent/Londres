@@ -122,7 +122,7 @@ class User {
                 "<p class='retry-info'>Will retry in <span class='secs-left'></span> seconds...</p>";
       }
       else if ($this->pos_less($instr_pos) ) {
-        $prob = '<p class="pause">The instructor is currently demonstrating Question ' . str_replace($this->C['CURR_POS_SEPARATOR'], "&ndash;", $instr_pos) . '.</p>'.
+        $prob = '<p class="pause">The instructor is currently at Question ' . str_replace($this->C['CURR_POS_SEPARATOR'], "&ndash;", $instr_pos) . '.</p>'.
                 '<input id="hack" name="hack" type="text" style="display: none" />';
       }
     }

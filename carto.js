@@ -41,7 +41,7 @@ function initMap()
     _map.setCenter(focusCoords);
     _focusMarker = new google.maps.Marker({position:focusCoords, draggable:false, map: _map });
     var isHome = ( $('.map-focus').hasClass('home') ); /* For now it can only be home or school */
-    var options = {content: "<div class='infowin'><span>" + (isHome ? "Your home" : "Your school") + "</span></div>"};
+    var options = {content: "<div class='infowin'><span>" + (isHome ? "Home" : "School") + "</span></div>"};
     var iw = new google.maps.InfoWindow(options);
     google.maps.event.addListener(_focusMarker, 'click', function() {
       iw.open(_map, this);
@@ -431,6 +431,12 @@ function processNewMapObject(e)
       setSubmitAnswerOptionEnabled();
     }
     showInfoBubble();
+  } else
+  if ( e.type == google.maps.drawing.OverlayType.MARKER ) {
+    var pos = newMapObj.getPosition();
+    newMapObj.setMap(null);
+    geocodeMarker(pos);
+    highlightLocation(pos);
   }
 }
 
